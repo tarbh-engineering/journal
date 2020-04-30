@@ -1,0 +1,15 @@
+{
+  "short_name": "Journal",
+  "name": "Journal",
+  "icons": [
+    {
+      "src": "/book.png",
+      "type": "image/png",
+      "sizes": "512x512"
+    }
+  ],
+  "start_url": "/",
+  "background_color": "#9182fe",
+  "theme_color": "#9182fe",
+  "display": "standalone"
+}

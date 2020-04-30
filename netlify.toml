@@ -1,0 +1,9 @@
+[[redirects]]
+from = "/graphql"
+to = "PLACEHOLDER/v1/graphql"
+status = 200
+
+[[redirects]]
+from = "/*"
+to = "/index.html"
+status = 200

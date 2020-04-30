@@ -1,0 +1,72 @@
+@keyframes rotation {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(359deg);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    filter: blur(50px);
+  }
+  to {
+    opacity: 1;
+    filter: blur(0px);
+  }
+}
+
+.on {
+  box-shadow: -1px 1px 0px #999, -2px 2px 0px #999, -3px 3px 0px #999,
+    -4px 4px 0px #999, -5px 5px 0px #999;
+}
+
+.mylad:hover {
+  box-shadow: -1px 1px 0px #999, -2px 2px 0px #999, -3px 3px 0px #999,
+    -4px 4px 0px #999, -5px 5px 0px #999;
+}
+
+#editor {
+  height: 100%;
+  width: 100%;
+  resize: none;
+  background-color: transparent;
+  border-width: 0px;
+}
+
+#editor:focus {
+  outline: none;
+}
+
+@font-face {
+  font-family: "Burbank";
+  src: url("./fonts/BurbankBigCondensed-Black.otf");
+}
+
+@font-face {
+  font-family: "Source Sans Pro";
+  font-style: normal;
+  font-weight: 400;
+  src: url("./fonts/SourceSansPro.woff2") format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA,
+    U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215,
+    U+FEFF, U+FFFD;
+}
+
+@font-face {
+  font-family: "Varela";
+  font-style: normal;
+  font-weight: 400;
+  src: local("Varela"), url("./fonts/varela.woff2") format("woff2"),
+    url("./fonts/varela.woff") format("woff");
+}
+
+@font-face {
+  font-family: "EB Garamond";
+  font-style: normal;
+  font-weight: 400;
+  src: local(""), url("./fonts/eb-garamond.woff2") format("woff2"),
+    url("./fonts/eb-garamond.woff") format("woff");
+}
