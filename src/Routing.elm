@@ -30,9 +30,6 @@ goTo route =
         RouteYear year ->
             absolute [ "year", String.fromInt year ] []
 
-        RouteTagPosts a ->
-            absolute [ "tags", "id" ] []
-
         RouteTags ->
             absolute [ "tags" ] []
 
@@ -70,8 +67,6 @@ routes =
     , map (parseDay RouteDay) (s "day" </> string)
     , map (parseDay RouteWeek) (s "week" </> string)
     , map RouteYear (s "year" </> int)
-
-    --, map (Uuid >> RouteTagPosts) (s "tags" </> string)
     , map
         (\m y ->
             m

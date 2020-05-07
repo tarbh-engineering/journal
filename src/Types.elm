@@ -1,4 +1,4 @@
-module Types exposing (Auth, Emoji(..), Flags, Funnel(..), GqlResult, GqlTask, Keys, Model, Msg(..), Post, PostView(..), Route(..), Screen, ServiceWorkerRequest(..), Sort(..), Status(..), Tag, View(..))
+module Types exposing (Auth, Def(..), Emoji(..), Flags, Funnel(..), GqlResult, GqlTask, Keys, Model, Msg(..), Post, PostView(..), Route(..), Screen, ServiceWorkerRequest(..), Sort(..), Status(..), Tag, View(..))
 
 import Array exposing (Array)
 import Browser exposing (UrlRequest)
@@ -6,12 +6,10 @@ import Browser.Dom
 import Browser.Events exposing (Visibility(..))
 import Date exposing (Date)
 import Day exposing (DayDict)
-import Dict exposing (Dict)
 import Graphql.Http
 import Helpers.UuidDict exposing (UuidDict)
 import Json.Decode exposing (Value)
 import List.Nonempty exposing (Nonempty)
-import Set exposing (Set)
 import Task exposing (Task)
 import Time exposing (Month(..))
 import Uuid exposing (Uuid)
@@ -58,7 +56,8 @@ type alias Model =
     , postCreateTags : List Uuid
     , auth : Maybe Auth
     , tagCreateName : String
-    , tagsBeingEdited : UuidDict String
+    , tagBeingEdited : Maybe Uuid
+    , tagUpdate : String
     , flash : Maybe ( Array ( Bool, String ), List ( Int, String ) )
     , loginForm : LoginForm
     , tagSort : Sort
@@ -72,6 +71,7 @@ type alias Model =
     , force : Bool
     , funnel : Funnel
     , tag : Maybe Uuid
+    , def : Maybe Def
     }
 
 
@@ -79,6 +79,13 @@ type Funnel
     = Hello
     | WelcomeBack String
     | JoinUs
+
+
+type Def
+    = World
+    | First
+    | Private
+    | Journal
 
 
 type Sort
@@ -112,18 +119,18 @@ type Msg
     | BodyUpdate String
     | NonceCb (GqlResult (Maybe String))
     | AuthCb (GqlResult Auth)
-    | Login String String
     | EmailSubmit
     | LoginSubmit String
     | SignupSubmit
+    | Buy Bool
     | LoginFormEmailUpdate String
     | LoginFormPasswordUpdate String
     | LoginFormPasswordVisibleToggle
     | Logout
-    | Signup String String
     | TagDelete Tag
     | TagDeleteCb (GqlResult Uuid)
-    | TagUpdate Tag (Maybe String)
+    | TagUpdate String
+    | TagUpdateSet (Maybe Tag)
     | TagUpdateSubmit Tag
     | TagUpdateCb (GqlResult Tag)
     | TagCreateNameUpdate String
@@ -147,6 +154,7 @@ type Msg
     | Change
     | TagSelect Uuid
     | Demo
+    | SetDef Def
 
 
 type Route
@@ -160,7 +168,6 @@ type Route
     | RouteTags
     | RouteSettings
     | RouteLogin
-    | RouteTagPosts Uuid
 
 
 type alias GqlResult a =

@@ -33,10 +33,7 @@ import List.Nonempty as Nonempty
 import Maybe.Extra exposing (unwrap)
 import Ports
 import Random
-import Random.List exposing (choose)
 import Routing exposing (goTo)
-import Set exposing (Set)
-import Set.Extra exposing (toggle)
 import Task
 import Time exposing (Month(..))
 import Types exposing (Auth, GqlTask, Keys, Model, Msg(..), Post, PostView(..), Route(..), ServiceWorkerRequest(..), Sort(..), Status(..), Tag, View(..))
@@ -369,7 +366,7 @@ new body tags d { key, token } =
                                                                 Api.InputObject.buildPost_tag_insert_input
                                                                     (\r_ ->
                                                                         { r_
-                                                                            | tag_id = Absent -- Present id
+                                                                            | tag_id = Present id
                                                                         }
                                                                     )
                                                             )
@@ -497,8 +494,9 @@ update msg model =
                             , tags = []
                             , date = d
                             }
+                                |> Ok
                         )
-                    |> Random.generate (Ok >> PostMutateCb)
+                    |> Random.generate PostMutateCb
                 )
 
             else
@@ -557,14 +555,14 @@ update msg model =
                     |> unwrap Cmd.none
                         (\p ->
                             if String.isEmpty model.postEditorBody then
-                                p.date
+                                Ok p.date
                                     |> Task.succeed
-                                    |> Task.perform (Ok >> PostDeleteCb)
+                                    |> Task.perform PostDeleteCb
 
                             else
-                                { p | body = model.postEditorBody }
+                                Ok { p | body = model.postEditorBody }
                                     |> Task.succeed
-                                    |> Task.perform (Ok >> PostMutateCb)
+                                    |> Task.perform PostMutateCb
                         )
                 )
 
@@ -768,8 +766,9 @@ update msg model =
                             , name = model.tagCreateName
                             , count = 0
                             }
+                                |> Ok
                         )
-                    |> Random.generate (Ok >> TagCreateCb)
+                    |> Random.generate TagCreateCb
 
               else
                 model.auth
@@ -829,11 +828,23 @@ update msg model =
         TagCreateNameUpdate str ->
             ( { model | tagCreateName = str }, Cmd.none )
 
+        SetDef d ->
+            ( { model
+                | def =
+                    if Just d == model.def then
+                        Nothing
+
+                    else
+                        Just d
+              }
+            , Cmd.none
+            )
+
         PostCreateTagToggle tag ->
             ( { model
                 | postCreateTags =
                     model.postCreateTags
-                        |> tgg tag.id
+                        |> toggle tag.id
               }
             , Cmd.none
             )
@@ -850,7 +861,9 @@ update msg model =
 
             else
                 ( { model | errors = [] }
-                , getNonce email
+                  --, getNonce email
+                , Nothing
+                    |> Task.succeed
                     |> Task.attempt NonceCb
                 )
 
@@ -864,25 +877,6 @@ update msg model =
                                     Types.JoinUs
                                     Types.WelcomeBack
                       }
-                      --, serviceWorkerRequest
-                      --(GenerateKeys
-                      --{ password = model.loginForm.password
-                      --, nonce = nonce
-                      --}
-                      --)
-                      --decodeKeys
-                      --|> Task.andThen
-                      --(\keys ->
-                      --login email keys.serverKey
-                      --|> Task.map
-                      --(\token ->
-                      --{ key = keys.encryptionKey
-                      --, token = token
-                      --, email = model.loginForm.email
-                      --}
-                      --)
-                      --)
-                      --|> Task.perform AuthCb
                     , Cmd.none
                     )
 
@@ -930,21 +924,6 @@ update msg model =
         Change ->
             ( { model | funnel = Types.Hello }, Cmd.none )
 
-        Login email_ pw ->
-            let
-                email =
-                    String.trim email_
-            in
-            if String.isEmpty email || String.isEmpty pw then
-                ( { model | errors = [ "empty field(s)" ] }
-                , Cmd.none
-                )
-
-            else
-                ( { model | errors = [] }
-                , Cmd.none
-                )
-
         Logout ->
             ( { model
                 | auth = Nothing
@@ -958,6 +937,9 @@ update msg model =
               }
             , Cmd.batch [ Ports.clearAuth (), goTo RouteHome ]
             )
+
+        Buy annual ->
+            ( model, Ports.buy { email = model.loginForm.email, annual = annual } )
 
         SignupSubmit ->
             if String.isEmpty model.loginForm.email || String.isEmpty model.loginForm.password then
@@ -992,39 +974,6 @@ update msg model =
                     |> Task.attempt AuthCb
                 )
 
-        Signup email pw ->
-            if String.isEmpty email || String.isEmpty pw then
-                ( { model | errors = [ "empty field(s)" ] }
-                , Cmd.none
-                )
-
-            else
-                ( { model | errors = [] }
-                , serviceWorkerRequest GenerateNonce Decode.string
-                    |> Task.andThen
-                        (\nonce ->
-                            serviceWorkerRequest
-                                (GenerateKeys
-                                    { password = pw
-                                    , nonce = nonce
-                                    }
-                                )
-                                decodeKeys
-                                |> Task.andThen
-                                    (\keys ->
-                                        signup email keys.serverKey nonce
-                                            |> Task.map
-                                                (\token ->
-                                                    { key = keys.encryptionKey
-                                                    , token = token
-                                                    , email = email
-                                                    }
-                                                )
-                                    )
-                        )
-                    |> Task.attempt AuthCb
-                )
-
         TagDelete tag ->
             ( model
             , if model.auth == Nothing then
@@ -1038,25 +987,25 @@ update msg model =
                         (deleteTag tag >> Task.attempt TagDeleteCb)
             )
 
-        TagUpdate t value ->
+        TagUpdate value ->
             ( { model
-                | tagsBeingEdited =
-                    model.tagsBeingEdited
+                | tagUpdate = value
+              }
+            , Cmd.none
+            )
 
-                --|> Dict.update (Uuid.toString t.id) (always value)
+        TagUpdateSet tag ->
+            ( { model
+                | tagBeingEdited = tag |> Maybe.map .id
+                , tagUpdate = tag |> unwrap "" .name
               }
             , Cmd.none
             )
 
         TagUpdateSubmit t ->
-            ( { model
-                | tagsBeingEdited =
-                    model.tagsBeingEdited
-
-                --|> Dict.update (Uuid.toString t.id) (always Nothing)
-              }
+            ( model
             , if model.auth == Nothing then
-                t
+                { t | name = model.tagUpdate }
                     |> Task.succeed
                     |> Task.attempt TagUpdateCb
 
@@ -1073,10 +1022,11 @@ update msg model =
                 Ok tag ->
                     ( { model
                         | tags =
-                            --Dict.insert
-                            --(Uuid.toString tag.id)
-                            --tag
-                            model.tags
+                            UD.insert
+                                tag.id
+                                tag
+                                model.tags
+                        , tagBeingEdited = Nothing
                       }
                     , Cmd.none
                     )
@@ -1092,7 +1042,7 @@ update msg model =
                 { post
                     | tags =
                         post.tags
-                            |> tgg tag.id
+                            |> toggle tag.id
                 }
                     |> Task.succeed
                     |> Task.map Just
@@ -1119,6 +1069,12 @@ update msg model =
             ( { model
                 | force = not model.force
                 , view = ViewHome
+                , def = Nothing
+                , funnel = Types.Hello
+                , current = Nothing
+                , loginForm =
+                    model.loginForm
+                        |> (\f -> { f | email = "" })
               }
             , Cmd.none
             )
@@ -1162,7 +1118,7 @@ update msg model =
                 |> Navigation.load
             )
 
-        VisibilityChange visibility ->
+        VisibilityChange _ ->
             ( model
             , Cmd.none
             )
@@ -1171,7 +1127,11 @@ update msg model =
             ( { model
                 | tag = Just id
               }
-            , Cmd.none
+            , model.auth
+                |> unwrap Cmd.none
+                    (fetchPostsByTag id
+                        >> Task.attempt PostsCb
+                    )
             )
 
         UrlChange route ->
@@ -1190,19 +1150,6 @@ update msg model =
                         | view = ViewHome
                       }
                     , Cmd.none
-                    )
-
-                RouteTagPosts id ->
-                    -- NOTE: All tags are loaded when app starts
-                    -- but in future may need to load the tag here.
-                    ( { model
-                        | view = ViewTagPosts id
-                      }
-                    , model.auth
-                        |> unwrap Cmd.none
-                            (fetchPostsByTag id
-                                >> Task.attempt PostsCb
-                            )
                     )
 
                 RouteYear year ->
@@ -1556,7 +1503,8 @@ makeGqlError str =
         ]
 
 
-tgg v ls =
+toggle : a -> List a -> List a
+toggle v ls =
     if List.member v ls then
         List.filter ((/=) v) ls
 

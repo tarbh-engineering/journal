@@ -1,25 +1,19 @@
 module Main exposing (main)
 
-import Api.Scalar exposing (Uuid(..))
 import Browser
 import Browser.Events
 import Data exposing (fetchTags, range)
 import Date
 import Day
 import Derberos.Date.Utils exposing (numberToMonth)
-import Dict
 import Graphql.OptionalArgument exposing (OptionalArgument(..))
 import Helpers.UuidDict as UD
-import Lorem
 import Maybe.Extra exposing (unwrap)
 import Ports
-import Random
-import Random.List exposing (choose)
 import Routing
-import Set
 import Task
 import Time exposing (Month(..))
-import Types exposing (Flags, Model, Msg(..), Post, PostView(..), Route(..), Screen, ServiceWorkerRequest(..), Sort(..), Status(..), Tag, View(..))
+import Types exposing (Flags, Model, Msg(..), PostView(..), Route(..), Screen, ServiceWorkerRequest(..), Sort(..), Status(..), View(..))
 import Update exposing (update)
 import Url
 import View exposing (view)
@@ -67,7 +61,7 @@ init flags =
     flags.auth
         |> unwrap
             ( startModel
-            , Routing.goTo RouteHome
+            , Cmd.none
             )
             (\auth ->
                 ( { startModel
@@ -117,7 +111,8 @@ emptyModel =
     , postView = PostView
     , auth = Nothing
     , tagCreateName = ""
-    , tagsBeingEdited = UD.empty
+    , tagUpdate = ""
+    , tagBeingEdited = Nothing
     , flash = Nothing
     , loginForm =
         { password = ""
@@ -135,4 +130,5 @@ emptyModel =
     , force = True
     , funnel = Types.Hello
     , tag = Nothing
+    , def = Nothing
     }

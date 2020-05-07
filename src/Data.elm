@@ -18,10 +18,8 @@ import Http
 import Json.Decode as Decode exposing (Decoder)
 import Json.Encode as Encode
 import Maybe.Extra exposing (unwrap)
-import Set
 import Task
 import Types exposing (Auth, GqlTask, Msg(..), Post, Route(..), ServiceWorkerRequest(..), Sort(..), Status(..), Tag, View(..))
-import Uuid
 
 
 graphqlEndpoint : String

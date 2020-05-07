@@ -1,6 +1,9 @@
-port module Ports exposing (clearAuth, log, onUrlChange, online, pushUrl, saveAuth)
+port module Ports exposing (buy, clearAuth, log, onUrlChange, online, pushUrl, saveAuth)
 
 import Types exposing (Auth)
+
+
+port buy : { annual : Bool, email : String } -> Cmd msg
 
 
 port clearAuth : () -> Cmd msg
