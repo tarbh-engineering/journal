@@ -1,4 +1,4 @@
-module CustomScalars exposing (Date, Id, Uuid, codecs)
+module CustomScalars exposing (Date, Id, Timestamptz, Uuid, codecs)
 
 import Api.Scalar exposing (defaultCodecs)
 import Date
@@ -19,7 +19,11 @@ type alias Uuid =
     Uuid.Uuid
 
 
-codecs : Api.Scalar.Codecs Date Id Uuid
+type alias Timestamptz =
+    Api.Scalar.Timestamptz
+
+
+codecs : Api.Scalar.Codecs Date Id Timestamptz Uuid
 codecs =
     Api.Scalar.defineCodecs
         { codecDate =
@@ -33,6 +37,7 @@ codecs =
                         )
             }
         , codecId = defaultCodecs.codecId
+        , codecTimestamptz = defaultCodecs.codecTimestamptz
         , codecUuid =
             { encoder = Uuid.encode
             , decoder = Uuid.decoder

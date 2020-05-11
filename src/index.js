@@ -3,6 +3,12 @@ const { loadStripe } = require("@stripe/stripe-js");
 
 require("./index.css");
 
+/* eslint-disable no-undef */
+const stripeProjectId = STRIPE_PROJECT_ID;
+const stripeAnnual = STRIPE_ANNUAL;
+const stripeMonthly = STRIPE_MONTHLY;
+/* eslint-enable no-undef */
+
 window.navigator.serviceWorker.register("/sw.js").then(() => {
   const auth = (() => {
     try {
@@ -54,20 +60,14 @@ window.navigator.serviceWorker.register("/sw.js").then(() => {
   app.ports.clearAuth.subscribe(() => localStorage.removeItem("APP"));
 
   app.ports.buy.subscribe(async ({ email, annual }) => {
-    const stripe = await loadStripe(
-      "pk_test_PU56swLMkv5raMkEXXo85RCO00LSchGOIe"
-    );
+    const stripe = await loadStripe(stripeProjectId);
 
     stripe
       .redirectToCheckout({
-        items: [
-          annual
-            ? { plan: "plan_HBB1mFRw1c5J9n", quantity: 1 }
-            : { plan: "plan_HBAwLd2r0nPQgu", quantity: 1 },
-        ],
+        items: [{ plan: annual ? stripeAnnual : stripeMonthly, quantity: 1 }],
         customerEmail: email,
-        successUrl: "http://localhost:7777/good?id={CHECKOUT_SESSION_ID}",
-        cancelUrl: "http://localhost:7777/bad",
+        successUrl: location.origin + "/payment-success",
+        cancelUrl: location.origin,
       })
       .then(console.log);
   });

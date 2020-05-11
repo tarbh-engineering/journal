@@ -31,12 +31,12 @@ login requiredArgs =
 
 
 type alias SignupRequiredArguments =
-    { email : String
-    , nonce : String
+    { nonce : String
     , password : String
+    , txt : String
     }
 
 
 signup : SignupRequiredArguments -> SelectionSet String Api.Object.Mutation
 signup requiredArgs =
-    Object.selectionForField "String" "signup" [ Argument.required "email" requiredArgs.email Encode.string, Argument.required "nonce" requiredArgs.nonce Encode.string, Argument.required "password" requiredArgs.password Encode.string ] Decode.string
+    Object.selectionForField "String" "signup" [ Argument.required "nonce" requiredArgs.nonce Encode.string, Argument.required "password" requiredArgs.password Encode.string, Argument.required "txt" requiredArgs.txt Encode.string ] Decode.string

@@ -2,7 +2,7 @@
 -- https://github.com/dillonkearns/elm-graphql
 
 
-module Api.Object.Query exposing (..)
+module Api.Object.Purchase_mutation_response exposing (..)
 
 import Api.InputObject
 import Api.Interface
@@ -19,19 +19,15 @@ import Graphql.SelectionSet exposing (SelectionSet)
 import Json.Decode as Decode
 
 
-type alias CheckRequiredArguments =
-    { txt : String }
+{-| number of affected rows by the mutation
+-}
+affected_rows : SelectionSet Int Api.Object.Purchase_mutation_response
+affected_rows =
+    Object.selectionForField "Int" "affected_rows" [] Decode.int
 
 
-check : CheckRequiredArguments -> SelectionSet Bool Api.Object.Query
-check requiredArgs =
-    Object.selectionForField "Bool" "check" [ Argument.required "txt" requiredArgs.txt Encode.string ] Decode.bool
-
-
-type alias NonceRequiredArguments =
-    { email : String }
-
-
-nonce : NonceRequiredArguments -> SelectionSet String Api.Object.Query
-nonce requiredArgs =
-    Object.selectionForField "String" "nonce" [ Argument.required "email" requiredArgs.email Encode.string ] Decode.string
+{-| data of the affected rows by the mutation
+-}
+returning : SelectionSet decodesTo Api.Object.Purchase -> SelectionSet (List decodesTo) Api.Object.Purchase_mutation_response
+returning object_ =
+    Object.selectionForCompositeField "returning" [] object_ (identity >> Decode.list)

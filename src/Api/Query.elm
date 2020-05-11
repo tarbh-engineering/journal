@@ -6,6 +6,7 @@ module Api.Query exposing (..)
 
 import Api.Enum.Post_select_column
 import Api.Enum.Post_tag_select_column
+import Api.Enum.Purchase_select_column
 import Api.Enum.Tag_select_column
 import Api.Enum.User_select_column
 import Api.InputObject
@@ -23,13 +24,22 @@ import Graphql.SelectionSet exposing (SelectionSet)
 import Json.Decode as Decode exposing (Decoder)
 
 
+type alias CheckRequiredArguments =
+    { txt : String }
+
+
+check : CheckRequiredArguments -> SelectionSet Bool RootQuery
+check requiredArgs =
+    Object.selectionForField "Bool" "check" [ Argument.required "txt" requiredArgs.txt Encode.string ] Decode.bool
+
+
 type alias NonceRequiredArguments =
     { email : String }
 
 
-nonce : NonceRequiredArguments -> SelectionSet (Maybe String) RootQuery
+nonce : NonceRequiredArguments -> SelectionSet String RootQuery
 nonce requiredArgs =
-    Object.selectionForField "(Maybe String)" "nonce" [ Argument.required "email" requiredArgs.email Encode.string ] (Decode.string |> Decode.nullable)
+    Object.selectionForField "String" "nonce" [ Argument.required "email" requiredArgs.email Encode.string ] Decode.string
 
 
 type alias PostOptionalArguments =
@@ -176,6 +186,79 @@ type alias PostTagByPkRequiredArguments =
 post_tag_by_pk : PostTagByPkRequiredArguments -> SelectionSet decodesTo Api.Object.Post_tag -> SelectionSet (Maybe decodesTo) RootQuery
 post_tag_by_pk requiredArgs object_ =
     Object.selectionForCompositeField "post_tag_by_pk" [ Argument.required "id" requiredArgs.id (CustomScalars.codecs |> Api.Scalar.unwrapEncoder .codecUuid) ] object_ (identity >> Decode.nullable)
+
+
+type alias PurchaseOptionalArguments =
+    { distinct_on : OptionalArgument (List Api.Enum.Purchase_select_column.Purchase_select_column)
+    , limit : OptionalArgument Int
+    , offset : OptionalArgument Int
+    , order_by : OptionalArgument (List Api.InputObject.Purchase_order_by)
+    , where_ : OptionalArgument Api.InputObject.Purchase_bool_exp
+    }
+
+
+{-| fetch data from the table: "purchase"
+
+  - distinct\_on - distinct select on columns
+  - limit - limit the number of rows returned
+  - offset - skip the first n rows. Use only with order\_by
+  - order\_by - sort the rows by one or more columns
+  - where\_ - filter the rows returned
+
+-}
+purchase : (PurchaseOptionalArguments -> PurchaseOptionalArguments) -> SelectionSet decodesTo Api.Object.Purchase -> SelectionSet (List decodesTo) RootQuery
+purchase fillInOptionals object_ =
+    let
+        filledInOptionals =
+            fillInOptionals { distinct_on = Absent, limit = Absent, offset = Absent, order_by = Absent, where_ = Absent }
+
+        optionalArgs =
+            [ Argument.optional "distinct_on" filledInOptionals.distinct_on (Encode.enum Api.Enum.Purchase_select_column.toString |> Encode.list), Argument.optional "limit" filledInOptionals.limit Encode.int, Argument.optional "offset" filledInOptionals.offset Encode.int, Argument.optional "order_by" filledInOptionals.order_by (Api.InputObject.encodePurchase_order_by |> Encode.list), Argument.optional "where" filledInOptionals.where_ Api.InputObject.encodePurchase_bool_exp ]
+                |> List.filterMap identity
+    in
+    Object.selectionForCompositeField "purchase" optionalArgs object_ (identity >> Decode.list)
+
+
+type alias PurchaseAggregateOptionalArguments =
+    { distinct_on : OptionalArgument (List Api.Enum.Purchase_select_column.Purchase_select_column)
+    , limit : OptionalArgument Int
+    , offset : OptionalArgument Int
+    , order_by : OptionalArgument (List Api.InputObject.Purchase_order_by)
+    , where_ : OptionalArgument Api.InputObject.Purchase_bool_exp
+    }
+
+
+{-| fetch aggregated fields from the table: "purchase"
+
+  - distinct\_on - distinct select on columns
+  - limit - limit the number of rows returned
+  - offset - skip the first n rows. Use only with order\_by
+  - order\_by - sort the rows by one or more columns
+  - where\_ - filter the rows returned
+
+-}
+purchase_aggregate : (PurchaseAggregateOptionalArguments -> PurchaseAggregateOptionalArguments) -> SelectionSet decodesTo Api.Object.Purchase_aggregate -> SelectionSet decodesTo RootQuery
+purchase_aggregate fillInOptionals object_ =
+    let
+        filledInOptionals =
+            fillInOptionals { distinct_on = Absent, limit = Absent, offset = Absent, order_by = Absent, where_ = Absent }
+
+        optionalArgs =
+            [ Argument.optional "distinct_on" filledInOptionals.distinct_on (Encode.enum Api.Enum.Purchase_select_column.toString |> Encode.list), Argument.optional "limit" filledInOptionals.limit Encode.int, Argument.optional "offset" filledInOptionals.offset Encode.int, Argument.optional "order_by" filledInOptionals.order_by (Api.InputObject.encodePurchase_order_by |> Encode.list), Argument.optional "where" filledInOptionals.where_ Api.InputObject.encodePurchase_bool_exp ]
+                |> List.filterMap identity
+    in
+    Object.selectionForCompositeField "purchase_aggregate" optionalArgs object_ identity
+
+
+type alias PurchaseByPkRequiredArguments =
+    { id : CustomScalars.Uuid }
+
+
+{-| fetch data from the table: "purchase" using primary key columns
+-}
+purchase_by_pk : PurchaseByPkRequiredArguments -> SelectionSet decodesTo Api.Object.Purchase -> SelectionSet (Maybe decodesTo) RootQuery
+purchase_by_pk requiredArgs object_ =
+    Object.selectionForCompositeField "purchase_by_pk" [ Argument.required "id" requiredArgs.id (CustomScalars.codecs |> Api.Scalar.unwrapEncoder .codecUuid) ] object_ (identity >> Decode.nullable)
 
 
 type alias TagOptionalArguments =

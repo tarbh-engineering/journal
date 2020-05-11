@@ -22,11 +22,6 @@ import Graphql.SelectionSet exposing (SelectionSet)
 import Json.Decode as Decode
 
 
-email : SelectionSet String Api.Object.User
-email =
-    Object.selectionForField "String" "email" [] Decode.string
-
-
 id : SelectionSet CustomScalars.Uuid Api.Object.User
 id =
     Object.selectionForField "CustomScalars.Uuid" "id" [] (CustomScalars.codecs |> Api.Scalar.unwrapCodecs |> .codecUuid |> .decoder)
@@ -164,6 +159,18 @@ postsByuserId_aggregate fillInOptionals object_ =
                 |> List.filterMap identity
     in
     Object.selectionForCompositeField "postsByuserId_aggregate" optionalArgs object_ identity
+
+
+{-| An object relationship
+-}
+purchase : SelectionSet decodesTo Api.Object.Purchase -> SelectionSet decodesTo Api.Object.User
+purchase object_ =
+    Object.selectionForCompositeField "purchase" [] object_ identity
+
+
+purchase_id : SelectionSet CustomScalars.Uuid Api.Object.User
+purchase_id =
+    Object.selectionForField "CustomScalars.Uuid" "purchase_id" [] (CustomScalars.codecs |> Api.Scalar.unwrapCodecs |> .codecUuid |> .decoder)
 
 
 type alias TagsByuserIdOptionalArguments =

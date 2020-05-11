@@ -24,6 +24,11 @@ id =
     Object.selectionForField "(Maybe CustomScalars.Uuid)" "id" [] (CustomScalars.codecs |> Api.Scalar.unwrapCodecs |> .codecUuid |> .decoder |> Decode.nullable)
 
 
+iv : SelectionSet (Maybe String) Api.Object.Tag_min_fields
+iv =
+    Object.selectionForField "(Maybe String)" "iv" [] (Decode.string |> Decode.nullable)
+
+
 name : SelectionSet (Maybe String) Api.Object.Tag_min_fields
 name =
     Object.selectionForField "(Maybe String)" "name" [] (Decode.string |> Decode.nullable)

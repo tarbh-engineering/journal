@@ -12,6 +12,7 @@ import Json.Decode as Decode exposing (Decoder)
   - Body - column name
   - Date - column name
   - Id - column name
+  - Iv - column name
   - User\_id - column name
 
 -}
@@ -19,12 +20,13 @@ type Post_update_column
     = Body
     | Date
     | Id
+    | Iv
     | User_id
 
 
 list : List Post_update_column
 list =
-    [ Body, Date, Id, User_id ]
+    [ Body, Date, Id, Iv, User_id ]
 
 
 decoder : Decoder Post_update_column
@@ -41,6 +43,9 @@ decoder =
 
                     "id" ->
                         Decode.succeed Id
+
+                    "iv" ->
+                        Decode.succeed Iv
 
                     "user_id" ->
                         Decode.succeed User_id
@@ -63,6 +68,9 @@ toString enum =
 
         Id ->
             "id"
+
+        Iv ->
+            "iv"
 
         User_id ->
             "user_id"
@@ -90,6 +98,9 @@ fromString enumString =
 
         "id" ->
             Just Id
+
+        "iv" ->
+            Just Iv
 
         "user_id" ->
             Just User_id

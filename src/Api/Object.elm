@@ -57,6 +57,30 @@ type Post_tag_mutation_response
     = Post_tag_mutation_response
 
 
+type Purchase
+    = Purchase
+
+
+type Purchase_aggregate
+    = Purchase_aggregate
+
+
+type Purchase_aggregate_fields
+    = Purchase_aggregate_fields
+
+
+type Purchase_max_fields
+    = Purchase_max_fields
+
+
+type Purchase_min_fields
+    = Purchase_min_fields
+
+
+type Purchase_mutation_response
+    = Purchase_mutation_response
+
+
 type Query
     = Query
 

@@ -35,6 +35,11 @@ id =
     Object.selectionForField "CustomScalars.Uuid" "id" [] (CustomScalars.codecs |> Api.Scalar.unwrapCodecs |> .codecUuid |> .decoder)
 
 
+iv : SelectionSet String Api.Object.Post
+iv =
+    Object.selectionForField "String" "iv" [] Decode.string
+
+
 type alias PostTagsBypostIdOptionalArguments =
     { distinct_on : OptionalArgument (List Api.Enum.Post_tag_select_column.Post_tag_select_column)
     , limit : OptionalArgument Int

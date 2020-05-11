@@ -1,4 +1,4 @@
-module Types exposing (Auth, Def(..), Emoji(..), Flags, Funnel(..), GqlResult, GqlTask, Keys, Model, Msg(..), Post, PostView(..), Route(..), Screen, ServiceWorkerRequest(..), Sort(..), Status(..), Tag, View(..))
+module Types exposing (Auth, Cipher, Def(..), Flags, Funnel(..), GqlResult, GqlTask, Keys, Model, Msg(..), Post, PostRaw, PostView(..), Route(..), Screen, Sort(..), Status(..), Tag, TagRaw, View(..))
 
 import Array exposing (Array)
 import Browser exposing (UrlRequest)
@@ -9,7 +9,6 @@ import Day exposing (DayDict)
 import Graphql.Http
 import Helpers.UuidDict exposing (UuidDict)
 import Json.Decode exposing (Value)
-import List.Nonempty exposing (Nonempty)
 import Task exposing (Task)
 import Time exposing (Month(..))
 import Uuid exposing (Uuid)
@@ -68,10 +67,11 @@ type alias Model =
     , month : Month
     , year : Int
     , current : Maybe Date
-    , force : Bool
     , funnel : Funnel
     , tag : Maybe Uuid
     , def : Maybe Def
+    , magic : Maybe Bool
+    , mg : String
     }
 
 
@@ -79,6 +79,7 @@ type Funnel
     = Hello
     | WelcomeBack String
     | JoinUs
+    | CheckEmail
 
 
 type Def
@@ -117,11 +118,12 @@ type Msg
     | PostUpdateCancel
     | PostUpdateSubmit Uuid
     | BodyUpdate String
-    | NonceCb (GqlResult (Maybe String))
+    | CheckCb (GqlResult Bool)
+    | NonceCb (GqlResult String)
     | AuthCb (GqlResult Auth)
     | EmailSubmit
     | LoginSubmit String
-    | SignupSubmit
+    | SignupSubmit String
     | Buy Bool
     | LoginFormEmailUpdate String
     | LoginFormPasswordUpdate String
@@ -153,21 +155,17 @@ type Msg
     | Force
     | Change
     | TagSelect Uuid
-    | Demo
     | SetDef Def
 
 
 type Route
     = NotFound
     | RouteToday
+    | RouteCalendar
     | RouteDay Date
-    | RouteWeek Date
-    | RouteMonth Month Int
-    | RouteYear Int
     | RouteHome
     | RouteTags
     | RouteSettings
-    | RouteLogin
 
 
 type alias GqlResult a =
@@ -178,21 +176,25 @@ type alias GqlTask a =
     Task (Graphql.Http.Error ()) a
 
 
-type ServiceWorkerRequest
-    = GenerateKeys
-        { password : String
-        , nonce : String
-        }
-    | GenerateNonce
-    | Decrypt { key : Value, content : String }
-    | Encrypt { key : Value, content : String }
-
-
 type alias Post =
     { date : Date
     , body : String
     , id : Uuid
     , tags : List Uuid
+    }
+
+
+type alias PostRaw =
+    { date : Date
+    , cipher : Cipher
+    , id : Uuid
+    , tags : List Uuid
+    }
+
+
+type alias Cipher =
+    { iv : String
+    , ciphertext : String
     }
 
 
@@ -203,46 +205,22 @@ type alias Tag =
     }
 
 
+type alias TagRaw =
+    { cipher : Cipher
+    , id : Uuid
+    , count : Int
+    }
+
+
 type View
-    = ViewPost Date
-    | ViewLogin
-    | ViewMonth Int Month
-    | ViewWeek (Nonempty Date)
-    | ViewTagPosts Uuid
-    | ViewYear Int
-    | ViewHome
+    = ViewHome
+    | ViewCalendar
     | ViewSettings
+    | ViewSuccess
     | ViewTags
+    | ViewMagic
 
 
 type PostView
     = PostView
     | PostTags
-
-
-type Emoji
-    = New
-    | House
-    | Edit
-    | Trash
-    | TagEmoji
-    | Tick
-    | X
-    | Next
-    | Disk
-    | Previous
-    | Key
-    | Sun
-    | Chart
-    | Calendar
-    | Dice
-    | Cogs
-    | Bang
-    | Clock
-    | Cyclone
-    | Abc
-    | Sherlock
-    | LeftArrow
-    | Paper
-    | Locked
-    | Unlocked

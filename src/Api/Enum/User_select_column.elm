@@ -9,22 +9,22 @@ import Json.Decode as Decode exposing (Decoder)
 
 {-| select columns of table "user"
 
-  - Email - column name
   - Id - column name
   - Nonce - column name
   - Password - column name
+  - Purchase\_id - column name
 
 -}
 type User_select_column
-    = Email
-    | Id
+    = Id
     | Nonce
     | Password
+    | Purchase_id
 
 
 list : List User_select_column
 list =
-    [ Email, Id, Nonce, Password ]
+    [ Id, Nonce, Password, Purchase_id ]
 
 
 decoder : Decoder User_select_column
@@ -33,9 +33,6 @@ decoder =
         |> Decode.andThen
             (\string ->
                 case string of
-                    "email" ->
-                        Decode.succeed Email
-
                     "id" ->
                         Decode.succeed Id
 
@@ -44,6 +41,9 @@ decoder =
 
                     "password" ->
                         Decode.succeed Password
+
+                    "purchase_id" ->
+                        Decode.succeed Purchase_id
 
                     _ ->
                         Decode.fail ("Invalid User_select_column type, " ++ string ++ " try re-running the @dillonkearns/elm-graphql CLI ")
@@ -55,9 +55,6 @@ decoder =
 toString : User_select_column -> String
 toString enum =
     case enum of
-        Email ->
-            "email"
-
         Id ->
             "id"
 
@@ -66,6 +63,9 @@ toString enum =
 
         Password ->
             "password"
+
+        Purchase_id ->
+            "purchase_id"
 
 
 {-| Convert from a String representation to an elm representation enum.
@@ -82,9 +82,6 @@ This can be useful for generating Strings to use for <select> menus to check whi
 fromString : String -> Maybe User_select_column
 fromString enumString =
     case enumString of
-        "email" ->
-            Just Email
-
         "id" ->
             Just Id
 
@@ -93,6 +90,9 @@ fromString enumString =
 
         "password" ->
             Just Password
+
+        "purchase_id" ->
+            Just Purchase_id
 
         _ ->
             Nothing

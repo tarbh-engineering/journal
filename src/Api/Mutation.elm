@@ -69,6 +69,31 @@ delete_post_tag_by_pk requiredArgs object_ =
     Object.selectionForCompositeField "delete_post_tag_by_pk" [ Argument.required "id" requiredArgs.id (CustomScalars.codecs |> Api.Scalar.unwrapEncoder .codecUuid) ] object_ (identity >> Decode.nullable)
 
 
+type alias DeletePurchaseRequiredArguments =
+    { where_ : Api.InputObject.Purchase_bool_exp }
+
+
+{-| delete data from the table: "purchase"
+
+  - where\_ - filter the rows which have to be deleted
+
+-}
+delete_purchase : DeletePurchaseRequiredArguments -> SelectionSet decodesTo Api.Object.Purchase_mutation_response -> SelectionSet (Maybe decodesTo) RootMutation
+delete_purchase requiredArgs object_ =
+    Object.selectionForCompositeField "delete_purchase" [ Argument.required "where" requiredArgs.where_ Api.InputObject.encodePurchase_bool_exp ] object_ (identity >> Decode.nullable)
+
+
+type alias DeletePurchaseByPkRequiredArguments =
+    { id : CustomScalars.Uuid }
+
+
+{-| delete single row from the table: "purchase"
+-}
+delete_purchase_by_pk : DeletePurchaseByPkRequiredArguments -> SelectionSet decodesTo Api.Object.Purchase -> SelectionSet (Maybe decodesTo) RootMutation
+delete_purchase_by_pk requiredArgs object_ =
+    Object.selectionForCompositeField "delete_purchase_by_pk" [ Argument.required "id" requiredArgs.id (CustomScalars.codecs |> Api.Scalar.unwrapEncoder .codecUuid) ] object_ (identity >> Decode.nullable)
+
+
 type alias DeleteTagRequiredArguments =
     { where_ : Api.InputObject.Tag_bool_exp }
 
@@ -227,6 +252,60 @@ insert_post_tag_one fillInOptionals requiredArgs object_ =
     Object.selectionForCompositeField "insert_post_tag_one" (optionalArgs ++ [ Argument.required "object" requiredArgs.object Api.InputObject.encodePost_tag_insert_input ]) object_ (identity >> Decode.nullable)
 
 
+type alias InsertPurchaseOptionalArguments =
+    { on_conflict : OptionalArgument Api.InputObject.Purchase_on_conflict }
+
+
+type alias InsertPurchaseRequiredArguments =
+    { objects : List Api.InputObject.Purchase_insert_input }
+
+
+{-| insert data into the table: "purchase"
+
+  - objects - the rows to be inserted
+  - on\_conflict - on conflict condition
+
+-}
+insert_purchase : (InsertPurchaseOptionalArguments -> InsertPurchaseOptionalArguments) -> InsertPurchaseRequiredArguments -> SelectionSet decodesTo Api.Object.Purchase_mutation_response -> SelectionSet (Maybe decodesTo) RootMutation
+insert_purchase fillInOptionals requiredArgs object_ =
+    let
+        filledInOptionals =
+            fillInOptionals { on_conflict = Absent }
+
+        optionalArgs =
+            [ Argument.optional "on_conflict" filledInOptionals.on_conflict Api.InputObject.encodePurchase_on_conflict ]
+                |> List.filterMap identity
+    in
+    Object.selectionForCompositeField "insert_purchase" (optionalArgs ++ [ Argument.required "objects" requiredArgs.objects (Api.InputObject.encodePurchase_insert_input |> Encode.list) ]) object_ (identity >> Decode.nullable)
+
+
+type alias InsertPurchaseOneOptionalArguments =
+    { on_conflict : OptionalArgument Api.InputObject.Purchase_on_conflict }
+
+
+type alias InsertPurchaseOneRequiredArguments =
+    { object : Api.InputObject.Purchase_insert_input }
+
+
+{-| insert a single row into the table: "purchase"
+
+  - object - the row to be inserted
+  - on\_conflict - on conflict condition
+
+-}
+insert_purchase_one : (InsertPurchaseOneOptionalArguments -> InsertPurchaseOneOptionalArguments) -> InsertPurchaseOneRequiredArguments -> SelectionSet decodesTo Api.Object.Purchase -> SelectionSet (Maybe decodesTo) RootMutation
+insert_purchase_one fillInOptionals requiredArgs object_ =
+    let
+        filledInOptionals =
+            fillInOptionals { on_conflict = Absent }
+
+        optionalArgs =
+            [ Argument.optional "on_conflict" filledInOptionals.on_conflict Api.InputObject.encodePurchase_on_conflict ]
+                |> List.filterMap identity
+    in
+    Object.selectionForCompositeField "insert_purchase_one" (optionalArgs ++ [ Argument.required "object" requiredArgs.object Api.InputObject.encodePurchase_insert_input ]) object_ (identity >> Decode.nullable)
+
+
 type alias InsertTagOptionalArguments =
     { on_conflict : OptionalArgument Api.InputObject.Tag_on_conflict }
 
@@ -347,15 +426,15 @@ login requiredArgs =
 
 
 type alias SignupRequiredArguments =
-    { email : String
-    , nonce : String
+    { nonce : String
     , password : String
+    , txt : String
     }
 
 
 signup : SignupRequiredArguments -> SelectionSet String RootMutation
 signup requiredArgs =
-    Object.selectionForField "String" "signup" [ Argument.required "email" requiredArgs.email Encode.string, Argument.required "nonce" requiredArgs.nonce Encode.string, Argument.required "password" requiredArgs.password Encode.string ] Decode.string
+    Object.selectionForField "String" "signup" [ Argument.required "nonce" requiredArgs.nonce Encode.string, Argument.required "password" requiredArgs.password Encode.string, Argument.required "txt" requiredArgs.txt Encode.string ] Decode.string
 
 
 type alias UpdatePostOptionalArguments =
@@ -462,6 +541,59 @@ update_post_tag_by_pk fillInOptionals requiredArgs object_ =
                 |> List.filterMap identity
     in
     Object.selectionForCompositeField "update_post_tag_by_pk" (optionalArgs ++ [ Argument.required "pk_columns" requiredArgs.pk_columns Api.InputObject.encodePost_tag_pk_columns_input ]) object_ (identity >> Decode.nullable)
+
+
+type alias UpdatePurchaseOptionalArguments =
+    { set_ : OptionalArgument Api.InputObject.Purchase_set_input }
+
+
+type alias UpdatePurchaseRequiredArguments =
+    { where_ : Api.InputObject.Purchase_bool_exp }
+
+
+{-| update data of the table: "purchase"
+
+  - set\_ - sets the columns of the filtered rows to the given values
+  - where\_ - filter the rows which have to be updated
+
+-}
+update_purchase : (UpdatePurchaseOptionalArguments -> UpdatePurchaseOptionalArguments) -> UpdatePurchaseRequiredArguments -> SelectionSet decodesTo Api.Object.Purchase_mutation_response -> SelectionSet (Maybe decodesTo) RootMutation
+update_purchase fillInOptionals requiredArgs object_ =
+    let
+        filledInOptionals =
+            fillInOptionals { set_ = Absent }
+
+        optionalArgs =
+            [ Argument.optional "_set" filledInOptionals.set_ Api.InputObject.encodePurchase_set_input ]
+                |> List.filterMap identity
+    in
+    Object.selectionForCompositeField "update_purchase" (optionalArgs ++ [ Argument.required "where" requiredArgs.where_ Api.InputObject.encodePurchase_bool_exp ]) object_ (identity >> Decode.nullable)
+
+
+type alias UpdatePurchaseByPkOptionalArguments =
+    { set_ : OptionalArgument Api.InputObject.Purchase_set_input }
+
+
+type alias UpdatePurchaseByPkRequiredArguments =
+    { pk_columns : Api.InputObject.Purchase_pk_columns_input }
+
+
+{-| update single row of the table: "purchase"
+
+  - set\_ - sets the columns of the filtered rows to the given values
+
+-}
+update_purchase_by_pk : (UpdatePurchaseByPkOptionalArguments -> UpdatePurchaseByPkOptionalArguments) -> UpdatePurchaseByPkRequiredArguments -> SelectionSet decodesTo Api.Object.Purchase -> SelectionSet (Maybe decodesTo) RootMutation
+update_purchase_by_pk fillInOptionals requiredArgs object_ =
+    let
+        filledInOptionals =
+            fillInOptionals { set_ = Absent }
+
+        optionalArgs =
+            [ Argument.optional "_set" filledInOptionals.set_ Api.InputObject.encodePurchase_set_input ]
+                |> List.filterMap identity
+    in
+    Object.selectionForCompositeField "update_purchase_by_pk" (optionalArgs ++ [ Argument.required "pk_columns" requiredArgs.pk_columns Api.InputObject.encodePurchase_pk_columns_input ]) object_ (identity >> Decode.nullable)
 
 
 type alias UpdateTagOptionalArguments =

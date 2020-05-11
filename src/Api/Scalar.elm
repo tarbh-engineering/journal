@@ -2,7 +2,7 @@
 -- https://github.com/dillonkearns/elm-graphql
 
 
-module Api.Scalar exposing (Codecs, Date(..), Id(..), Uuid(..), defaultCodecs, defineCodecs, unwrapCodecs, unwrapEncoder)
+module Api.Scalar exposing (Codecs, Date(..), Id(..), Timestamptz(..), Uuid(..), defaultCodecs, defineCodecs, unwrapCodecs, unwrapEncoder)
 
 import Graphql.Codec exposing (Codec)
 import Graphql.Internal.Builder.Object as Object
@@ -19,6 +19,10 @@ type Id
     = Id String
 
 
+type Timestamptz
+    = Timestamptz String
+
+
 type Uuid
     = Uuid String
 
@@ -26,18 +30,20 @@ type Uuid
 defineCodecs :
     { codecDate : Codec valueDate
     , codecId : Codec valueId
+    , codecTimestamptz : Codec valueTimestamptz
     , codecUuid : Codec valueUuid
     }
-    -> Codecs valueDate valueId valueUuid
+    -> Codecs valueDate valueId valueTimestamptz valueUuid
 defineCodecs definitions =
     Codecs definitions
 
 
 unwrapCodecs :
-    Codecs valueDate valueId valueUuid
+    Codecs valueDate valueId valueTimestamptz valueUuid
     ->
         { codecDate : Codec valueDate
         , codecId : Codec valueId
+        , codecTimestamptz : Codec valueTimestamptz
         , codecUuid : Codec valueUuid
         }
 unwrapCodecs (Codecs unwrappedCodecs) =
@@ -48,18 +54,19 @@ unwrapEncoder getter (Codecs unwrappedCodecs) =
     (unwrappedCodecs |> getter |> .encoder) >> Graphql.Internal.Encode.fromJson
 
 
-type Codecs valueDate valueId valueUuid
-    = Codecs (RawCodecs valueDate valueId valueUuid)
+type Codecs valueDate valueId valueTimestamptz valueUuid
+    = Codecs (RawCodecs valueDate valueId valueTimestamptz valueUuid)
 
 
-type alias RawCodecs valueDate valueId valueUuid =
+type alias RawCodecs valueDate valueId valueTimestamptz valueUuid =
     { codecDate : Codec valueDate
     , codecId : Codec valueId
+    , codecTimestamptz : Codec valueTimestamptz
     , codecUuid : Codec valueUuid
     }
 
 
-defaultCodecs : RawCodecs Date Id Uuid
+defaultCodecs : RawCodecs Date Id Timestamptz Uuid
 defaultCodecs =
     { codecDate =
         { encoder = \(Date raw) -> Encode.string raw
@@ -68,6 +75,10 @@ defaultCodecs =
     , codecId =
         { encoder = \(Id raw) -> Encode.string raw
         , decoder = Object.scalarDecoder |> Decode.map Id
+        }
+    , codecTimestamptz =
+        { encoder = \(Timestamptz raw) -> Encode.string raw
+        , decoder = Object.scalarDecoder |> Decode.map Timestamptz
         }
     , codecUuid =
         { encoder = \(Uuid raw) -> Encode.string raw

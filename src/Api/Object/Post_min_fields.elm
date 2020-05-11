@@ -34,6 +34,11 @@ id =
     Object.selectionForField "(Maybe CustomScalars.Uuid)" "id" [] (CustomScalars.codecs |> Api.Scalar.unwrapCodecs |> .codecUuid |> .decoder |> Decode.nullable)
 
 
+iv : SelectionSet (Maybe String) Api.Object.Post_min_fields
+iv =
+    Object.selectionForField "(Maybe String)" "iv" [] (Decode.string |> Decode.nullable)
+
+
 user_id : SelectionSet (Maybe CustomScalars.Uuid) Api.Object.Post_min_fields
 user_id =
     Object.selectionForField "(Maybe CustomScalars.Uuid)" "user_id" [] (CustomScalars.codecs |> Api.Scalar.unwrapCodecs |> .codecUuid |> .decoder |> Decode.nullable)

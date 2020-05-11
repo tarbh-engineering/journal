@@ -16,14 +16,19 @@ type alias Id =
     Api.Scalar.Id
 
 
+type alias Timestamptz =
+    Api.Scalar.Timestamptz
+
+
 type alias Uuid =
     Api.Scalar.Uuid
 
 
-codecs : Api.Scalar.Codecs Date Id Uuid
+codecs : Api.Scalar.Codecs Date Id Timestamptz Uuid
 codecs =
     Api.Scalar.defineCodecs
         { codecDate = defaultCodecs.codecDate
         , codecId = defaultCodecs.codecId
+        , codecTimestamptz = defaultCodecs.codecTimestamptz
         , codecUuid = defaultCodecs.codecUuid
         }

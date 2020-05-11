@@ -25,6 +25,11 @@ id =
     Object.selectionForField "CustomScalars.Uuid" "id" [] (CustomScalars.codecs |> Api.Scalar.unwrapCodecs |> .codecUuid |> .decoder)
 
 
+iv : SelectionSet String Api.Object.Tag
+iv =
+    Object.selectionForField "String" "iv" [] Decode.string
+
+
 name : SelectionSet String Api.Object.Tag
 name =
     Object.selectionForField "String" "name" [] Decode.string

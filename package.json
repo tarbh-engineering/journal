@@ -13,7 +13,7 @@
   "devDependencies": {
     "@dillonkearns/elm-graphql": "^4.0.2",
     "elm-hot-webpack-loader": "^1.1.6",
-    "webpack-dev-server": "^3.10.3"
+    "webpack-dev-server": "^3.11.0"
   },
   "scripts": {
     "sw": "webpack --config webpack.sw.js",

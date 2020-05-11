@@ -13,19 +13,19 @@ const handlers = async (request) => {
       return jsonResponse(await crypto.nonce());
     }
     case "keys": {
-      const { password, nonce } = await request.json();
+      const body = await request.json();
 
-      return jsonResponse(await crypto.keys(password, nonce));
+      return jsonResponse(await crypto.keys(body));
     }
     case "decrypt": {
-      const { content, key } = await request.json();
+      const body = await request.json();
 
-      return jsonResponse(await crypto.decrypt(content, key));
+      return jsonResponse(await crypto.decrypt(body));
     }
     case "encrypt": {
-      const { content, key } = await request.json();
+      const body = await request.json();
 
-      return jsonResponse(await crypto.encrypt(content, key));
+      return jsonResponse(await crypto.encrypt(body));
     }
     default: {
       return make400("unmatched url");

@@ -9,18 +9,18 @@ import Json.Decode as Decode exposing (Decoder)
 
 {-| unique or primary key constraints on table "user"
 
-  - User\_email\_key - unique or primary key constraint
   - User\_pkey - unique or primary key constraint
+  - User\_purchase\_id\_key - unique or primary key constraint
 
 -}
 type User_constraint
-    = User_email_key
-    | User_pkey
+    = User_pkey
+    | User_purchase_id_key
 
 
 list : List User_constraint
 list =
-    [ User_email_key, User_pkey ]
+    [ User_pkey, User_purchase_id_key ]
 
 
 decoder : Decoder User_constraint
@@ -29,11 +29,11 @@ decoder =
         |> Decode.andThen
             (\string ->
                 case string of
-                    "user_email_key" ->
-                        Decode.succeed User_email_key
-
                     "user_pkey" ->
                         Decode.succeed User_pkey
+
+                    "user_purchase_id_key" ->
+                        Decode.succeed User_purchase_id_key
 
                     _ ->
                         Decode.fail ("Invalid User_constraint type, " ++ string ++ " try re-running the @dillonkearns/elm-graphql CLI ")
@@ -45,11 +45,11 @@ decoder =
 toString : User_constraint -> String
 toString enum =
     case enum of
-        User_email_key ->
-            "user_email_key"
-
         User_pkey ->
             "user_pkey"
+
+        User_purchase_id_key ->
+            "user_purchase_id_key"
 
 
 {-| Convert from a String representation to an elm representation enum.
@@ -66,11 +66,11 @@ This can be useful for generating Strings to use for <select> menus to check whi
 fromString : String -> Maybe User_constraint
 fromString enumString =
     case enumString of
-        "user_email_key" ->
-            Just User_email_key
-
         "user_pkey" ->
             Just User_pkey
+
+        "user_purchase_id_key" ->
+            Just User_purchase_id_key
 
         _ ->
             Nothing

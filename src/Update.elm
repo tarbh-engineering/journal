@@ -15,8 +15,9 @@ import Browser
 import Browser.Dom
 import Browser.Events exposing (Visibility(..))
 import Browser.Navigation as Navigation
+import Crypto
 import CustomScalars exposing (Uuid)
-import Data exposing (fetchTags, graphqlEndpoint, ignoreParsedErrorData, mutate, postSelection, query, range, serviceWorkerRequest, tagSelection)
+import Data exposing (fetchTags, graphqlEndpoint, ignoreParsedErrorData, mutate, postSelection, query, range, tagSelection)
 import Date exposing (Date)
 import Day exposing (DayDict)
 import Derberos.Date.Utils exposing (getNextMonth, getPrevMonth)
@@ -26,17 +27,18 @@ import Graphql.Http.GraphqlError
 import Graphql.OptionalArgument exposing (OptionalArgument(..))
 import Graphql.SelectionSet exposing (SelectionSet)
 import Helpers
+import Helpers.Parse
 import Helpers.UuidDict as UD
-import Json.Decode as Decode exposing (Decoder)
+import Json.Decode as JD
 import Json.Encode as Encode
-import List.Nonempty as Nonempty
 import Maybe.Extra exposing (unwrap)
 import Ports
 import Random
+import Result.Extra exposing (unpack)
 import Routing exposing (goTo)
 import Task
 import Time exposing (Month(..))
-import Types exposing (Auth, GqlTask, Keys, Model, Msg(..), Post, PostView(..), Route(..), ServiceWorkerRequest(..), Sort(..), Status(..), Tag, View(..))
+import Types exposing (Auth, GqlTask, Model, Msg(..), Post, PostView(..), Route(..), Sort(..), Status(..), Tag, View(..))
 import Url
 import Uuid
 
@@ -67,12 +69,15 @@ fetchPostsByTag id { key, token } =
         |> Task.andThen
             (List.map
                 (\post ->
-                    serviceWorkerRequest
-                        (Decrypt
-                            { key = key, content = post.body }
-                        )
-                        Decode.string
-                        |> Task.map (\str -> { post | body = str })
+                    Crypto.decrypt key post.cipher
+                        |> Task.map
+                            (\str ->
+                                { id = post.id
+                                , body = str
+                                , date = post.date
+                                , tags = post.tags
+                                }
+                            )
                 )
                 >> Task.sequence
             )
@@ -80,13 +85,9 @@ fetchPostsByTag id { key, token } =
 
 editTag : Tag -> Auth -> GqlTask Tag
 editTag { id, name } { token, key } =
-    serviceWorkerRequest
-        (Encrypt
-            { key = key, content = name }
-        )
-        Decode.string
+    Crypto.encrypt key name
         |> Task.andThen
-            (\encryptedContent ->
+            (\res ->
                 Api.Mutation.update_tag
                     (\r ->
                         { r
@@ -94,7 +95,8 @@ editTag { id, name } { token, key } =
                                 Api.InputObject.buildTag_set_input
                                     (\a ->
                                         { a
-                                            | name = Present encryptedContent
+                                            | name = Present res.ciphertext
+                                            , iv = Present res.iv
                                         }
                                     )
                                     |> Present
@@ -117,7 +119,7 @@ editTag { id, name } { token, key } =
         |> Task.andThen
             (unwrap
                 (Task.fail (makeGqlError "post doesn't exist"))
-                (\t -> Task.succeed { t | name = name })
+                (Data.tp key)
             )
 
 
@@ -199,7 +201,7 @@ delete id { token } =
 
 
 attachTag : Post -> Uuid -> Auth -> GqlTask Post
-attachTag post tagId { token } =
+attachTag post tagId { token, key } =
     Api.Mutation.insert_post_tag
         identity
         { objects =
@@ -220,10 +222,11 @@ attachTag post tagId { token } =
         )
         |> Graphql.SelectionSet.nonNullOrFail
         |> mutate token
+        |> Task.andThen (Data.mp key)
 
 
 removeTag : Uuid -> Auth -> GqlTask Post
-removeTag tagId { token } =
+removeTag tagId { token, key } =
     Api.Mutation.delete_post_tag
         { where_ =
             Api.InputObject.buildPost_tag_bool_exp
@@ -241,17 +244,14 @@ removeTag tagId { token } =
         )
         |> Graphql.SelectionSet.nonNullOrFail
         |> mutate token
+        |> Task.andThen (Data.mp key)
 
 
 postUpdateBody : Uuid -> String -> Auth -> GqlTask Post
 postUpdateBody id body { key, token } =
-    serviceWorkerRequest
-        (Encrypt
-            { key = key, content = body }
-        )
-        Decode.string
+    Crypto.encrypt key body
         |> Task.andThen
-            (\encryptedContent ->
+            (\res ->
                 Api.Mutation.update_post
                     (\r ->
                         { r
@@ -260,7 +260,9 @@ postUpdateBody id body { key, token } =
                                     (\a ->
                                         { a
                                             | body =
-                                                Present encryptedContent
+                                                Present res.ciphertext
+                                            , iv =
+                                                Present res.iv
                                         }
                                     )
                                     |> Present
@@ -284,19 +286,15 @@ postUpdateBody id body { key, token } =
                 (makeGqlError "post doesn't exist"
                     |> Task.fail
                 )
-                (\p -> Task.succeed { p | body = body })
+                (Data.mp key)
             )
 
 
 tagCreate : String -> Auth -> GqlTask Tag
 tagCreate name { key, token } =
-    serviceWorkerRequest
-        (Encrypt
-            { key = key, content = name }
-        )
-        Decode.string
+    Crypto.encrypt key name
         |> Task.andThen
-            (\encryptedContent ->
+            (\res ->
                 Api.Mutation.insert_tag
                     identity
                     { objects =
@@ -304,7 +302,9 @@ tagCreate name { key, token } =
                             (\r ->
                                 { r
                                     | name =
-                                        Present encryptedContent
+                                        Present res.ciphertext
+                                    , iv =
+                                        Present res.iv
                                 }
                             )
                         ]
@@ -319,19 +319,15 @@ tagCreate name { key, token } =
                 (makeGqlError "tag doesn't exist"
                     |> Task.fail
                 )
-                (\t -> Task.succeed { t | name = name })
+                (Data.tp key)
             )
 
 
 new : String -> List Uuid -> Date -> Auth -> GqlTask Post
 new body tags d { key, token } =
-    serviceWorkerRequest
-        (Encrypt
-            { key = key, content = body }
-        )
-        Decode.string
+    Crypto.encrypt key body
         |> Task.andThen
-            (\encryptedContent ->
+            (\res ->
                 Api.Mutation.insert_post
                     (\r ->
                         { r
@@ -349,7 +345,9 @@ new body tags d { key, token } =
                             (\r ->
                                 { r
                                     | body =
-                                        Present encryptedContent
+                                        Present res.ciphertext
+                                    , iv =
+                                        Present res.iv
                                     , date =
                                         d
                                             |> Present
@@ -387,7 +385,7 @@ new body tags d { key, token } =
                 (makeGqlError "post doesn't exist"
                     |> Task.fail
                 )
-                (\p -> Task.succeed { p | body = body })
+                (Data.mp key)
             )
 
 
@@ -418,9 +416,6 @@ clearLoading =
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
-        Demo ->
-            ( model, Cmd.none )
-
         NextMonth ->
             ( { model
                 | year =
@@ -471,14 +466,18 @@ update msg model =
             ( { model | screen = screen }, Cmd.none )
 
         FocusCb res ->
-            ( model
-            , case res of
-                Ok _ ->
-                    Cmd.none
-
-                Err (Browser.Dom.NotFound id) ->
-                    Ports.log <| "id not found: \"" ++ id ++ "\""
-            )
+            res
+                |> unpack
+                    (\(Browser.Dom.NotFound id) ->
+                        ( model
+                        , Ports.log <| "id not found: \"" ++ id ++ "\""
+                        )
+                    )
+                    (\_ ->
+                        ( model
+                        , Cmd.none
+                        )
+                    )
 
         PostCreateSubmit d ->
             if String.isEmpty model.postEditorBody then
@@ -581,176 +580,190 @@ update msg model =
                 )
 
         PostsCb res ->
-            case res of
-                Ok posts ->
-                    ( { model
-                        | posts =
-                            posts
-                                |> List.foldr
-                                    (\v ->
-                                        Day.update v.date
-                                            (unwrap
-                                                (Found v)
-                                                (\post ->
-                                                    case post of
-                                                        Missing ->
-                                                            Found v
-
-                                                        Loading _ ->
-                                                            Found v
-
-                                                        Found _ ->
-                                                            Found v
-                                                )
-                                                >> Just
-                                            )
-                                    )
-                                    model.posts
-                                |> clearLoading
-                      }
-                    , Cmd.none
+            res
+                |> unpack
+                    (\err ->
+                        ( { model
+                            | posts =
+                                model.posts
+                                    |> clearLoading
+                            , online = not <| isNetworkError err
+                          }
+                        , logGqlError "PostsCb" err
+                        )
                     )
+                    (\posts ->
+                        ( { model
+                            | posts =
+                                posts
+                                    |> List.foldr
+                                        (\v ->
+                                            Day.update v.date
+                                                (unwrap
+                                                    (Found v)
+                                                    (\post ->
+                                                        case post of
+                                                            Missing ->
+                                                                Found v
 
-                Err err ->
-                    ( { model
-                        | posts =
-                            model.posts
-                                |> clearLoading
-                        , online = not <| isNetworkError err
-                      }
-                    , logGqlError "PostsCb" err
+                                                            Loading _ ->
+                                                                Found v
+
+                                                            Found _ ->
+                                                                Found v
+                                                    )
+                                                    >> Just
+                                                )
+                                        )
+                                        model.posts
+                                    |> clearLoading
+                          }
+                        , Cmd.none
+                        )
                     )
 
         TagsCb res ->
-            case res of
-                Ok tags ->
-                    ( { model
-                        | tags =
-                            tags
-                                |> UD.fromList
-                      }
-                    , Cmd.none
+            res
+                |> unpack
+                    (\err ->
+                        ( { model | online = not <| isNetworkError err }
+                        , logGqlError "TagsCb" err
+                        )
                     )
-
-                Err err ->
-                    ( { model | online = not <| isNetworkError err }
-                    , logGqlError "TagsCb" err
+                    (\tags ->
+                        ( { model
+                            | tags =
+                                tags
+                                    |> UD.fromList
+                          }
+                        , Cmd.none
+                        )
                     )
 
         PostDeleteCb res ->
-            case res of
-                Ok date ->
-                    ( { model
-                        | posts =
-                            Day.remove
-                                date
-                                model.posts
-                        , postEditorBody = ""
-                        , postSaveInProgress = False
-                      }
-                    , Cmd.none
+            res
+                |> unpack
+                    (\err ->
+                        ( { model
+                            | online = not <| isNetworkError err
+                            , postSaveInProgress = False
+                          }
+                        , logGqlError "PostDeleteCb" err
+                        )
                     )
-
-                Err err ->
-                    ( { model
-                        | online = not <| isNetworkError err
-                        , postSaveInProgress = False
-                      }
-                    , logGqlError "PostDeleteCb" err
+                    (\date ->
+                        ( { model
+                            | posts =
+                                Day.remove
+                                    date
+                                    model.posts
+                            , postEditorBody = ""
+                            , postSaveInProgress = False
+                          }
+                        , Cmd.none
+                        )
                     )
 
         TagDeleteCb res ->
-            case res of
-                Ok id ->
-                    ( { model
-                        | tags =
-                            UD.remove
-                                id
-                                model.tags
-                      }
-                    , Cmd.none
+            res
+                |> unpack
+                    (\err ->
+                        ( { model | online = not <| isNetworkError err }
+                        , logGqlError "TagDeleteCb" err
+                        )
                     )
-
-                Err err ->
-                    ( { model | online = not <| isNetworkError err }
-                    , logGqlError "TagDeleteCb" err
+                    (\id ->
+                        ( { model
+                            | tags =
+                                UD.remove
+                                    id
+                                    model.tags
+                          }
+                        , Cmd.none
+                        )
                     )
 
         PostMutateCb res ->
-            case res of
-                Ok post ->
-                    ( { model
-                        | posts =
-                            model.posts
-                                |> Day.insert
-                                    post.date
-                                    (Found post)
-                        , postView = PostView
-                        , postBeingEdited = False
-                        , postSaveInProgress = False
-                        , online = True
-                      }
-                    , Cmd.none
+            res
+                |> unpack
+                    (\err ->
+                        ( { model
+                            | online = not <| isNetworkError err
+                            , postSaveInProgress = False
+                            , postBeingEdited = False
+                          }
+                        , logGqlError "PostMutateCb" err
+                        )
                     )
-
-                Err err ->
-                    ( { model
-                        | online = not <| isNetworkError err
-                        , postSaveInProgress = False
-                        , postBeingEdited = False
-                      }
-                    , logGqlError "PostMutateCb" err
+                    (\post ->
+                        ( { model
+                            | posts =
+                                model.posts
+                                    |> Day.insert
+                                        post.date
+                                        (Found post)
+                            , postView = PostView
+                            , postBeingEdited = False
+                            , postSaveInProgress = False
+                            , online = True
+                          }
+                        , Cmd.none
+                        )
                     )
 
         PostCb day res ->
-            case res of
-                Ok resPost ->
-                    case resPost of
-                        Just post ->
-                            ( { model
-                                | posts =
-                                    model.posts
-                                        |> Day.insert
-                                            post.date
-                                            (Found post)
-                                , postBeingEdited = False
-                              }
-                            , Cmd.none
-                            )
+            res
+                |> unpack
+                    (\err ->
+                        ( { model
+                            | online = not <| isNetworkError err
+                            , postSaveInProgress = False
+                            , postBeingEdited = False
+                          }
+                        , logGqlError "PostCb" err
+                        )
+                    )
+                    (\resPost ->
+                        case resPost of
+                            Just post ->
+                                ( { model
+                                    | posts =
+                                        model.posts
+                                            |> Day.insert
+                                                post.date
+                                                (Found post)
+                                    , postBeingEdited = False
+                                  }
+                                , Cmd.none
+                                )
 
-                        Nothing ->
-                            ( { model
-                                | posts =
-                                    model.posts
-                                        |> Day.remove day
-                                , postBeingEdited = False
-                              }
-                            , Cmd.none
-                            )
-
-                Err err ->
-                    ( { model
-                        | online = not <| isNetworkError err
-                        , postSaveInProgress = False
-                        , postBeingEdited = False
-                      }
-                    , logGqlError "PostCb" err
+                            Nothing ->
+                                ( { model
+                                    | posts =
+                                        model.posts
+                                            |> Day.remove day
+                                    , postBeingEdited = False
+                                  }
+                                , Cmd.none
+                                )
                     )
 
         TagCreateCb res ->
-            case res of
-                Ok tag ->
-                    ( { model
-                        | tags =
-                            UD.insert tag.id tag model.tags
-                        , tagCreateName = ""
-                      }
-                    , Cmd.none
+            res
+                |> unpack
+                    (\err ->
+                        ( { model | online = not <| isNetworkError err }
+                        , logGqlError "TagCreateCb" err
+                        )
                     )
-
-                Err err ->
-                    ( { model | online = not <| isNetworkError err }
-                    , logGqlError "TagCreateCb" err
+                    (\tag ->
+                        ( { model
+                            | tags =
+                                UD.insert tag.id tag model.tags
+                            , tagCreateName = ""
+                          }
+                        , Cmd.none
+                        )
                     )
 
         TagCreateSubmit ->
@@ -782,47 +795,49 @@ update msg model =
             ( { model | postEditorBody = str }, Cmd.none )
 
         AuthCb res ->
-            case res of
-                Ok auth ->
-                    let
-                        now =
-                            Task.map2
-                                Date.fromPosix
-                                Time.here
-                                Time.now
-                    in
-                    ( { model
-                        | auth = Just auth
-                        , force = False
-                      }
-                    , Cmd.batch
-                        [ now
-                            |> Task.andThen
-                                (\t ->
-                                    let
-                                        start =
-                                            Date.floor Date.Month t
-                                    in
-                                    range
-                                        start
-                                        (start
-                                            |> Date.add Date.Months 1
-                                        )
-                                        auth
-                                )
-                            |> Task.attempt PostsCb
-                        , Ports.saveAuth auth
-                        , fetchTags auth
-                            |> Task.attempt TagsCb
-                        ]
+            res
+                |> unpack
+                    (\err ->
+                        ( { model
+                            | errors = parseErrors err
+                            , online = not <| isNetworkError err
+                          }
+                        , logGqlError "AuthCb" err
+                        )
                     )
-
-                Err err ->
-                    ( { model
-                        | errors = parseErrors err
-                        , online = not <| isNetworkError err
-                      }
-                    , logGqlError "AuthCb" err
+                    (\auth ->
+                        let
+                            now =
+                                Task.map2
+                                    Date.fromPosix
+                                    Time.here
+                                    Time.now
+                        in
+                        ( { model
+                            | auth = Just auth
+                            , view = ViewCalendar
+                          }
+                        , Cmd.batch
+                            [ now
+                                |> Task.andThen
+                                    (\t ->
+                                        let
+                                            start =
+                                                Date.floor Date.Month t
+                                        in
+                                        range
+                                            start
+                                            (start
+                                                |> Date.add Date.Months 1
+                                            )
+                                            auth
+                                    )
+                                |> Task.attempt PostsCb
+                            , Ports.saveAuth auth
+                            , fetchTags auth
+                                |> Task.attempt TagsCb
+                            ]
+                        )
                     )
 
         TagCreateNameUpdate str ->
@@ -861,31 +876,56 @@ update msg model =
 
             else
                 ( { model | errors = [] }
-                  --, getNonce email
-                , Nothing
-                    |> Task.succeed
+                , getNonce email
                     |> Task.attempt NonceCb
                 )
 
-        NonceCb res ->
-            case res of
-                Ok nonce ->
-                    ( { model
-                        | funnel =
-                            nonce
-                                |> unwrap
-                                    Types.JoinUs
-                                    Types.WelcomeBack
-                      }
-                    , Cmd.none
+        CheckCb res ->
+            res
+                |> unpack
+                    (\err ->
+                        ( model
+                        , logGqlError "CheckCb" err
+                        )
+                    )
+                    (\bool ->
+                        ( { model | magic = Just bool }
+                        , Cmd.none
+                        )
                     )
 
-                Err err ->
-                    ( { model
-                        | errors = parseErrors err
-                        , online = not <| isNetworkError err
-                      }
-                    , logGqlError "NonceCb" err
+        NonceCb res ->
+            res
+                |> unpack
+                    (\err ->
+                        if check "no-user" err then
+                            ( { model
+                                | funnel = Types.CheckEmail
+                              }
+                            , Cmd.none
+                            )
+
+                        else if check "no-purchase" err then
+                            ( { model
+                                | funnel = Types.JoinUs
+                              }
+                            , Cmd.none
+                            )
+
+                        else
+                            ( { model
+                                | errors = parseErrors err
+                                , online = not <| isNetworkError err
+                              }
+                            , logGqlError "NonceCb" err
+                            )
+                    )
+                    (\nonce ->
+                        ( { model
+                            | funnel = Types.WelcomeBack nonce
+                          }
+                        , Cmd.none
+                        )
                     )
 
         LoginSubmit nonce ->
@@ -900,13 +940,7 @@ update msg model =
 
             else
                 ( { model | errors = [] }
-                , serviceWorkerRequest
-                    (GenerateKeys
-                        { password = model.loginForm.password
-                        , nonce = nonce
-                        }
-                    )
-                    decodeKeys
+                , Crypto.keys model.loginForm.password nonce
                     |> Task.andThen
                         (\keys ->
                             login email keys.serverKey
@@ -927,13 +961,15 @@ update msg model =
         Logout ->
             ( { model
                 | auth = Nothing
+                , posts = Day.newDayDict
+                , tags = UD.empty
                 , loginForm =
                     { email = ""
                     , password = ""
                     , passwordVisible = False
                     }
                 , funnel = Types.Hello
-                , force = True
+                , view = ViewHome
               }
             , Cmd.batch [ Ports.clearAuth (), goTo RouteHome ]
             )
@@ -941,32 +977,26 @@ update msg model =
         Buy annual ->
             ( model, Ports.buy { email = model.loginForm.email, annual = annual } )
 
-        SignupSubmit ->
-            if String.isEmpty model.loginForm.email || String.isEmpty model.loginForm.password then
+        SignupSubmit txt ->
+            if String.isEmpty model.loginForm.password then
                 ( { model | errors = [ "empty field(s)" ] }
                 , Cmd.none
                 )
 
             else
                 ( { model | errors = [] }
-                , serviceWorkerRequest GenerateNonce Decode.string
+                , Crypto.nonce
                     |> Task.andThen
                         (\nonce ->
-                            serviceWorkerRequest
-                                (GenerateKeys
-                                    { password = model.loginForm.password
-                                    , nonce = nonce
-                                    }
-                                )
-                                decodeKeys
+                            Crypto.keys model.loginForm.password nonce
                                 |> Task.andThen
                                     (\keys ->
-                                        signup model.loginForm.email keys.serverKey nonce
+                                        signup keys.serverKey nonce txt
                                             |> Task.map
                                                 (\token ->
                                                     { key = keys.encryptionKey
                                                     , token = token
-                                                    , email = model.loginForm.email
+                                                    , email = "ok"
                                                     }
                                                 )
                                     )
@@ -1018,22 +1048,24 @@ update msg model =
             )
 
         TagUpdateCb res ->
-            case res of
-                Ok tag ->
-                    ( { model
-                        | tags =
-                            UD.insert
-                                tag.id
-                                tag
-                                model.tags
-                        , tagBeingEdited = Nothing
-                      }
-                    , Cmd.none
+            res
+                |> unpack
+                    (\err ->
+                        ( { model | online = not <| isNetworkError err }
+                        , logGqlError "TagUpdateCb" err
+                        )
                     )
-
-                Err err ->
-                    ( { model | online = not <| isNetworkError err }
-                    , logGqlError "TagUpdateCb" err
+                    (\tag ->
+                        ( { model
+                            | tags =
+                                UD.insert
+                                    tag.id
+                                    tag
+                                    model.tags
+                            , tagBeingEdited = Nothing
+                          }
+                        , Cmd.none
+                        )
                     )
 
         PostTagToggle post tag ->
@@ -1067,8 +1099,12 @@ update msg model =
 
         Force ->
             ( { model
-                | force = not model.force
-                , view = ViewHome
+                | view =
+                    if model.view == ViewHome then
+                        ViewCalendar
+
+                    else
+                        ViewHome
                 , def = Nothing
                 , funnel = Types.Hello
                 , current = Nothing
@@ -1152,13 +1188,6 @@ update msg model =
                     , Cmd.none
                     )
 
-                RouteYear year ->
-                    ( { model
-                        | view = ViewYear year
-                      }
-                    , Cmd.none
-                    )
-
                 RouteTags ->
                     ( { model
                         | view = ViewTags
@@ -1195,92 +1224,11 @@ update msg model =
                     , Cmd.none
                     )
 
-                RouteMonth month year ->
-                    let
-                        days =
-                            Day.getMonthDays year month
-                    in
+                RouteCalendar ->
                     ( { model
-                        | view =
-                            ViewMonth year month
-                        , posts =
-                            if model.auth == Nothing then
-                                model.posts
-
-                            else
-                                days
-                                    |> List.foldl
-                                        (\d ->
-                                            model.posts
-                                                |> Helpers.getStatus d
-                                                |> (\data ->
-                                                        case data of
-                                                            Missing ->
-                                                                Loading Nothing
-
-                                                            Found a ->
-                                                                Loading <| Just a
-
-                                                            Loading a ->
-                                                                Loading a
-                                                   )
-                                                |> Day.insert d
-                                        )
-                                        model.posts
+                        | view = ViewCalendar
                       }
-                    , Maybe.map3
-                        (\a b auth ->
-                            range a b auth
-                                |> Task.attempt PostsCb
-                        )
-                        (days |> List.head)
-                        (days |> List.reverse |> List.head)
-                        model.auth
-                        |> Maybe.withDefault Cmd.none
-                    )
-
-                RouteWeek day ->
-                    let
-                        week =
-                            Day.getWeek day
-                    in
-                    ( { model
-                        | view = ViewWeek week
-                        , posts =
-                            if model.auth == Nothing then
-                                model.posts
-
-                            else
-                                week
-                                    |> Nonempty.foldl
-                                        (\d ->
-                                            model.posts
-                                                |> Helpers.getStatus d
-                                                |> (\data ->
-                                                        case data of
-                                                            Missing ->
-                                                                Loading Nothing
-
-                                                            Found a ->
-                                                                Loading <| Just a
-
-                                                            Loading a ->
-                                                                Loading a
-                                                   )
-                                                |> Day.insert d
-                                        )
-                                        model.posts
-                      }
-                    , model.auth
-                        |> unwrap Cmd.none
-                            (range
-                                (week |> Nonempty.head)
-                                (week
-                                    |> Nonempty.reverse
-                                    |> Nonempty.head
-                                )
-                                >> Task.attempt PostsCb
-                            )
+                    , Cmd.none
                     )
 
                 RouteDay d ->
@@ -1355,20 +1303,6 @@ update msg model =
                                 )
                            )
 
-                RouteLogin ->
-                    model.auth
-                        |> unwrap
-                            ( { model
-                                | view = ViewLogin
-                              }
-                            , Cmd.none
-                            )
-                            (always
-                                ( model
-                                , goTo RouteHome
-                                )
-                            )
-
                 NotFound ->
                     ( model
                       --, Debug.log "bad route" route
@@ -1404,11 +1338,11 @@ parseErrors err =
 
 
 signup : String -> String -> String -> GqlTask String
-signup email pw nonce =
+signup pw nonce txt =
     Api.Mutation.signup
-        { email = email
-        , nonce = nonce
+        { nonce = nonce
         , password = pw
+        , txt = txt
         }
         |> Graphql.Http.mutationRequest graphqlEndpoint
         |> Graphql.Http.toTask
@@ -1426,7 +1360,7 @@ login email pw =
         |> Task.mapError ignoreParsedErrorData
 
 
-getNonce : String -> GqlTask (Maybe String)
+getNonce : String -> GqlTask String
 getNonce email =
     Api.Query.nonce
         { email = email
@@ -1436,51 +1370,9 @@ getNonce email =
         |> Task.mapError ignoreParsedErrorData
 
 
-decodeKeys : Decoder Keys
-decodeKeys =
-    Decode.map2 Keys
-        (Decode.field "encryptionKey" Decode.value)
-        (Decode.field "serverKey" Decode.string)
-
-
 logGqlError : String -> Graphql.Http.Error a -> Cmd msg
 logGqlError tag err =
-    case err of
-        Graphql.Http.GraphqlError _ es ->
-            es
-                |> List.map .message
-                |> String.join ", "
-                |> (++) (tag ++ ":\n")
-                |> Ports.log
-
-        Graphql.Http.HttpError e ->
-            logHttpError tag e
-
-
-parseHttpError : HttpError -> String
-parseHttpError err =
-    case err of
-        Graphql.Http.BadUrl _ ->
-            "Bad Url"
-
-        Graphql.Http.Timeout ->
-            "Timeout"
-
-        Graphql.Http.NetworkError ->
-            "Network Error"
-
-        Graphql.Http.BadStatus { statusCode } _ ->
-            "Bad Status - " ++ String.fromInt statusCode
-
-        Graphql.Http.BadPayload txt ->
-            "Bad Payload - " ++ Decode.errorToString txt
-
-
-logHttpError : String -> HttpError -> Cmd msg
-logHttpError tag =
-    parseHttpError
-        >> (\txt -> tag ++ ": " ++ txt)
-        >> Ports.log
+    Ports.log (tag ++ ":\n" ++ Helpers.Parse.gqlError err)
 
 
 equalToId : Uuid -> OptionalArgument Api.InputObject.Uuid_comparison_exp
@@ -1510,3 +1402,20 @@ toggle v ls =
 
     else
         v :: ls
+
+
+check : String -> Graphql.Http.Error () -> Bool
+check code err =
+    case err of
+        Graphql.Http.GraphqlError _ es ->
+            es
+                |> List.concatMap (.details >> Dict.values)
+                |> List.filterMap
+                    (JD.decodeValue
+                        (JD.field "code" JD.string)
+                        >> Result.toMaybe
+                    )
+                |> List.any ((==) code)
+
+        Graphql.Http.HttpError _ ->
+            False

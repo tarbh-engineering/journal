@@ -19,11 +19,6 @@ import Graphql.SelectionSet exposing (SelectionSet)
 import Json.Decode as Decode
 
 
-email : SelectionSet (Maybe String) Api.Object.User_min_fields
-email =
-    Object.selectionForField "(Maybe String)" "email" [] (Decode.string |> Decode.nullable)
-
-
 id : SelectionSet (Maybe CustomScalars.Uuid) Api.Object.User_min_fields
 id =
     Object.selectionForField "(Maybe CustomScalars.Uuid)" "id" [] (CustomScalars.codecs |> Api.Scalar.unwrapCodecs |> .codecUuid |> .decoder |> Decode.nullable)
@@ -37,3 +32,8 @@ nonce =
 password : SelectionSet (Maybe String) Api.Object.User_min_fields
 password =
     Object.selectionForField "(Maybe String)" "password" [] (Decode.string |> Decode.nullable)
+
+
+purchase_id : SelectionSet (Maybe CustomScalars.Uuid) Api.Object.User_min_fields
+purchase_id =
+    Object.selectionForField "(Maybe CustomScalars.Uuid)" "purchase_id" [] (CustomScalars.codecs |> Api.Scalar.unwrapCodecs |> .codecUuid |> .decoder |> Decode.nullable)

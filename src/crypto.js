@@ -37,7 +37,7 @@ const hexStringToArrayBuffer = (hex) => {
   return new Uint8Array(parse([], hex));
 };
 
-const encrypt = async (content, key) => {
+const encrypt = async ({ content, key }) => {
   const encryptionKey = await crypto.subtle.importKey(
     "jwk",
     key,
@@ -57,12 +57,13 @@ const encrypt = async (content, key) => {
     await stringToArrayBuffer(content)
   );
 
-  return [iv, ciphertext].map(arrayBufferToHexString).join(":");
+  return {
+    iv: arrayBufferToHexString(iv),
+    ciphertext: arrayBufferToHexString(ciphertext),
+  };
 };
 
-const decrypt = async (string, key) => {
-  const [iv, ciphertext] = string.split(":").map(hexStringToArrayBuffer);
-
+const decrypt = async ({ iv, ciphertext, key }) => {
   const encryptionKey = await crypto.subtle.importKey(
     "jwk",
     key,
@@ -72,15 +73,15 @@ const decrypt = async (string, key) => {
   );
 
   const plaintextContent = await crypto.subtle.decrypt(
-    { name: "AES-CBC", iv },
+    { name: "AES-CBC", iv: hexStringToArrayBuffer(iv) },
     encryptionKey,
-    ciphertext
+    hexStringToArrayBuffer(ciphertext)
   );
 
   return arrayBufferToString(plaintextContent);
 };
 
-const keys = async (password, nonce) => {
+const keys = async ({ password, nonce }) => {
   const key = await crypto.subtle.importKey(
     "raw",
     await stringToArrayBuffer(password),

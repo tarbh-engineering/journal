@@ -22,7 +22,7 @@ import Maybe.Extra exposing (unwrap)
 import Ordinal
 import Time exposing (Month(..))
 import Time.Format.I18n.I_en_us exposing (monthName)
-import Types exposing (Def(..), Emoji(..), Funnel(..), Model, Msg(..), PostView(..), Route(..), Sort(..), Status(..), View(..))
+import Types exposing (Def(..), Funnel(..), Model, Msg(..), PostView(..), Route(..), Sort(..), Status(..), View(..))
 import Validate exposing (isValidEmail)
 
 
@@ -287,98 +287,6 @@ press =
         ]
 
 
-emoji : Emoji -> msg -> Element msg
-emoji e msg =
-    button
-        [ Font.size 40
-        , textShadow
-        ]
-        { onPress = Just msg
-        , label = el [ press ] <| renderEmoji e
-        }
-
-
-renderEmoji : Emoji -> Element msg
-renderEmoji e =
-    (case e of
-        Disk ->
-            "💾"
-
-        Next ->
-            "⏩"
-
-        Previous ->
-            "⏪"
-
-        New ->
-            "🆕"
-
-        House ->
-            "🏠"
-
-        Edit ->
-            "📝"
-
-        Trash ->
-            "🗑"
-
-        TagEmoji ->
-            "🏷"
-
-        Tick ->
-            "✅"
-
-        X ->
-            "❌"
-
-        Key ->
-            "🔑"
-
-        Sun ->
-            "🌞"
-
-        Chart ->
-            "📋"
-
-        Calendar ->
-            "🗓"
-
-        Dice ->
-            "🎲"
-
-        Cogs ->
-            "⚙️"
-
-        Bang ->
-            "💥"
-
-        Clock ->
-            "🕰"
-
-        Cyclone ->
-            "🌀"
-
-        Abc ->
-            "🔤"
-
-        Sherlock ->
-            "🔍"
-
-        LeftArrow ->
-            "⬅️"
-
-        Paper ->
-            "📄"
-
-        Locked ->
-            "🔒"
-
-        Unlocked ->
-            "🔓"
-    )
-        |> text
-
-
 blue : Color
 blue =
     rgb255 112 237 204
@@ -426,141 +334,216 @@ view model =
             , height <| px 10
             , Background.color black
             ]
-    , if model.force then
-        viewHome model
+    , case model.view of
+        ViewHome ->
+            viewHome model
 
-      else
-        case model.view of
-            ViewHome ->
-                viewPage model
-
-            ViewSettings ->
-                model.auth
-                    |> unwrap
-                        ([ text "You're a guest, you don't have settings!"
-                         , Input.button
-                            [ Font.bold
-                            , centerX
-                            , Element.mouseOver
-                                [ Font.color blue
+        ViewMagic ->
+            model.magic
+                |> unwrap (text "wait")
+                    (\b ->
+                        if b then
+                            [ text "Choose a password"
+                                |> el [ Font.italic ]
+                            , Input.currentPassword
+                                [ Border.rounded 0
+                                , Border.width 1
+                                , Border.color black
+                                , width fill
+                                , padding 10
                                 ]
-                            ]
-                            { onPress = Just Force, label = text "Sign up now" }
-                         ]
-                            |> column [ spacing 50, centerX ]
-                        )
-                        (\auth ->
-                            [ [ text "Email: "
-                              , text auth.email
-                              ]
-                                |> row [ spacing 10 ]
-                            , Input.button []
-                                { onPress = Just Logout
-                                , label = text "LOGOUT"
+                                { onChange = LoginFormPasswordUpdate
+                                , label = Input.labelHidden ""
+                                , show = False
+                                , placeholder =
+                                    text "Your password"
+                                        |> Input.placeholder []
+                                        |> Just
+                                , text = model.loginForm.password
                                 }
+                            , text "Don't forget it or you are screwed."
+                                |> el [ Font.italic, Font.size 15 ]
+                            , Input.text
+                                [ Border.rounded 0
+                                , Border.width 1
+                                , Border.color black
+                                , width fill
+                                , padding 10
+                                ]
+                                { onChange = LoginFormPasswordUpdate
+                                , label = Input.labelHidden ""
+                                , placeholder =
+                                    text "Optional password hint"
+                                        |> Input.placeholder []
+                                        |> Just
+                                , text = ""
+                                }
+                            , btn "Submit" <| SignupSubmit model.mg
                             ]
-                                |> column [ spacing 20 ]
-                        )
-                    |> el
-                        [ centerX
-                        ]
-                    |> viewFrame model
-
-            ViewTags ->
-                [ [ [ Input.text
-                        [ Border.rounded 0
-                        , Border.width 0
-                        , width fill
-                        , padding 10
-
-                        --, style "cursor" "wait"
-                        --|> whenAttr model.inProgress
-                        , Html.Attributes.disabled (model.funnel /= Types.Hello)
-                            |> Element.htmlAttribute
-                        , (if model.funnel /= Types.Hello then
-                            grey
-
-                           else
-                            white
-                          )
-                            |> Background.color
-
-                        --, onEnter Submit
-                        --|> whenAttr valid
-                        ]
-                        { onChange = TagCreateNameUpdate
-                        , label = Input.labelHidden ""
-                        , placeholder =
-                            Just <|
-                                Input.placeholder
-                                    [--rale
+                                |> column
+                                    [ cappedWidth 450
+                                    , spacing 30
+                                    , centerX
+                                    , padding 40
                                     ]
-                                <|
-                                    text "New tag"
-                        , text = model.tagCreateName
-                        }
-                    , btn "Submit" TagCreateSubmit
+
+                        else
+                            [ text "This link is broken."
+                            , btn "Re-send email" (NavigateTo RouteHome)
+                                |> el [ centerX ]
+                            ]
+                                |> column
+                                    [ centerX
+                                    , spacing 20
+                                    ]
+                    )
+
+        ViewCalendar ->
+            viewPage model
+
+        ViewSettings ->
+            model.auth
+                |> unwrap
+                    ([ text "You're a guest, you don't have settings!"
+                     , Input.button
+                        [ Font.bold
+                        , centerX
+                        , Element.mouseOver
+                            [ Font.color blue
+                            ]
+                        ]
+                        { onPress = Just <| NavigateTo RouteHome, label = text "Sign up now" }
+                     ]
+                        |> column [ spacing 50, centerX ]
+                    )
+                    (\auth ->
+                        [ [ text "Email: "
+                          , text auth.email
+                          ]
+                            |> row [ spacing 10 ]
+                        , Input.button []
+                            { onPress = Just Logout
+                            , label = text "LOGOUT"
+                            }
+                        ]
+                            |> column [ spacing 20 ]
+                    )
+                |> el
+                    [ centerX
                     ]
-                        |> row []
-                  , model.tags
-                        |> UD.values
-                        |> List.map
-                            (\t ->
-                                if model.tagBeingEdited == Just t.id then
-                                    Input.text
-                                        [ Border.rounded 0, shadow ]
-                                        { label =
-                                            Input.labelRight [] <|
-                                                row []
-                                                    [ emoji Tick <| TagUpdateSubmit { t | name = model.tagUpdate }
-                                                    , emoji X <| TagUpdateSet Nothing
-                                                    ]
-                                        , onChange = TagUpdate
-                                        , placeholder = Nothing
-                                        , text = model.tagUpdate
-                                        }
+                |> viewFrame model
 
-                                else
-                                    [ Input.button []
-                                        { onPress = Just <| TagSelect t.id
-                                        , label = text t.name
-                                        }
+        ViewTags ->
+            [ [ [ Input.text
+                    [ Border.rounded 0
+                    , Border.width 0
+                    , width fill
+                    , padding 10
 
-                                    --(t.name ++ " [" ++  ++ "]")
-                                    --<|
-                                    --NavigateTo <|
-                                    --RouteTagPosts t.id
-                                    , text <| String.fromInt t.count
-                                    , row []
-                                        [ emoji Edit <| TagUpdateSet <| Just t
-                                        , emoji Trash <| TagDelete t
-                                        ]
-                                    ]
-                                        |> row [ spacing 20, width fill ]
-                            )
-                        |> column []
-                  ]
-                    |> column [ cappedWidth 450, centerX ]
-                , model.tag
-                    |> whenJust
-                        (\t ->
-                            model.posts
-                                |> Day.values
-                                |> List.filterMap Helpers.extract
-                                |> List.filter
-                                    (\p ->
-                                        List.member t p.tags
-                                    )
-                                |> List.map (.date >> Date.toIsoString >> text)
-                                |> column [ spacing 10 ]
-                        )
+                    --, style "cursor" "wait"
+                    --|> whenAttr model.inProgress
+                    , Html.Attributes.disabled (model.funnel /= Types.Hello)
+                        |> Element.htmlAttribute
+                    , (if model.funnel /= Types.Hello then
+                        grey
+
+                       else
+                        white
+                      )
+                        |> Background.color
+
+                    --, onEnter Submit
+                    --|> whenAttr valid
+                    ]
+                    { onChange = TagCreateNameUpdate
+                    , label = Input.labelHidden ""
+                    , placeholder =
+                        Just <|
+                            Input.placeholder
+                                [--rale
+                                ]
+                            <|
+                                text "New tag"
+                    , text = model.tagCreateName
+                    }
+                , btn "Submit" TagCreateSubmit
                 ]
-                    |> row [ centerX, spacing 50 ]
-                    |> viewFrame model
+                    |> row []
+              , model.tags
+                    |> UD.values
+                    |> List.map
+                        (\t ->
+                            if model.tagBeingEdited == Just t.id then
+                                Input.text
+                                    [ Border.rounded 0, shadow ]
+                                    { label =
+                                        Input.labelRight [] <|
+                                            row []
+                                                --[ emoji Tick <| TagUpdateSubmit { t | name = model.tagUpdate }
+                                                --, emoji X <| TagUpdateSet Nothing
+                                                --]
+                                                []
+                                    , onChange = TagUpdate
+                                    , placeholder = Nothing
+                                    , text = model.tagUpdate
+                                    }
 
-            _ ->
-                text "my sweer lad"
-                    |> el [ centerX, centerY ]
+                            else
+                                [ Input.button []
+                                    { onPress = Just <| TagSelect t.id
+                                    , label = text t.name
+                                    }
+
+                                --(t.name ++ " [" ++  ++ "]")
+                                --<|
+                                --NavigateTo <|
+                                --RouteTagPosts t.id
+                                , text <| String.fromInt t.count
+                                , row []
+                                    --[ emoji Edit <| TagUpdateSet <| Just t
+                                    --, emoji Trash <| TagDelete t
+                                    --]
+                                    []
+                                ]
+                                    |> row [ spacing 20, width fill ]
+                        )
+                    |> column []
+              ]
+                |> column [ cappedWidth 450, centerX ]
+            , model.tag
+                |> whenJust
+                    (\t ->
+                        model.posts
+                            |> Day.values
+                            |> List.filterMap Helpers.extract
+                            |> List.filter
+                                (\p ->
+                                    List.member t p.tags
+                                )
+                            |> List.map (.date >> Date.toIsoString >> text)
+                            |> column [ spacing 10 ]
+                    )
+            ]
+                |> row [ centerX, spacing 50 ]
+                |> viewFrame model
+
+        ViewSuccess ->
+            [ text "BLOCKOUT"
+                |> el
+                    [ varela
+                    , Font.semiBold
+                    , Font.size 75
+                    , style "animation-name" "fadeIn"
+                    , style "animation-duration" "1s"
+                    ]
+            , text "Thank you for your purchase."
+                |> el [ centerX ]
+            , text "Please check your email for the next steps."
+                |> el [ centerX ]
+            , btn "Continue" (NavigateTo RouteHome)
+                |> el [ centerX ]
+            ]
+                |> column [ centerX, spacing 20, padding 40 ]
     ]
         |> column [ spacing 20, height fill, width fill ]
         |> Element.layoutWith
@@ -595,6 +578,8 @@ viewHome : Model -> Element Msg
 viewHome model =
     [ [ ( "FAQ", RouteSettings )
       , ( "Contact", RouteSettings )
+      , ( "Alternatives", RouteSettings )
+      , ( "Security", RouteSettings )
       ]
         |> List.map
             (\( name, _ ) ->
@@ -681,7 +666,7 @@ viewHome model =
                     [ Font.color blue
                     ]
                 ]
-                { onPress = Just Force
+                { onPress = Just <| NavigateTo RouteCalendar
                 , label = text "Try the demo"
                 }
           ]
@@ -690,7 +675,7 @@ viewHome model =
             viewFunnel model
 
           else
-            btn "Return to app" Force
+            btn "Return to app" <| NavigateTo RouteCalendar
         ]
             |> column [ spacing 40, Element.alignRight ]
       ]
@@ -825,9 +810,18 @@ viewFunnel model =
         Hello ->
             none
 
-        WelcomeBack _ ->
-            text "Welcome back"
-                |> el [ Font.italic ]
+        WelcomeBack nonce ->
+            viewWelcome model nonce
+
+        CheckEmail ->
+            [ text "Please check your email for signup instructions."
+            , btn "Re-send email" (NavigateTo RouteHome)
+                |> el [ centerX ]
+            ]
+                |> column
+                    [ centerX
+                    , spacing 20
+                    ]
 
         JoinUs ->
             [ text "Please choose your desired plan"
@@ -859,22 +853,29 @@ viewWelcome model nonce =
             , Border.width 0
             , width fill
             , padding 10
+            , centerY
+            , onKeydown [ onEnter <| LoginSubmit nonce ]
             ]
             { onChange = LoginFormPasswordUpdate
             , label = Input.labelHidden ""
             , show = False
             , placeholder =
                 text "Your password"
+                    |> el [ centerY ]
                     |> Input.placeholder []
                     |> Just
             , text = model.loginForm.password
             }
-      , el [ height fill, width <| px 1, Background.color black ] none
+            |> el
+                [ height fill
+                , width fill
+                , Border.widthEach { top = 1, bottom = 1, left = 1, right = 0 }
+                , Border.color black
+                ]
       , btn "Submit" (LoginSubmit nonce)
       ]
         |> row
             [ width fill
-            , Border.width 1
             ]
     ]
         |> column
@@ -892,7 +893,7 @@ viewFrame model elem =
             , Font.semiBold
             , Font.size 25
             ]
-            { onPress = Just Force
+            { onPress = Just <| NavigateTo RouteHome
             , label =
                 [ text "BLOCKOUT"
                 , text "DEMO"
@@ -901,7 +902,7 @@ viewFrame model elem =
                 ]
                     |> row [ spacing 10 ]
             }
-      , [ ( "Calendar", RouteHome, ViewHome )
+      , [ ( "Calendar", RouteCalendar, ViewCalendar )
         , ( "Tags", RouteTags, ViewTags )
         , ( "Settings", RouteSettings, ViewSettings )
         ]
@@ -932,47 +933,6 @@ viewPage model =
     ]
         |> row [ width fill, height fill, spacing 20, padding 20 ]
         |> viewFrame model
-
-
-viewPassword : Model -> Element Msg
-viewPassword model =
-    [ text "Please provide a password in order to sign up"
-        |> el [ Font.italic ]
-    , Input.currentPassword
-        [ Border.rounded 0
-        , Border.width 1
-        , Border.color black
-        , width fill
-        , padding 10
-        ]
-        { onChange = LoginFormPasswordUpdate
-        , label = Input.labelHidden ""
-        , show = False
-        , placeholder =
-            text "Your password"
-                |> Input.placeholder []
-                |> Just
-        , text = model.loginForm.password
-        }
-    , Input.text
-        [ Border.rounded 0
-        , Border.width 1
-        , Border.color black
-        , width fill
-        , padding 10
-        ]
-        { onChange = LoginFormPasswordUpdate
-        , label = Input.labelHidden ""
-        , placeholder =
-            text "Optional password hint"
-                |> Input.placeholder []
-                |> Just
-        , text = ""
-        }
-    ]
-        |> column
-            [ width fill
-            ]
 
 
 viewReady : Element Msg
@@ -1090,7 +1050,14 @@ viewPost model =
                                 |> when (model.postEditorBody /= "")
                             )
                             (\p ->
-                                [ btn "Submit" (PostUpdateSubmit p.id)
+                                [ btn
+                                    (if String.isEmpty model.postEditorBody then
+                                        "Delete"
+
+                                     else
+                                        "Submit"
+                                    )
+                                    (PostUpdateSubmit p.id)
                                     |> when (model.postEditorBody /= p.body)
                                 , btn "Cancel" PostUpdateCancel
                                 ]

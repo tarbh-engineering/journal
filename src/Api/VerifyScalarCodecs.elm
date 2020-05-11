@@ -13,6 +13,6 @@ import Api.Scalar
 import CustomScalars
 
 
-verify : Api.Scalar.Codecs CustomScalars.Date CustomScalars.Id CustomScalars.Uuid
+verify : Api.Scalar.Codecs CustomScalars.Date CustomScalars.Id CustomScalars.Timestamptz CustomScalars.Uuid
 verify =
     CustomScalars.codecs

@@ -2,7 +2,7 @@
 -- https://github.com/dillonkearns/elm-graphql
 
 
-module Api.Object.Query exposing (..)
+module Api.Object.Purchase_aggregate exposing (..)
 
 import Api.InputObject
 import Api.Interface
@@ -19,19 +19,11 @@ import Graphql.SelectionSet exposing (SelectionSet)
 import Json.Decode as Decode
 
 
-type alias CheckRequiredArguments =
-    { txt : String }
+aggregate : SelectionSet decodesTo Api.Object.Purchase_aggregate_fields -> SelectionSet (Maybe decodesTo) Api.Object.Purchase_aggregate
+aggregate object_ =
+    Object.selectionForCompositeField "aggregate" [] object_ (identity >> Decode.nullable)
 
 
-check : CheckRequiredArguments -> SelectionSet Bool Api.Object.Query
-check requiredArgs =
-    Object.selectionForField "Bool" "check" [ Argument.required "txt" requiredArgs.txt Encode.string ] Decode.bool
-
-
-type alias NonceRequiredArguments =
-    { email : String }
-
-
-nonce : NonceRequiredArguments -> SelectionSet String Api.Object.Query
-nonce requiredArgs =
-    Object.selectionForField "String" "nonce" [ Argument.required "email" requiredArgs.email Encode.string ] Decode.string
+nodes : SelectionSet decodesTo Api.Object.Purchase -> SelectionSet (List decodesTo) Api.Object.Purchase_aggregate
+nodes object_ =
+    Object.selectionForCompositeField "nodes" [] object_ (identity >> Decode.list)

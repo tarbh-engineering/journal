@@ -8,14 +8,15 @@ import Day
 import Derberos.Date.Utils exposing (numberToMonth)
 import Graphql.OptionalArgument exposing (OptionalArgument(..))
 import Helpers.UuidDict as UD
-import Maybe.Extra exposing (unwrap)
+import Maybe.Extra exposing (orElse, unwrap)
 import Ports
 import Routing
 import Task
 import Time exposing (Month(..))
-import Types exposing (Flags, Model, Msg(..), PostView(..), Route(..), Screen, ServiceWorkerRequest(..), Sort(..), Status(..), View(..))
+import Types exposing (Flags, Model, Msg(..), PostView(..), Route(..), Screen, Sort(..), Status(..), View(..))
 import Update exposing (update)
 import Url
+import Url.Parser exposing ((</>), parse, s)
 import View exposing (view)
 
 
@@ -60,15 +61,43 @@ init flags =
     in
     flags.auth
         |> unwrap
-            ( startModel
-            , Cmd.none
+            (flags.href
+                |> Url.fromString
+                |> Maybe.andThen
+                    (\url ->
+                        url
+                            |> Url.Parser.parse (s "magic" </> Url.Parser.string)
+                            |> Maybe.map
+                                (\val ->
+                                    ( { startModel
+                                        | view = ViewMagic
+                                        , mg = val
+                                      }
+                                    , Data.check val
+                                        |> Task.attempt CheckCb
+                                    )
+                                )
+                            |> orElse
+                                (url
+                                    |> Url.Parser.parse (s "payment-success")
+                                    |> Maybe.map
+                                        (\_ ->
+                                            ( { startModel | view = ViewSuccess }
+                                            , Cmd.none
+                                            )
+                                        )
+                                )
+                    )
+                |> Maybe.withDefault
+                    ( startModel
+                    , Cmd.none
+                    )
             )
             (\auth ->
                 ( { startModel
                     | auth = Just auth
                     , view = ViewHome
                     , online = flags.online
-                    , force = False
                   }
                 , Cmd.batch
                     [ now
@@ -88,11 +117,12 @@ init flags =
                         |> Task.attempt PostsCb
                     , fetchTags auth
                         |> Task.attempt TagsCb
-                    , flags.href
-                        |> Url.fromString
-                        |> unwrap Types.NotFound Routing.router
-                        |> Task.succeed
-                        |> Task.perform UrlChange
+
+                    --, flags.href
+                    --|> Url.fromString
+                    --|> unwrap Types.NotFound Routing.router
+                    --|> Task.succeed
+                    --|> Task.perform UrlChange
                     ]
                 )
             )
@@ -103,7 +133,7 @@ emptyModel =
     { errors = []
     , posts = Day.newDayDict
     , tags = UD.empty
-    , view = ViewLogin
+    , view = ViewHome
     , postCreateTags = []
     , postSaveInProgress = False
     , postEditorBody = ""
@@ -127,8 +157,9 @@ emptyModel =
     , month = Time.Jan
     , year = 2020
     , current = Nothing
-    , force = True
     , funnel = Types.Hello
     , tag = Nothing
     , def = Nothing
+    , magic = Nothing
+    , mg = ""
     }

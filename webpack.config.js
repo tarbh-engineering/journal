@@ -1,7 +1,13 @@
 const { resolve } = require("path");
 const webpack = require("webpack");
 
-const { ENV, HASURA_ENDPOINT } = process.env;
+const {
+  ENV,
+  HASURA_ENDPOINT,
+  STRIPE_PROJECT_ID,
+  STRIPE_ANNUAL,
+  STRIPE_MONTHLY,
+} = process.env;
 
 const publicFolder = resolve("./public");
 
@@ -60,5 +66,12 @@ module.exports = {
       },
     ],
   },
-  plugins: [new webpack.NoEmitOnErrorsPlugin()],
+  plugins: [
+    new webpack.DefinePlugin({
+      STRIPE_PROJECT_ID: JSON.stringify(STRIPE_PROJECT_ID),
+      STRIPE_MONTHLY: JSON.stringify(STRIPE_MONTHLY),
+      STRIPE_ANNUAL: JSON.stringify(STRIPE_ANNUAL),
+    }),
+    new webpack.NoEmitOnErrorsPlugin(),
+  ],
 };
