@@ -20,6 +20,11 @@ import Graphql.SelectionSet exposing (SelectionSet)
 import Json.Decode as Decode
 
 
+created_at : SelectionSet CustomScalars.Timestamptz Api.Object.Tag
+created_at =
+    Object.selectionForField "CustomScalars.Timestamptz" "created_at" [] (CustomScalars.codecs |> Api.Scalar.unwrapCodecs |> .codecTimestamptz |> .decoder)
+
+
 id : SelectionSet CustomScalars.Uuid Api.Object.Tag
 id =
     Object.selectionForField "CustomScalars.Uuid" "id" [] (CustomScalars.codecs |> Api.Scalar.unwrapCodecs |> .codecUuid |> .decoder)
@@ -53,7 +58,10 @@ type alias PostTagsBytagIdOptionalArguments =
   - where\_ - filter the rows returned
 
 -}
-postTagsBytagId : (PostTagsBytagIdOptionalArguments -> PostTagsBytagIdOptionalArguments) -> SelectionSet decodesTo Api.Object.Post_tag -> SelectionSet (List decodesTo) Api.Object.Tag
+postTagsBytagId :
+    (PostTagsBytagIdOptionalArguments -> PostTagsBytagIdOptionalArguments)
+    -> SelectionSet decodesTo Api.Object.Post_tag
+    -> SelectionSet (List decodesTo) Api.Object.Tag
 postTagsBytagId fillInOptionals object_ =
     let
         filledInOptionals =
@@ -84,7 +92,10 @@ type alias PostTagsBytagIdAggregateOptionalArguments =
   - where\_ - filter the rows returned
 
 -}
-postTagsBytagId_aggregate : (PostTagsBytagIdAggregateOptionalArguments -> PostTagsBytagIdAggregateOptionalArguments) -> SelectionSet decodesTo Api.Object.Post_tag_aggregate -> SelectionSet decodesTo Api.Object.Tag
+postTagsBytagId_aggregate :
+    (PostTagsBytagIdAggregateOptionalArguments -> PostTagsBytagIdAggregateOptionalArguments)
+    -> SelectionSet decodesTo Api.Object.Post_tag_aggregate
+    -> SelectionSet decodesTo Api.Object.Tag
 postTagsBytagId_aggregate fillInOptionals object_ =
     let
         filledInOptionals =
@@ -97,9 +108,16 @@ postTagsBytagId_aggregate fillInOptionals object_ =
     Object.selectionForCompositeField "postTagsBytagId_aggregate" optionalArgs object_ identity
 
 
+updated_at : SelectionSet CustomScalars.Timestamptz Api.Object.Tag
+updated_at =
+    Object.selectionForField "CustomScalars.Timestamptz" "updated_at" [] (CustomScalars.codecs |> Api.Scalar.unwrapCodecs |> .codecTimestamptz |> .decoder)
+
+
 {-| An object relationship
 -}
-userByuserId : SelectionSet decodesTo Api.Object.User -> SelectionSet decodesTo Api.Object.Tag
+userByuserId :
+    SelectionSet decodesTo Api.Object.User
+    -> SelectionSet decodesTo Api.Object.Tag
 userByuserId object_ =
     Object.selectionForCompositeField "userByuserId" [] object_ identity
 

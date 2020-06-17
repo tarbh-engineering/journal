@@ -19,11 +19,15 @@ import Graphql.SelectionSet exposing (SelectionSet)
 import Json.Decode as Decode
 
 
-aggregate : SelectionSet decodesTo Api.Object.Post_aggregate_fields -> SelectionSet (Maybe decodesTo) Api.Object.Post_aggregate
+aggregate :
+    SelectionSet decodesTo Api.Object.Post_aggregate_fields
+    -> SelectionSet (Maybe decodesTo) Api.Object.Post_aggregate
 aggregate object_ =
     Object.selectionForCompositeField "aggregate" [] object_ (identity >> Decode.nullable)
 
 
-nodes : SelectionSet decodesTo Api.Object.Post -> SelectionSet (List decodesTo) Api.Object.Post_aggregate
+nodes :
+    SelectionSet decodesTo Api.Object.Post
+    -> SelectionSet (List decodesTo) Api.Object.Post_aggregate
 nodes object_ =
     Object.selectionForCompositeField "nodes" [] object_ (identity >> Decode.list)

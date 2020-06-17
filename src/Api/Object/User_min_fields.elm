@@ -19,6 +19,11 @@ import Graphql.SelectionSet exposing (SelectionSet)
 import Json.Decode as Decode
 
 
+created_at : SelectionSet (Maybe CustomScalars.Timestamptz) Api.Object.User_min_fields
+created_at =
+    Object.selectionForField "(Maybe CustomScalars.Timestamptz)" "created_at" [] (CustomScalars.codecs |> Api.Scalar.unwrapCodecs |> .codecTimestamptz |> .decoder |> Decode.nullable)
+
+
 id : SelectionSet (Maybe CustomScalars.Uuid) Api.Object.User_min_fields
 id =
     Object.selectionForField "(Maybe CustomScalars.Uuid)" "id" [] (CustomScalars.codecs |> Api.Scalar.unwrapCodecs |> .codecUuid |> .decoder |> Decode.nullable)
@@ -37,3 +42,13 @@ password =
 purchase_id : SelectionSet (Maybe CustomScalars.Uuid) Api.Object.User_min_fields
 purchase_id =
     Object.selectionForField "(Maybe CustomScalars.Uuid)" "purchase_id" [] (CustomScalars.codecs |> Api.Scalar.unwrapCodecs |> .codecUuid |> .decoder |> Decode.nullable)
+
+
+token : SelectionSet (Maybe String) Api.Object.User_min_fields
+token =
+    Object.selectionForField "(Maybe String)" "token" [] (Decode.string |> Decode.nullable)
+
+
+updated_at : SelectionSet (Maybe CustomScalars.Timestamptz) Api.Object.User_min_fields
+updated_at =
+    Object.selectionForField "(Maybe CustomScalars.Timestamptz)" "updated_at" [] (CustomScalars.codecs |> Api.Scalar.unwrapCodecs |> .codecTimestamptz |> .decoder |> Decode.nullable)

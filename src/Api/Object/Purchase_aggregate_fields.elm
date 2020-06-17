@@ -26,7 +26,9 @@ type alias CountOptionalArguments =
     }
 
 
-count : (CountOptionalArguments -> CountOptionalArguments) -> SelectionSet (Maybe Int) Api.Object.Purchase_aggregate_fields
+count :
+    (CountOptionalArguments -> CountOptionalArguments)
+    -> SelectionSet (Maybe Int) Api.Object.Purchase_aggregate_fields
 count fillInOptionals =
     let
         filledInOptionals =
@@ -39,11 +41,15 @@ count fillInOptionals =
     Object.selectionForField "(Maybe Int)" "count" optionalArgs (Decode.int |> Decode.nullable)
 
 
-max : SelectionSet decodesTo Api.Object.Purchase_max_fields -> SelectionSet (Maybe decodesTo) Api.Object.Purchase_aggregate_fields
+max :
+    SelectionSet decodesTo Api.Object.Purchase_max_fields
+    -> SelectionSet (Maybe decodesTo) Api.Object.Purchase_aggregate_fields
 max object_ =
     Object.selectionForCompositeField "max" [] object_ (identity >> Decode.nullable)
 
 
-min : SelectionSet decodesTo Api.Object.Purchase_min_fields -> SelectionSet (Maybe decodesTo) Api.Object.Purchase_aggregate_fields
+min :
+    SelectionSet decodesTo Api.Object.Purchase_min_fields
+    -> SelectionSet (Maybe decodesTo) Api.Object.Purchase_aggregate_fields
 min object_ =
     Object.selectionForCompositeField "min" [] object_ (identity >> Decode.nullable)

@@ -42,7 +42,10 @@ type alias PostOptionalArguments =
   - where\_ - filter the rows returned
 
 -}
-post : (PostOptionalArguments -> PostOptionalArguments) -> SelectionSet decodesTo Api.Object.Post -> SelectionSet (List decodesTo) RootSubscription
+post :
+    (PostOptionalArguments -> PostOptionalArguments)
+    -> SelectionSet decodesTo Api.Object.Post
+    -> SelectionSet (List decodesTo) RootSubscription
 post fillInOptionals object_ =
     let
         filledInOptionals =
@@ -73,7 +76,10 @@ type alias PostAggregateOptionalArguments =
   - where\_ - filter the rows returned
 
 -}
-post_aggregate : (PostAggregateOptionalArguments -> PostAggregateOptionalArguments) -> SelectionSet decodesTo Api.Object.Post_aggregate -> SelectionSet decodesTo RootSubscription
+post_aggregate :
+    (PostAggregateOptionalArguments -> PostAggregateOptionalArguments)
+    -> SelectionSet decodesTo Api.Object.Post_aggregate
+    -> SelectionSet decodesTo RootSubscription
 post_aggregate fillInOptionals object_ =
     let
         filledInOptionals =
@@ -92,7 +98,10 @@ type alias PostByPkRequiredArguments =
 
 {-| fetch data from the table: "post" using primary key columns
 -}
-post_by_pk : PostByPkRequiredArguments -> SelectionSet decodesTo Api.Object.Post -> SelectionSet (Maybe decodesTo) RootSubscription
+post_by_pk :
+    PostByPkRequiredArguments
+    -> SelectionSet decodesTo Api.Object.Post
+    -> SelectionSet (Maybe decodesTo) RootSubscription
 post_by_pk requiredArgs object_ =
     Object.selectionForCompositeField "post_by_pk" [ Argument.required "id" requiredArgs.id (CustomScalars.codecs |> Api.Scalar.unwrapEncoder .codecUuid) ] object_ (identity >> Decode.nullable)
 
@@ -115,7 +124,10 @@ type alias PostTagOptionalArguments =
   - where\_ - filter the rows returned
 
 -}
-post_tag : (PostTagOptionalArguments -> PostTagOptionalArguments) -> SelectionSet decodesTo Api.Object.Post_tag -> SelectionSet (List decodesTo) RootSubscription
+post_tag :
+    (PostTagOptionalArguments -> PostTagOptionalArguments)
+    -> SelectionSet decodesTo Api.Object.Post_tag
+    -> SelectionSet (List decodesTo) RootSubscription
 post_tag fillInOptionals object_ =
     let
         filledInOptionals =
@@ -146,7 +158,10 @@ type alias PostTagAggregateOptionalArguments =
   - where\_ - filter the rows returned
 
 -}
-post_tag_aggregate : (PostTagAggregateOptionalArguments -> PostTagAggregateOptionalArguments) -> SelectionSet decodesTo Api.Object.Post_tag_aggregate -> SelectionSet decodesTo RootSubscription
+post_tag_aggregate :
+    (PostTagAggregateOptionalArguments -> PostTagAggregateOptionalArguments)
+    -> SelectionSet decodesTo Api.Object.Post_tag_aggregate
+    -> SelectionSet decodesTo RootSubscription
 post_tag_aggregate fillInOptionals object_ =
     let
         filledInOptionals =
@@ -165,7 +180,10 @@ type alias PostTagByPkRequiredArguments =
 
 {-| fetch data from the table: "post\_tag" using primary key columns
 -}
-post_tag_by_pk : PostTagByPkRequiredArguments -> SelectionSet decodesTo Api.Object.Post_tag -> SelectionSet (Maybe decodesTo) RootSubscription
+post_tag_by_pk :
+    PostTagByPkRequiredArguments
+    -> SelectionSet decodesTo Api.Object.Post_tag
+    -> SelectionSet (Maybe decodesTo) RootSubscription
 post_tag_by_pk requiredArgs object_ =
     Object.selectionForCompositeField "post_tag_by_pk" [ Argument.required "id" requiredArgs.id (CustomScalars.codecs |> Api.Scalar.unwrapEncoder .codecUuid) ] object_ (identity >> Decode.nullable)
 
@@ -188,7 +206,10 @@ type alias PurchaseOptionalArguments =
   - where\_ - filter the rows returned
 
 -}
-purchase : (PurchaseOptionalArguments -> PurchaseOptionalArguments) -> SelectionSet decodesTo Api.Object.Purchase -> SelectionSet (List decodesTo) RootSubscription
+purchase :
+    (PurchaseOptionalArguments -> PurchaseOptionalArguments)
+    -> SelectionSet decodesTo Api.Object.Purchase
+    -> SelectionSet (List decodesTo) RootSubscription
 purchase fillInOptionals object_ =
     let
         filledInOptionals =
@@ -219,7 +240,10 @@ type alias PurchaseAggregateOptionalArguments =
   - where\_ - filter the rows returned
 
 -}
-purchase_aggregate : (PurchaseAggregateOptionalArguments -> PurchaseAggregateOptionalArguments) -> SelectionSet decodesTo Api.Object.Purchase_aggregate -> SelectionSet decodesTo RootSubscription
+purchase_aggregate :
+    (PurchaseAggregateOptionalArguments -> PurchaseAggregateOptionalArguments)
+    -> SelectionSet decodesTo Api.Object.Purchase_aggregate
+    -> SelectionSet decodesTo RootSubscription
 purchase_aggregate fillInOptionals object_ =
     let
         filledInOptionals =
@@ -238,7 +262,10 @@ type alias PurchaseByPkRequiredArguments =
 
 {-| fetch data from the table: "purchase" using primary key columns
 -}
-purchase_by_pk : PurchaseByPkRequiredArguments -> SelectionSet decodesTo Api.Object.Purchase -> SelectionSet (Maybe decodesTo) RootSubscription
+purchase_by_pk :
+    PurchaseByPkRequiredArguments
+    -> SelectionSet decodesTo Api.Object.Purchase
+    -> SelectionSet (Maybe decodesTo) RootSubscription
 purchase_by_pk requiredArgs object_ =
     Object.selectionForCompositeField "purchase_by_pk" [ Argument.required "id" requiredArgs.id (CustomScalars.codecs |> Api.Scalar.unwrapEncoder .codecUuid) ] object_ (identity >> Decode.nullable)
 
@@ -261,7 +288,10 @@ type alias TagOptionalArguments =
   - where\_ - filter the rows returned
 
 -}
-tag : (TagOptionalArguments -> TagOptionalArguments) -> SelectionSet decodesTo Api.Object.Tag -> SelectionSet (List decodesTo) RootSubscription
+tag :
+    (TagOptionalArguments -> TagOptionalArguments)
+    -> SelectionSet decodesTo Api.Object.Tag
+    -> SelectionSet (List decodesTo) RootSubscription
 tag fillInOptionals object_ =
     let
         filledInOptionals =
@@ -292,7 +322,10 @@ type alias TagAggregateOptionalArguments =
   - where\_ - filter the rows returned
 
 -}
-tag_aggregate : (TagAggregateOptionalArguments -> TagAggregateOptionalArguments) -> SelectionSet decodesTo Api.Object.Tag_aggregate -> SelectionSet decodesTo RootSubscription
+tag_aggregate :
+    (TagAggregateOptionalArguments -> TagAggregateOptionalArguments)
+    -> SelectionSet decodesTo Api.Object.Tag_aggregate
+    -> SelectionSet decodesTo RootSubscription
 tag_aggregate fillInOptionals object_ =
     let
         filledInOptionals =
@@ -311,7 +344,10 @@ type alias TagByPkRequiredArguments =
 
 {-| fetch data from the table: "tag" using primary key columns
 -}
-tag_by_pk : TagByPkRequiredArguments -> SelectionSet decodesTo Api.Object.Tag -> SelectionSet (Maybe decodesTo) RootSubscription
+tag_by_pk :
+    TagByPkRequiredArguments
+    -> SelectionSet decodesTo Api.Object.Tag
+    -> SelectionSet (Maybe decodesTo) RootSubscription
 tag_by_pk requiredArgs object_ =
     Object.selectionForCompositeField "tag_by_pk" [ Argument.required "id" requiredArgs.id (CustomScalars.codecs |> Api.Scalar.unwrapEncoder .codecUuid) ] object_ (identity >> Decode.nullable)
 
@@ -334,7 +370,10 @@ type alias UserOptionalArguments =
   - where\_ - filter the rows returned
 
 -}
-user : (UserOptionalArguments -> UserOptionalArguments) -> SelectionSet decodesTo Api.Object.User -> SelectionSet (List decodesTo) RootSubscription
+user :
+    (UserOptionalArguments -> UserOptionalArguments)
+    -> SelectionSet decodesTo Api.Object.User
+    -> SelectionSet (List decodesTo) RootSubscription
 user fillInOptionals object_ =
     let
         filledInOptionals =
@@ -365,7 +404,10 @@ type alias UserAggregateOptionalArguments =
   - where\_ - filter the rows returned
 
 -}
-user_aggregate : (UserAggregateOptionalArguments -> UserAggregateOptionalArguments) -> SelectionSet decodesTo Api.Object.User_aggregate -> SelectionSet decodesTo RootSubscription
+user_aggregate :
+    (UserAggregateOptionalArguments -> UserAggregateOptionalArguments)
+    -> SelectionSet decodesTo Api.Object.User_aggregate
+    -> SelectionSet decodesTo RootSubscription
 user_aggregate fillInOptionals object_ =
     let
         filledInOptionals =
@@ -384,6 +426,9 @@ type alias UserByPkRequiredArguments =
 
 {-| fetch data from the table: "user" using primary key columns
 -}
-user_by_pk : UserByPkRequiredArguments -> SelectionSet decodesTo Api.Object.User -> SelectionSet (Maybe decodesTo) RootSubscription
+user_by_pk :
+    UserByPkRequiredArguments
+    -> SelectionSet decodesTo Api.Object.User
+    -> SelectionSet (Maybe decodesTo) RootSubscription
 user_by_pk requiredArgs object_ =
     Object.selectionForCompositeField "user_by_pk" [ Argument.required "id" requiredArgs.id (CustomScalars.codecs |> Api.Scalar.unwrapEncoder .codecUuid) ] object_ (identity >> Decode.nullable)

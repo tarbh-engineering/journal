@@ -19,6 +19,11 @@ import Graphql.SelectionSet exposing (SelectionSet)
 import Json.Decode as Decode
 
 
+created_at : SelectionSet (Maybe CustomScalars.Timestamptz) Api.Object.Tag_max_fields
+created_at =
+    Object.selectionForField "(Maybe CustomScalars.Timestamptz)" "created_at" [] (CustomScalars.codecs |> Api.Scalar.unwrapCodecs |> .codecTimestamptz |> .decoder |> Decode.nullable)
+
+
 id : SelectionSet (Maybe CustomScalars.Uuid) Api.Object.Tag_max_fields
 id =
     Object.selectionForField "(Maybe CustomScalars.Uuid)" "id" [] (CustomScalars.codecs |> Api.Scalar.unwrapCodecs |> .codecUuid |> .decoder |> Decode.nullable)
@@ -32,6 +37,11 @@ iv =
 name : SelectionSet (Maybe String) Api.Object.Tag_max_fields
 name =
     Object.selectionForField "(Maybe String)" "name" [] (Decode.string |> Decode.nullable)
+
+
+updated_at : SelectionSet (Maybe CustomScalars.Timestamptz) Api.Object.Tag_max_fields
+updated_at =
+    Object.selectionForField "(Maybe CustomScalars.Timestamptz)" "updated_at" [] (CustomScalars.codecs |> Api.Scalar.unwrapCodecs |> .codecTimestamptz |> .decoder |> Decode.nullable)
 
 
 user_id : SelectionSet (Maybe CustomScalars.Uuid) Api.Object.Tag_max_fields

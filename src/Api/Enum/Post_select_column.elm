@@ -10,23 +10,27 @@ import Json.Decode as Decode exposing (Decoder)
 {-| select columns of table "post"
 
   - Body - column name
+  - Created\_at - column name
   - Date - column name
   - Id - column name
   - Iv - column name
+  - Updated\_at - column name
   - User\_id - column name
 
 -}
 type Post_select_column
     = Body
+    | Created_at
     | Date
     | Id
     | Iv
+    | Updated_at
     | User_id
 
 
 list : List Post_select_column
 list =
-    [ Body, Date, Id, Iv, User_id ]
+    [ Body, Created_at, Date, Id, Iv, Updated_at, User_id ]
 
 
 decoder : Decoder Post_select_column
@@ -38,6 +42,9 @@ decoder =
                     "body" ->
                         Decode.succeed Body
 
+                    "created_at" ->
+                        Decode.succeed Created_at
+
                     "date" ->
                         Decode.succeed Date
 
@@ -47,6 +54,9 @@ decoder =
                     "iv" ->
                         Decode.succeed Iv
 
+                    "updated_at" ->
+                        Decode.succeed Updated_at
+
                     "user_id" ->
                         Decode.succeed User_id
 
@@ -55,13 +65,16 @@ decoder =
             )
 
 
-{-| Convert from the union type representating the Enum to a string that the GraphQL server will recognize.
+{-| Convert from the union type representing the Enum to a string that the GraphQL server will recognize.
 -}
 toString : Post_select_column -> String
 toString enum =
     case enum of
         Body ->
             "body"
+
+        Created_at ->
+            "created_at"
 
         Date ->
             "date"
@@ -71,6 +84,9 @@ toString enum =
 
         Iv ->
             "iv"
+
+        Updated_at ->
+            "updated_at"
 
         User_id ->
             "user_id"
@@ -93,6 +109,9 @@ fromString enumString =
         "body" ->
             Just Body
 
+        "created_at" ->
+            Just Created_at
+
         "date" ->
             Just Date
 
@@ -101,6 +120,9 @@ fromString enumString =
 
         "iv" ->
             Just Iv
+
+        "updated_at" ->
+            Just Updated_at
 
         "user_id" ->
             Just User_id

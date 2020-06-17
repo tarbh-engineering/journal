@@ -19,6 +19,11 @@ import Graphql.SelectionSet exposing (SelectionSet)
 import Json.Decode as Decode
 
 
+created_at : SelectionSet CustomScalars.Timestamptz Api.Object.Post_tag
+created_at =
+    Object.selectionForField "CustomScalars.Timestamptz" "created_at" [] (CustomScalars.codecs |> Api.Scalar.unwrapCodecs |> .codecTimestamptz |> .decoder)
+
+
 id : SelectionSet CustomScalars.Uuid Api.Object.Post_tag
 id =
     Object.selectionForField "CustomScalars.Uuid" "id" [] (CustomScalars.codecs |> Api.Scalar.unwrapCodecs |> .codecUuid |> .decoder)
@@ -26,7 +31,9 @@ id =
 
 {-| An object relationship
 -}
-postBypostId : SelectionSet decodesTo Api.Object.Post -> SelectionSet decodesTo Api.Object.Post_tag
+postBypostId :
+    SelectionSet decodesTo Api.Object.Post
+    -> SelectionSet decodesTo Api.Object.Post_tag
 postBypostId object_ =
     Object.selectionForCompositeField "postBypostId" [] object_ identity
 
@@ -38,7 +45,9 @@ post_id =
 
 {-| An object relationship
 -}
-tagBytagId : SelectionSet decodesTo Api.Object.Tag -> SelectionSet decodesTo Api.Object.Post_tag
+tagBytagId :
+    SelectionSet decodesTo Api.Object.Tag
+    -> SelectionSet decodesTo Api.Object.Post_tag
 tagBytagId object_ =
     Object.selectionForCompositeField "tagBytagId" [] object_ identity
 
@@ -48,9 +57,16 @@ tag_id =
     Object.selectionForField "CustomScalars.Uuid" "tag_id" [] (CustomScalars.codecs |> Api.Scalar.unwrapCodecs |> .codecUuid |> .decoder)
 
 
+updated_at : SelectionSet CustomScalars.Timestamptz Api.Object.Post_tag
+updated_at =
+    Object.selectionForField "CustomScalars.Timestamptz" "updated_at" [] (CustomScalars.codecs |> Api.Scalar.unwrapCodecs |> .codecTimestamptz |> .decoder)
+
+
 {-| An object relationship
 -}
-userByuserId : SelectionSet decodesTo Api.Object.User -> SelectionSet decodesTo Api.Object.Post_tag
+userByuserId :
+    SelectionSet decodesTo Api.Object.User
+    -> SelectionSet decodesTo Api.Object.Post_tag
 userByuserId object_ =
     Object.selectionForCompositeField "userByuserId" [] object_ identity
 

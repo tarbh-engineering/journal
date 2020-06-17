@@ -28,7 +28,9 @@ import Graphql.SelectionSet exposing (SelectionSet)
 import Json.Decode as Decode
 
 
-buildDate_comparison_exp : (Date_comparison_expOptionalFields -> Date_comparison_expOptionalFields) -> Date_comparison_exp
+buildDate_comparison_exp :
+    (Date_comparison_expOptionalFields -> Date_comparison_expOptionalFields)
+    -> Date_comparison_exp
 buildDate_comparison_exp fillOptionals =
     let
         optionals =
@@ -74,7 +76,9 @@ encodeDate_comparison_exp input =
         [ ( "_eq", (CustomScalars.codecs |> Api.Scalar.unwrapEncoder .codecDate) |> Encode.optional input.eq_ ), ( "_gt", (CustomScalars.codecs |> Api.Scalar.unwrapEncoder .codecDate) |> Encode.optional input.gt_ ), ( "_gte", (CustomScalars.codecs |> Api.Scalar.unwrapEncoder .codecDate) |> Encode.optional input.gte_ ), ( "_in", ((CustomScalars.codecs |> Api.Scalar.unwrapEncoder .codecDate) |> Encode.list) |> Encode.optional input.in_ ), ( "_is_null", Encode.bool |> Encode.optional input.is_null_ ), ( "_lt", (CustomScalars.codecs |> Api.Scalar.unwrapEncoder .codecDate) |> Encode.optional input.lt_ ), ( "_lte", (CustomScalars.codecs |> Api.Scalar.unwrapEncoder .codecDate) |> Encode.optional input.lte_ ), ( "_neq", (CustomScalars.codecs |> Api.Scalar.unwrapEncoder .codecDate) |> Encode.optional input.neq_ ), ( "_nin", ((CustomScalars.codecs |> Api.Scalar.unwrapEncoder .codecDate) |> Encode.list) |> Encode.optional input.nin_ ) ]
 
 
-buildPost_aggregate_order_by : (Post_aggregate_order_byOptionalFields -> Post_aggregate_order_byOptionalFields) -> Post_aggregate_order_by
+buildPost_aggregate_order_by :
+    (Post_aggregate_order_byOptionalFields -> Post_aggregate_order_byOptionalFields)
+    -> Post_aggregate_order_by
 buildPost_aggregate_order_by fillOptionals =
     let
         optionals =
@@ -108,7 +112,10 @@ encodePost_aggregate_order_by input =
         [ ( "count", Encode.enum Api.Enum.Order_by.toString |> Encode.optional input.count ), ( "max", encodePost_max_order_by |> Encode.optional input.max ), ( "min", encodePost_min_order_by |> Encode.optional input.min ) ]
 
 
-buildPost_arr_rel_insert_input : Post_arr_rel_insert_inputRequiredFields -> (Post_arr_rel_insert_inputOptionalFields -> Post_arr_rel_insert_inputOptionalFields) -> Post_arr_rel_insert_input
+buildPost_arr_rel_insert_input :
+    Post_arr_rel_insert_inputRequiredFields
+    -> (Post_arr_rel_insert_inputOptionalFields -> Post_arr_rel_insert_inputOptionalFields)
+    -> Post_arr_rel_insert_input
 buildPost_arr_rel_insert_input required fillOptionals =
     let
         optionals =
@@ -151,14 +158,16 @@ encodePost_arr_rel_insert_input (Post_arr_rel_insert_input input) =
         [ ( "data", (encodePost_insert_input |> Encode.list) input.data |> Just ), ( "on_conflict", encodePost_on_conflict |> Encode.optional input.on_conflict ) ]
 
 
-buildPost_bool_exp : (Post_bool_expOptionalFields -> Post_bool_expOptionalFields) -> Post_bool_exp
+buildPost_bool_exp :
+    (Post_bool_expOptionalFields -> Post_bool_expOptionalFields)
+    -> Post_bool_exp
 buildPost_bool_exp fillOptionals =
     let
         optionals =
             fillOptionals
-                { and_ = Absent, not_ = Absent, or_ = Absent, body = Absent, date = Absent, id = Absent, iv = Absent, postTagsBypostId = Absent, userByuserId = Absent, user_id = Absent }
+                { and_ = Absent, not_ = Absent, or_ = Absent, body = Absent, created_at = Absent, date = Absent, id = Absent, iv = Absent, postTagsBypostId = Absent, updated_at = Absent, userByuserId = Absent, user_id = Absent }
     in
-    Post_bool_exp { and_ = optionals.and_, not_ = optionals.not_, or_ = optionals.or_, body = optionals.body, date = optionals.date, id = optionals.id, iv = optionals.iv, postTagsBypostId = optionals.postTagsBypostId, userByuserId = optionals.userByuserId, user_id = optionals.user_id }
+    Post_bool_exp { and_ = optionals.and_, not_ = optionals.not_, or_ = optionals.or_, body = optionals.body, created_at = optionals.created_at, date = optionals.date, id = optionals.id, iv = optionals.iv, postTagsBypostId = optionals.postTagsBypostId, updated_at = optionals.updated_at, userByuserId = optionals.userByuserId, user_id = optionals.user_id }
 
 
 type alias Post_bool_expOptionalFields =
@@ -166,10 +175,12 @@ type alias Post_bool_expOptionalFields =
     , not_ : OptionalArgument Post_bool_exp
     , or_ : OptionalArgument (List (Maybe Post_bool_exp))
     , body : OptionalArgument String_comparison_exp
+    , created_at : OptionalArgument Timestamptz_comparison_exp
     , date : OptionalArgument Date_comparison_exp
     , id : OptionalArgument Uuid_comparison_exp
     , iv : OptionalArgument String_comparison_exp
     , postTagsBypostId : OptionalArgument Post_tag_bool_exp
+    , updated_at : OptionalArgument Timestamptz_comparison_exp
     , userByuserId : OptionalArgument User_bool_exp
     , user_id : OptionalArgument Uuid_comparison_exp
     }
@@ -185,10 +196,12 @@ type alias Post_bool_expRaw =
     , not_ : OptionalArgument Post_bool_exp
     , or_ : OptionalArgument (List (Maybe Post_bool_exp))
     , body : OptionalArgument String_comparison_exp
+    , created_at : OptionalArgument Timestamptz_comparison_exp
     , date : OptionalArgument Date_comparison_exp
     , id : OptionalArgument Uuid_comparison_exp
     , iv : OptionalArgument String_comparison_exp
     , postTagsBypostId : OptionalArgument Post_tag_bool_exp
+    , updated_at : OptionalArgument Timestamptz_comparison_exp
     , userByuserId : OptionalArgument User_bool_exp
     , user_id : OptionalArgument Uuid_comparison_exp
     }
@@ -205,25 +218,29 @@ type Post_bool_exp
 encodePost_bool_exp : Post_bool_exp -> Value
 encodePost_bool_exp (Post_bool_exp input) =
     Encode.maybeObject
-        [ ( "_and", (encodePost_bool_exp |> Encode.maybe |> Encode.list) |> Encode.optional input.and_ ), ( "_not", encodePost_bool_exp |> Encode.optional input.not_ ), ( "_or", (encodePost_bool_exp |> Encode.maybe |> Encode.list) |> Encode.optional input.or_ ), ( "body", encodeString_comparison_exp |> Encode.optional input.body ), ( "date", encodeDate_comparison_exp |> Encode.optional input.date ), ( "id", encodeUuid_comparison_exp |> Encode.optional input.id ), ( "iv", encodeString_comparison_exp |> Encode.optional input.iv ), ( "postTagsBypostId", encodePost_tag_bool_exp |> Encode.optional input.postTagsBypostId ), ( "userByuserId", encodeUser_bool_exp |> Encode.optional input.userByuserId ), ( "user_id", encodeUuid_comparison_exp |> Encode.optional input.user_id ) ]
+        [ ( "_and", (encodePost_bool_exp |> Encode.maybe |> Encode.list) |> Encode.optional input.and_ ), ( "_not", encodePost_bool_exp |> Encode.optional input.not_ ), ( "_or", (encodePost_bool_exp |> Encode.maybe |> Encode.list) |> Encode.optional input.or_ ), ( "body", encodeString_comparison_exp |> Encode.optional input.body ), ( "created_at", encodeTimestamptz_comparison_exp |> Encode.optional input.created_at ), ( "date", encodeDate_comparison_exp |> Encode.optional input.date ), ( "id", encodeUuid_comparison_exp |> Encode.optional input.id ), ( "iv", encodeString_comparison_exp |> Encode.optional input.iv ), ( "postTagsBypostId", encodePost_tag_bool_exp |> Encode.optional input.postTagsBypostId ), ( "updated_at", encodeTimestamptz_comparison_exp |> Encode.optional input.updated_at ), ( "userByuserId", encodeUser_bool_exp |> Encode.optional input.userByuserId ), ( "user_id", encodeUuid_comparison_exp |> Encode.optional input.user_id ) ]
 
 
-buildPost_insert_input : (Post_insert_inputOptionalFields -> Post_insert_inputOptionalFields) -> Post_insert_input
+buildPost_insert_input :
+    (Post_insert_inputOptionalFields -> Post_insert_inputOptionalFields)
+    -> Post_insert_input
 buildPost_insert_input fillOptionals =
     let
         optionals =
             fillOptionals
-                { body = Absent, date = Absent, id = Absent, iv = Absent, postTagsBypostId = Absent, userByuserId = Absent, user_id = Absent }
+                { body = Absent, created_at = Absent, date = Absent, id = Absent, iv = Absent, postTagsBypostId = Absent, updated_at = Absent, userByuserId = Absent, user_id = Absent }
     in
-    Post_insert_input { body = optionals.body, date = optionals.date, id = optionals.id, iv = optionals.iv, postTagsBypostId = optionals.postTagsBypostId, userByuserId = optionals.userByuserId, user_id = optionals.user_id }
+    Post_insert_input { body = optionals.body, created_at = optionals.created_at, date = optionals.date, id = optionals.id, iv = optionals.iv, postTagsBypostId = optionals.postTagsBypostId, updated_at = optionals.updated_at, userByuserId = optionals.userByuserId, user_id = optionals.user_id }
 
 
 type alias Post_insert_inputOptionalFields =
     { body : OptionalArgument String
+    , created_at : OptionalArgument CustomScalars.Timestamptz
     , date : OptionalArgument CustomScalars.Date
     , id : OptionalArgument CustomScalars.Uuid
     , iv : OptionalArgument String
     , postTagsBypostId : OptionalArgument Post_tag_arr_rel_insert_input
+    , updated_at : OptionalArgument CustomScalars.Timestamptz
     , userByuserId : OptionalArgument User_obj_rel_insert_input
     , user_id : OptionalArgument CustomScalars.Uuid
     }
@@ -236,10 +253,12 @@ references to itself either directly (recursive) or indirectly (circular). See
 -}
 type alias Post_insert_inputRaw =
     { body : OptionalArgument String
+    , created_at : OptionalArgument CustomScalars.Timestamptz
     , date : OptionalArgument CustomScalars.Date
     , id : OptionalArgument CustomScalars.Uuid
     , iv : OptionalArgument String
     , postTagsBypostId : OptionalArgument Post_tag_arr_rel_insert_input
+    , updated_at : OptionalArgument CustomScalars.Timestamptz
     , userByuserId : OptionalArgument User_obj_rel_insert_input
     , user_id : OptionalArgument CustomScalars.Uuid
     }
@@ -256,24 +275,28 @@ type Post_insert_input
 encodePost_insert_input : Post_insert_input -> Value
 encodePost_insert_input (Post_insert_input input) =
     Encode.maybeObject
-        [ ( "body", Encode.string |> Encode.optional input.body ), ( "date", (CustomScalars.codecs |> Api.Scalar.unwrapEncoder .codecDate) |> Encode.optional input.date ), ( "id", (CustomScalars.codecs |> Api.Scalar.unwrapEncoder .codecUuid) |> Encode.optional input.id ), ( "iv", Encode.string |> Encode.optional input.iv ), ( "postTagsBypostId", encodePost_tag_arr_rel_insert_input |> Encode.optional input.postTagsBypostId ), ( "userByuserId", encodeUser_obj_rel_insert_input |> Encode.optional input.userByuserId ), ( "user_id", (CustomScalars.codecs |> Api.Scalar.unwrapEncoder .codecUuid) |> Encode.optional input.user_id ) ]
+        [ ( "body", Encode.string |> Encode.optional input.body ), ( "created_at", (CustomScalars.codecs |> Api.Scalar.unwrapEncoder .codecTimestamptz) |> Encode.optional input.created_at ), ( "date", (CustomScalars.codecs |> Api.Scalar.unwrapEncoder .codecDate) |> Encode.optional input.date ), ( "id", (CustomScalars.codecs |> Api.Scalar.unwrapEncoder .codecUuid) |> Encode.optional input.id ), ( "iv", Encode.string |> Encode.optional input.iv ), ( "postTagsBypostId", encodePost_tag_arr_rel_insert_input |> Encode.optional input.postTagsBypostId ), ( "updated_at", (CustomScalars.codecs |> Api.Scalar.unwrapEncoder .codecTimestamptz) |> Encode.optional input.updated_at ), ( "userByuserId", encodeUser_obj_rel_insert_input |> Encode.optional input.userByuserId ), ( "user_id", (CustomScalars.codecs |> Api.Scalar.unwrapEncoder .codecUuid) |> Encode.optional input.user_id ) ]
 
 
-buildPost_max_order_by : (Post_max_order_byOptionalFields -> Post_max_order_byOptionalFields) -> Post_max_order_by
+buildPost_max_order_by :
+    (Post_max_order_byOptionalFields -> Post_max_order_byOptionalFields)
+    -> Post_max_order_by
 buildPost_max_order_by fillOptionals =
     let
         optionals =
             fillOptionals
-                { body = Absent, date = Absent, id = Absent, iv = Absent, user_id = Absent }
+                { body = Absent, created_at = Absent, date = Absent, id = Absent, iv = Absent, updated_at = Absent, user_id = Absent }
     in
-    { body = optionals.body, date = optionals.date, id = optionals.id, iv = optionals.iv, user_id = optionals.user_id }
+    { body = optionals.body, created_at = optionals.created_at, date = optionals.date, id = optionals.id, iv = optionals.iv, updated_at = optionals.updated_at, user_id = optionals.user_id }
 
 
 type alias Post_max_order_byOptionalFields =
     { body : OptionalArgument Api.Enum.Order_by.Order_by
+    , created_at : OptionalArgument Api.Enum.Order_by.Order_by
     , date : OptionalArgument Api.Enum.Order_by.Order_by
     , id : OptionalArgument Api.Enum.Order_by.Order_by
     , iv : OptionalArgument Api.Enum.Order_by.Order_by
+    , updated_at : OptionalArgument Api.Enum.Order_by.Order_by
     , user_id : OptionalArgument Api.Enum.Order_by.Order_by
     }
 
@@ -282,9 +305,11 @@ type alias Post_max_order_byOptionalFields =
 -}
 type alias Post_max_order_by =
     { body : OptionalArgument Api.Enum.Order_by.Order_by
+    , created_at : OptionalArgument Api.Enum.Order_by.Order_by
     , date : OptionalArgument Api.Enum.Order_by.Order_by
     , id : OptionalArgument Api.Enum.Order_by.Order_by
     , iv : OptionalArgument Api.Enum.Order_by.Order_by
+    , updated_at : OptionalArgument Api.Enum.Order_by.Order_by
     , user_id : OptionalArgument Api.Enum.Order_by.Order_by
     }
 
@@ -294,24 +319,28 @@ type alias Post_max_order_by =
 encodePost_max_order_by : Post_max_order_by -> Value
 encodePost_max_order_by input =
     Encode.maybeObject
-        [ ( "body", Encode.enum Api.Enum.Order_by.toString |> Encode.optional input.body ), ( "date", Encode.enum Api.Enum.Order_by.toString |> Encode.optional input.date ), ( "id", Encode.enum Api.Enum.Order_by.toString |> Encode.optional input.id ), ( "iv", Encode.enum Api.Enum.Order_by.toString |> Encode.optional input.iv ), ( "user_id", Encode.enum Api.Enum.Order_by.toString |> Encode.optional input.user_id ) ]
+        [ ( "body", Encode.enum Api.Enum.Order_by.toString |> Encode.optional input.body ), ( "created_at", Encode.enum Api.Enum.Order_by.toString |> Encode.optional input.created_at ), ( "date", Encode.enum Api.Enum.Order_by.toString |> Encode.optional input.date ), ( "id", Encode.enum Api.Enum.Order_by.toString |> Encode.optional input.id ), ( "iv", Encode.enum Api.Enum.Order_by.toString |> Encode.optional input.iv ), ( "updated_at", Encode.enum Api.Enum.Order_by.toString |> Encode.optional input.updated_at ), ( "user_id", Encode.enum Api.Enum.Order_by.toString |> Encode.optional input.user_id ) ]
 
 
-buildPost_min_order_by : (Post_min_order_byOptionalFields -> Post_min_order_byOptionalFields) -> Post_min_order_by
+buildPost_min_order_by :
+    (Post_min_order_byOptionalFields -> Post_min_order_byOptionalFields)
+    -> Post_min_order_by
 buildPost_min_order_by fillOptionals =
     let
         optionals =
             fillOptionals
-                { body = Absent, date = Absent, id = Absent, iv = Absent, user_id = Absent }
+                { body = Absent, created_at = Absent, date = Absent, id = Absent, iv = Absent, updated_at = Absent, user_id = Absent }
     in
-    { body = optionals.body, date = optionals.date, id = optionals.id, iv = optionals.iv, user_id = optionals.user_id }
+    { body = optionals.body, created_at = optionals.created_at, date = optionals.date, id = optionals.id, iv = optionals.iv, updated_at = optionals.updated_at, user_id = optionals.user_id }
 
 
 type alias Post_min_order_byOptionalFields =
     { body : OptionalArgument Api.Enum.Order_by.Order_by
+    , created_at : OptionalArgument Api.Enum.Order_by.Order_by
     , date : OptionalArgument Api.Enum.Order_by.Order_by
     , id : OptionalArgument Api.Enum.Order_by.Order_by
     , iv : OptionalArgument Api.Enum.Order_by.Order_by
+    , updated_at : OptionalArgument Api.Enum.Order_by.Order_by
     , user_id : OptionalArgument Api.Enum.Order_by.Order_by
     }
 
@@ -320,9 +349,11 @@ type alias Post_min_order_byOptionalFields =
 -}
 type alias Post_min_order_by =
     { body : OptionalArgument Api.Enum.Order_by.Order_by
+    , created_at : OptionalArgument Api.Enum.Order_by.Order_by
     , date : OptionalArgument Api.Enum.Order_by.Order_by
     , id : OptionalArgument Api.Enum.Order_by.Order_by
     , iv : OptionalArgument Api.Enum.Order_by.Order_by
+    , updated_at : OptionalArgument Api.Enum.Order_by.Order_by
     , user_id : OptionalArgument Api.Enum.Order_by.Order_by
     }
 
@@ -332,10 +363,13 @@ type alias Post_min_order_by =
 encodePost_min_order_by : Post_min_order_by -> Value
 encodePost_min_order_by input =
     Encode.maybeObject
-        [ ( "body", Encode.enum Api.Enum.Order_by.toString |> Encode.optional input.body ), ( "date", Encode.enum Api.Enum.Order_by.toString |> Encode.optional input.date ), ( "id", Encode.enum Api.Enum.Order_by.toString |> Encode.optional input.id ), ( "iv", Encode.enum Api.Enum.Order_by.toString |> Encode.optional input.iv ), ( "user_id", Encode.enum Api.Enum.Order_by.toString |> Encode.optional input.user_id ) ]
+        [ ( "body", Encode.enum Api.Enum.Order_by.toString |> Encode.optional input.body ), ( "created_at", Encode.enum Api.Enum.Order_by.toString |> Encode.optional input.created_at ), ( "date", Encode.enum Api.Enum.Order_by.toString |> Encode.optional input.date ), ( "id", Encode.enum Api.Enum.Order_by.toString |> Encode.optional input.id ), ( "iv", Encode.enum Api.Enum.Order_by.toString |> Encode.optional input.iv ), ( "updated_at", Encode.enum Api.Enum.Order_by.toString |> Encode.optional input.updated_at ), ( "user_id", Encode.enum Api.Enum.Order_by.toString |> Encode.optional input.user_id ) ]
 
 
-buildPost_obj_rel_insert_input : Post_obj_rel_insert_inputRequiredFields -> (Post_obj_rel_insert_inputOptionalFields -> Post_obj_rel_insert_inputOptionalFields) -> Post_obj_rel_insert_input
+buildPost_obj_rel_insert_input :
+    Post_obj_rel_insert_inputRequiredFields
+    -> (Post_obj_rel_insert_inputOptionalFields -> Post_obj_rel_insert_inputOptionalFields)
+    -> Post_obj_rel_insert_input
 buildPost_obj_rel_insert_input required fillOptionals =
     let
         optionals =
@@ -378,7 +412,10 @@ encodePost_obj_rel_insert_input (Post_obj_rel_insert_input input) =
         [ ( "data", encodePost_insert_input input.data |> Just ), ( "on_conflict", encodePost_on_conflict |> Encode.optional input.on_conflict ) ]
 
 
-buildPost_on_conflict : Post_on_conflictRequiredFields -> (Post_on_conflictOptionalFields -> Post_on_conflictOptionalFields) -> Post_on_conflict
+buildPost_on_conflict :
+    Post_on_conflictRequiredFields
+    -> (Post_on_conflictOptionalFields -> Post_on_conflictOptionalFields)
+    -> Post_on_conflict
 buildPost_on_conflict required fillOptionals =
     let
         optionals =
@@ -424,22 +461,26 @@ encodePost_on_conflict (Post_on_conflict input) =
         [ ( "constraint", Encode.enum Api.Enum.Post_constraint.toString input.constraint |> Just ), ( "update_columns", (Encode.enum Api.Enum.Post_update_column.toString |> Encode.list) input.update_columns |> Just ), ( "where", encodePost_bool_exp |> Encode.optional input.where_ ) ]
 
 
-buildPost_order_by : (Post_order_byOptionalFields -> Post_order_byOptionalFields) -> Post_order_by
+buildPost_order_by :
+    (Post_order_byOptionalFields -> Post_order_byOptionalFields)
+    -> Post_order_by
 buildPost_order_by fillOptionals =
     let
         optionals =
             fillOptionals
-                { body = Absent, date = Absent, id = Absent, iv = Absent, postTagsBypostId_aggregate = Absent, userByuserId = Absent, user_id = Absent }
+                { body = Absent, created_at = Absent, date = Absent, id = Absent, iv = Absent, postTagsBypostId_aggregate = Absent, updated_at = Absent, userByuserId = Absent, user_id = Absent }
     in
-    Post_order_by { body = optionals.body, date = optionals.date, id = optionals.id, iv = optionals.iv, postTagsBypostId_aggregate = optionals.postTagsBypostId_aggregate, userByuserId = optionals.userByuserId, user_id = optionals.user_id }
+    Post_order_by { body = optionals.body, created_at = optionals.created_at, date = optionals.date, id = optionals.id, iv = optionals.iv, postTagsBypostId_aggregate = optionals.postTagsBypostId_aggregate, updated_at = optionals.updated_at, userByuserId = optionals.userByuserId, user_id = optionals.user_id }
 
 
 type alias Post_order_byOptionalFields =
     { body : OptionalArgument Api.Enum.Order_by.Order_by
+    , created_at : OptionalArgument Api.Enum.Order_by.Order_by
     , date : OptionalArgument Api.Enum.Order_by.Order_by
     , id : OptionalArgument Api.Enum.Order_by.Order_by
     , iv : OptionalArgument Api.Enum.Order_by.Order_by
     , postTagsBypostId_aggregate : OptionalArgument Post_tag_aggregate_order_by
+    , updated_at : OptionalArgument Api.Enum.Order_by.Order_by
     , userByuserId : OptionalArgument User_order_by
     , user_id : OptionalArgument Api.Enum.Order_by.Order_by
     }
@@ -452,10 +493,12 @@ references to itself either directly (recursive) or indirectly (circular). See
 -}
 type alias Post_order_byRaw =
     { body : OptionalArgument Api.Enum.Order_by.Order_by
+    , created_at : OptionalArgument Api.Enum.Order_by.Order_by
     , date : OptionalArgument Api.Enum.Order_by.Order_by
     , id : OptionalArgument Api.Enum.Order_by.Order_by
     , iv : OptionalArgument Api.Enum.Order_by.Order_by
     , postTagsBypostId_aggregate : OptionalArgument Post_tag_aggregate_order_by
+    , updated_at : OptionalArgument Api.Enum.Order_by.Order_by
     , userByuserId : OptionalArgument User_order_by
     , user_id : OptionalArgument Api.Enum.Order_by.Order_by
     }
@@ -472,10 +515,12 @@ type Post_order_by
 encodePost_order_by : Post_order_by -> Value
 encodePost_order_by (Post_order_by input) =
     Encode.maybeObject
-        [ ( "body", Encode.enum Api.Enum.Order_by.toString |> Encode.optional input.body ), ( "date", Encode.enum Api.Enum.Order_by.toString |> Encode.optional input.date ), ( "id", Encode.enum Api.Enum.Order_by.toString |> Encode.optional input.id ), ( "iv", Encode.enum Api.Enum.Order_by.toString |> Encode.optional input.iv ), ( "postTagsBypostId_aggregate", encodePost_tag_aggregate_order_by |> Encode.optional input.postTagsBypostId_aggregate ), ( "userByuserId", encodeUser_order_by |> Encode.optional input.userByuserId ), ( "user_id", Encode.enum Api.Enum.Order_by.toString |> Encode.optional input.user_id ) ]
+        [ ( "body", Encode.enum Api.Enum.Order_by.toString |> Encode.optional input.body ), ( "created_at", Encode.enum Api.Enum.Order_by.toString |> Encode.optional input.created_at ), ( "date", Encode.enum Api.Enum.Order_by.toString |> Encode.optional input.date ), ( "id", Encode.enum Api.Enum.Order_by.toString |> Encode.optional input.id ), ( "iv", Encode.enum Api.Enum.Order_by.toString |> Encode.optional input.iv ), ( "postTagsBypostId_aggregate", encodePost_tag_aggregate_order_by |> Encode.optional input.postTagsBypostId_aggregate ), ( "updated_at", Encode.enum Api.Enum.Order_by.toString |> Encode.optional input.updated_at ), ( "userByuserId", encodeUser_order_by |> Encode.optional input.userByuserId ), ( "user_id", Encode.enum Api.Enum.Order_by.toString |> Encode.optional input.user_id ) ]
 
 
-buildPost_pk_columns_input : Post_pk_columns_inputRequiredFields -> Post_pk_columns_input
+buildPost_pk_columns_input :
+    Post_pk_columns_inputRequiredFields
+    -> Post_pk_columns_input
 buildPost_pk_columns_input required =
     { id = required.id }
 
@@ -498,21 +543,25 @@ encodePost_pk_columns_input input =
         [ ( "id", (CustomScalars.codecs |> Api.Scalar.unwrapEncoder .codecUuid) input.id |> Just ) ]
 
 
-buildPost_set_input : (Post_set_inputOptionalFields -> Post_set_inputOptionalFields) -> Post_set_input
+buildPost_set_input :
+    (Post_set_inputOptionalFields -> Post_set_inputOptionalFields)
+    -> Post_set_input
 buildPost_set_input fillOptionals =
     let
         optionals =
             fillOptionals
-                { body = Absent, date = Absent, id = Absent, iv = Absent, user_id = Absent }
+                { body = Absent, created_at = Absent, date = Absent, id = Absent, iv = Absent, updated_at = Absent, user_id = Absent }
     in
-    { body = optionals.body, date = optionals.date, id = optionals.id, iv = optionals.iv, user_id = optionals.user_id }
+    { body = optionals.body, created_at = optionals.created_at, date = optionals.date, id = optionals.id, iv = optionals.iv, updated_at = optionals.updated_at, user_id = optionals.user_id }
 
 
 type alias Post_set_inputOptionalFields =
     { body : OptionalArgument String
+    , created_at : OptionalArgument CustomScalars.Timestamptz
     , date : OptionalArgument CustomScalars.Date
     , id : OptionalArgument CustomScalars.Uuid
     , iv : OptionalArgument String
+    , updated_at : OptionalArgument CustomScalars.Timestamptz
     , user_id : OptionalArgument CustomScalars.Uuid
     }
 
@@ -521,9 +570,11 @@ type alias Post_set_inputOptionalFields =
 -}
 type alias Post_set_input =
     { body : OptionalArgument String
+    , created_at : OptionalArgument CustomScalars.Timestamptz
     , date : OptionalArgument CustomScalars.Date
     , id : OptionalArgument CustomScalars.Uuid
     , iv : OptionalArgument String
+    , updated_at : OptionalArgument CustomScalars.Timestamptz
     , user_id : OptionalArgument CustomScalars.Uuid
     }
 
@@ -533,10 +584,12 @@ type alias Post_set_input =
 encodePost_set_input : Post_set_input -> Value
 encodePost_set_input input =
     Encode.maybeObject
-        [ ( "body", Encode.string |> Encode.optional input.body ), ( "date", (CustomScalars.codecs |> Api.Scalar.unwrapEncoder .codecDate) |> Encode.optional input.date ), ( "id", (CustomScalars.codecs |> Api.Scalar.unwrapEncoder .codecUuid) |> Encode.optional input.id ), ( "iv", Encode.string |> Encode.optional input.iv ), ( "user_id", (CustomScalars.codecs |> Api.Scalar.unwrapEncoder .codecUuid) |> Encode.optional input.user_id ) ]
+        [ ( "body", Encode.string |> Encode.optional input.body ), ( "created_at", (CustomScalars.codecs |> Api.Scalar.unwrapEncoder .codecTimestamptz) |> Encode.optional input.created_at ), ( "date", (CustomScalars.codecs |> Api.Scalar.unwrapEncoder .codecDate) |> Encode.optional input.date ), ( "id", (CustomScalars.codecs |> Api.Scalar.unwrapEncoder .codecUuid) |> Encode.optional input.id ), ( "iv", Encode.string |> Encode.optional input.iv ), ( "updated_at", (CustomScalars.codecs |> Api.Scalar.unwrapEncoder .codecTimestamptz) |> Encode.optional input.updated_at ), ( "user_id", (CustomScalars.codecs |> Api.Scalar.unwrapEncoder .codecUuid) |> Encode.optional input.user_id ) ]
 
 
-buildPost_tag_aggregate_order_by : (Post_tag_aggregate_order_byOptionalFields -> Post_tag_aggregate_order_byOptionalFields) -> Post_tag_aggregate_order_by
+buildPost_tag_aggregate_order_by :
+    (Post_tag_aggregate_order_byOptionalFields -> Post_tag_aggregate_order_byOptionalFields)
+    -> Post_tag_aggregate_order_by
 buildPost_tag_aggregate_order_by fillOptionals =
     let
         optionals =
@@ -570,7 +623,10 @@ encodePost_tag_aggregate_order_by input =
         [ ( "count", Encode.enum Api.Enum.Order_by.toString |> Encode.optional input.count ), ( "max", encodePost_tag_max_order_by |> Encode.optional input.max ), ( "min", encodePost_tag_min_order_by |> Encode.optional input.min ) ]
 
 
-buildPost_tag_arr_rel_insert_input : Post_tag_arr_rel_insert_inputRequiredFields -> (Post_tag_arr_rel_insert_inputOptionalFields -> Post_tag_arr_rel_insert_inputOptionalFields) -> Post_tag_arr_rel_insert_input
+buildPost_tag_arr_rel_insert_input :
+    Post_tag_arr_rel_insert_inputRequiredFields
+    -> (Post_tag_arr_rel_insert_inputOptionalFields -> Post_tag_arr_rel_insert_inputOptionalFields)
+    -> Post_tag_arr_rel_insert_input
 buildPost_tag_arr_rel_insert_input required fillOptionals =
     let
         optionals =
@@ -613,25 +669,29 @@ encodePost_tag_arr_rel_insert_input (Post_tag_arr_rel_insert_input input) =
         [ ( "data", (encodePost_tag_insert_input |> Encode.list) input.data |> Just ), ( "on_conflict", encodePost_tag_on_conflict |> Encode.optional input.on_conflict ) ]
 
 
-buildPost_tag_bool_exp : (Post_tag_bool_expOptionalFields -> Post_tag_bool_expOptionalFields) -> Post_tag_bool_exp
+buildPost_tag_bool_exp :
+    (Post_tag_bool_expOptionalFields -> Post_tag_bool_expOptionalFields)
+    -> Post_tag_bool_exp
 buildPost_tag_bool_exp fillOptionals =
     let
         optionals =
             fillOptionals
-                { and_ = Absent, not_ = Absent, or_ = Absent, id = Absent, postBypostId = Absent, post_id = Absent, tagBytagId = Absent, tag_id = Absent, userByuserId = Absent, user_id = Absent }
+                { and_ = Absent, not_ = Absent, or_ = Absent, created_at = Absent, id = Absent, postBypostId = Absent, post_id = Absent, tagBytagId = Absent, tag_id = Absent, updated_at = Absent, userByuserId = Absent, user_id = Absent }
     in
-    Post_tag_bool_exp { and_ = optionals.and_, not_ = optionals.not_, or_ = optionals.or_, id = optionals.id, postBypostId = optionals.postBypostId, post_id = optionals.post_id, tagBytagId = optionals.tagBytagId, tag_id = optionals.tag_id, userByuserId = optionals.userByuserId, user_id = optionals.user_id }
+    Post_tag_bool_exp { and_ = optionals.and_, not_ = optionals.not_, or_ = optionals.or_, created_at = optionals.created_at, id = optionals.id, postBypostId = optionals.postBypostId, post_id = optionals.post_id, tagBytagId = optionals.tagBytagId, tag_id = optionals.tag_id, updated_at = optionals.updated_at, userByuserId = optionals.userByuserId, user_id = optionals.user_id }
 
 
 type alias Post_tag_bool_expOptionalFields =
     { and_ : OptionalArgument (List (Maybe Post_tag_bool_exp))
     , not_ : OptionalArgument Post_tag_bool_exp
     , or_ : OptionalArgument (List (Maybe Post_tag_bool_exp))
+    , created_at : OptionalArgument Timestamptz_comparison_exp
     , id : OptionalArgument Uuid_comparison_exp
     , postBypostId : OptionalArgument Post_bool_exp
     , post_id : OptionalArgument Uuid_comparison_exp
     , tagBytagId : OptionalArgument Tag_bool_exp
     , tag_id : OptionalArgument Uuid_comparison_exp
+    , updated_at : OptionalArgument Timestamptz_comparison_exp
     , userByuserId : OptionalArgument User_bool_exp
     , user_id : OptionalArgument Uuid_comparison_exp
     }
@@ -646,11 +706,13 @@ type alias Post_tag_bool_expRaw =
     { and_ : OptionalArgument (List (Maybe Post_tag_bool_exp))
     , not_ : OptionalArgument Post_tag_bool_exp
     , or_ : OptionalArgument (List (Maybe Post_tag_bool_exp))
+    , created_at : OptionalArgument Timestamptz_comparison_exp
     , id : OptionalArgument Uuid_comparison_exp
     , postBypostId : OptionalArgument Post_bool_exp
     , post_id : OptionalArgument Uuid_comparison_exp
     , tagBytagId : OptionalArgument Tag_bool_exp
     , tag_id : OptionalArgument Uuid_comparison_exp
+    , updated_at : OptionalArgument Timestamptz_comparison_exp
     , userByuserId : OptionalArgument User_bool_exp
     , user_id : OptionalArgument Uuid_comparison_exp
     }
@@ -667,25 +729,29 @@ type Post_tag_bool_exp
 encodePost_tag_bool_exp : Post_tag_bool_exp -> Value
 encodePost_tag_bool_exp (Post_tag_bool_exp input) =
     Encode.maybeObject
-        [ ( "_and", (encodePost_tag_bool_exp |> Encode.maybe |> Encode.list) |> Encode.optional input.and_ ), ( "_not", encodePost_tag_bool_exp |> Encode.optional input.not_ ), ( "_or", (encodePost_tag_bool_exp |> Encode.maybe |> Encode.list) |> Encode.optional input.or_ ), ( "id", encodeUuid_comparison_exp |> Encode.optional input.id ), ( "postBypostId", encodePost_bool_exp |> Encode.optional input.postBypostId ), ( "post_id", encodeUuid_comparison_exp |> Encode.optional input.post_id ), ( "tagBytagId", encodeTag_bool_exp |> Encode.optional input.tagBytagId ), ( "tag_id", encodeUuid_comparison_exp |> Encode.optional input.tag_id ), ( "userByuserId", encodeUser_bool_exp |> Encode.optional input.userByuserId ), ( "user_id", encodeUuid_comparison_exp |> Encode.optional input.user_id ) ]
+        [ ( "_and", (encodePost_tag_bool_exp |> Encode.maybe |> Encode.list) |> Encode.optional input.and_ ), ( "_not", encodePost_tag_bool_exp |> Encode.optional input.not_ ), ( "_or", (encodePost_tag_bool_exp |> Encode.maybe |> Encode.list) |> Encode.optional input.or_ ), ( "created_at", encodeTimestamptz_comparison_exp |> Encode.optional input.created_at ), ( "id", encodeUuid_comparison_exp |> Encode.optional input.id ), ( "postBypostId", encodePost_bool_exp |> Encode.optional input.postBypostId ), ( "post_id", encodeUuid_comparison_exp |> Encode.optional input.post_id ), ( "tagBytagId", encodeTag_bool_exp |> Encode.optional input.tagBytagId ), ( "tag_id", encodeUuid_comparison_exp |> Encode.optional input.tag_id ), ( "updated_at", encodeTimestamptz_comparison_exp |> Encode.optional input.updated_at ), ( "userByuserId", encodeUser_bool_exp |> Encode.optional input.userByuserId ), ( "user_id", encodeUuid_comparison_exp |> Encode.optional input.user_id ) ]
 
 
-buildPost_tag_insert_input : (Post_tag_insert_inputOptionalFields -> Post_tag_insert_inputOptionalFields) -> Post_tag_insert_input
+buildPost_tag_insert_input :
+    (Post_tag_insert_inputOptionalFields -> Post_tag_insert_inputOptionalFields)
+    -> Post_tag_insert_input
 buildPost_tag_insert_input fillOptionals =
     let
         optionals =
             fillOptionals
-                { id = Absent, postBypostId = Absent, post_id = Absent, tagBytagId = Absent, tag_id = Absent, userByuserId = Absent, user_id = Absent }
+                { created_at = Absent, id = Absent, postBypostId = Absent, post_id = Absent, tagBytagId = Absent, tag_id = Absent, updated_at = Absent, userByuserId = Absent, user_id = Absent }
     in
-    Post_tag_insert_input { id = optionals.id, postBypostId = optionals.postBypostId, post_id = optionals.post_id, tagBytagId = optionals.tagBytagId, tag_id = optionals.tag_id, userByuserId = optionals.userByuserId, user_id = optionals.user_id }
+    Post_tag_insert_input { created_at = optionals.created_at, id = optionals.id, postBypostId = optionals.postBypostId, post_id = optionals.post_id, tagBytagId = optionals.tagBytagId, tag_id = optionals.tag_id, updated_at = optionals.updated_at, userByuserId = optionals.userByuserId, user_id = optionals.user_id }
 
 
 type alias Post_tag_insert_inputOptionalFields =
-    { id : OptionalArgument CustomScalars.Uuid
+    { created_at : OptionalArgument CustomScalars.Timestamptz
+    , id : OptionalArgument CustomScalars.Uuid
     , postBypostId : OptionalArgument Post_obj_rel_insert_input
     , post_id : OptionalArgument CustomScalars.Uuid
     , tagBytagId : OptionalArgument Tag_obj_rel_insert_input
     , tag_id : OptionalArgument CustomScalars.Uuid
+    , updated_at : OptionalArgument CustomScalars.Timestamptz
     , userByuserId : OptionalArgument User_obj_rel_insert_input
     , user_id : OptionalArgument CustomScalars.Uuid
     }
@@ -697,11 +763,13 @@ references to itself either directly (recursive) or indirectly (circular). See
 <https://github.com/dillonkearns/elm-graphql/issues/33>.
 -}
 type alias Post_tag_insert_inputRaw =
-    { id : OptionalArgument CustomScalars.Uuid
+    { created_at : OptionalArgument CustomScalars.Timestamptz
+    , id : OptionalArgument CustomScalars.Uuid
     , postBypostId : OptionalArgument Post_obj_rel_insert_input
     , post_id : OptionalArgument CustomScalars.Uuid
     , tagBytagId : OptionalArgument Tag_obj_rel_insert_input
     , tag_id : OptionalArgument CustomScalars.Uuid
+    , updated_at : OptionalArgument CustomScalars.Timestamptz
     , userByuserId : OptionalArgument User_obj_rel_insert_input
     , user_id : OptionalArgument CustomScalars.Uuid
     }
@@ -718,23 +786,27 @@ type Post_tag_insert_input
 encodePost_tag_insert_input : Post_tag_insert_input -> Value
 encodePost_tag_insert_input (Post_tag_insert_input input) =
     Encode.maybeObject
-        [ ( "id", (CustomScalars.codecs |> Api.Scalar.unwrapEncoder .codecUuid) |> Encode.optional input.id ), ( "postBypostId", encodePost_obj_rel_insert_input |> Encode.optional input.postBypostId ), ( "post_id", (CustomScalars.codecs |> Api.Scalar.unwrapEncoder .codecUuid) |> Encode.optional input.post_id ), ( "tagBytagId", encodeTag_obj_rel_insert_input |> Encode.optional input.tagBytagId ), ( "tag_id", (CustomScalars.codecs |> Api.Scalar.unwrapEncoder .codecUuid) |> Encode.optional input.tag_id ), ( "userByuserId", encodeUser_obj_rel_insert_input |> Encode.optional input.userByuserId ), ( "user_id", (CustomScalars.codecs |> Api.Scalar.unwrapEncoder .codecUuid) |> Encode.optional input.user_id ) ]
+        [ ( "created_at", (CustomScalars.codecs |> Api.Scalar.unwrapEncoder .codecTimestamptz) |> Encode.optional input.created_at ), ( "id", (CustomScalars.codecs |> Api.Scalar.unwrapEncoder .codecUuid) |> Encode.optional input.id ), ( "postBypostId", encodePost_obj_rel_insert_input |> Encode.optional input.postBypostId ), ( "post_id", (CustomScalars.codecs |> Api.Scalar.unwrapEncoder .codecUuid) |> Encode.optional input.post_id ), ( "tagBytagId", encodeTag_obj_rel_insert_input |> Encode.optional input.tagBytagId ), ( "tag_id", (CustomScalars.codecs |> Api.Scalar.unwrapEncoder .codecUuid) |> Encode.optional input.tag_id ), ( "updated_at", (CustomScalars.codecs |> Api.Scalar.unwrapEncoder .codecTimestamptz) |> Encode.optional input.updated_at ), ( "userByuserId", encodeUser_obj_rel_insert_input |> Encode.optional input.userByuserId ), ( "user_id", (CustomScalars.codecs |> Api.Scalar.unwrapEncoder .codecUuid) |> Encode.optional input.user_id ) ]
 
 
-buildPost_tag_max_order_by : (Post_tag_max_order_byOptionalFields -> Post_tag_max_order_byOptionalFields) -> Post_tag_max_order_by
+buildPost_tag_max_order_by :
+    (Post_tag_max_order_byOptionalFields -> Post_tag_max_order_byOptionalFields)
+    -> Post_tag_max_order_by
 buildPost_tag_max_order_by fillOptionals =
     let
         optionals =
             fillOptionals
-                { id = Absent, post_id = Absent, tag_id = Absent, user_id = Absent }
+                { created_at = Absent, id = Absent, post_id = Absent, tag_id = Absent, updated_at = Absent, user_id = Absent }
     in
-    { id = optionals.id, post_id = optionals.post_id, tag_id = optionals.tag_id, user_id = optionals.user_id }
+    { created_at = optionals.created_at, id = optionals.id, post_id = optionals.post_id, tag_id = optionals.tag_id, updated_at = optionals.updated_at, user_id = optionals.user_id }
 
 
 type alias Post_tag_max_order_byOptionalFields =
-    { id : OptionalArgument Api.Enum.Order_by.Order_by
+    { created_at : OptionalArgument Api.Enum.Order_by.Order_by
+    , id : OptionalArgument Api.Enum.Order_by.Order_by
     , post_id : OptionalArgument Api.Enum.Order_by.Order_by
     , tag_id : OptionalArgument Api.Enum.Order_by.Order_by
+    , updated_at : OptionalArgument Api.Enum.Order_by.Order_by
     , user_id : OptionalArgument Api.Enum.Order_by.Order_by
     }
 
@@ -742,9 +814,11 @@ type alias Post_tag_max_order_byOptionalFields =
 {-| Type for the Post\_tag\_max\_order\_by input object.
 -}
 type alias Post_tag_max_order_by =
-    { id : OptionalArgument Api.Enum.Order_by.Order_by
+    { created_at : OptionalArgument Api.Enum.Order_by.Order_by
+    , id : OptionalArgument Api.Enum.Order_by.Order_by
     , post_id : OptionalArgument Api.Enum.Order_by.Order_by
     , tag_id : OptionalArgument Api.Enum.Order_by.Order_by
+    , updated_at : OptionalArgument Api.Enum.Order_by.Order_by
     , user_id : OptionalArgument Api.Enum.Order_by.Order_by
     }
 
@@ -754,23 +828,27 @@ type alias Post_tag_max_order_by =
 encodePost_tag_max_order_by : Post_tag_max_order_by -> Value
 encodePost_tag_max_order_by input =
     Encode.maybeObject
-        [ ( "id", Encode.enum Api.Enum.Order_by.toString |> Encode.optional input.id ), ( "post_id", Encode.enum Api.Enum.Order_by.toString |> Encode.optional input.post_id ), ( "tag_id", Encode.enum Api.Enum.Order_by.toString |> Encode.optional input.tag_id ), ( "user_id", Encode.enum Api.Enum.Order_by.toString |> Encode.optional input.user_id ) ]
+        [ ( "created_at", Encode.enum Api.Enum.Order_by.toString |> Encode.optional input.created_at ), ( "id", Encode.enum Api.Enum.Order_by.toString |> Encode.optional input.id ), ( "post_id", Encode.enum Api.Enum.Order_by.toString |> Encode.optional input.post_id ), ( "tag_id", Encode.enum Api.Enum.Order_by.toString |> Encode.optional input.tag_id ), ( "updated_at", Encode.enum Api.Enum.Order_by.toString |> Encode.optional input.updated_at ), ( "user_id", Encode.enum Api.Enum.Order_by.toString |> Encode.optional input.user_id ) ]
 
 
-buildPost_tag_min_order_by : (Post_tag_min_order_byOptionalFields -> Post_tag_min_order_byOptionalFields) -> Post_tag_min_order_by
+buildPost_tag_min_order_by :
+    (Post_tag_min_order_byOptionalFields -> Post_tag_min_order_byOptionalFields)
+    -> Post_tag_min_order_by
 buildPost_tag_min_order_by fillOptionals =
     let
         optionals =
             fillOptionals
-                { id = Absent, post_id = Absent, tag_id = Absent, user_id = Absent }
+                { created_at = Absent, id = Absent, post_id = Absent, tag_id = Absent, updated_at = Absent, user_id = Absent }
     in
-    { id = optionals.id, post_id = optionals.post_id, tag_id = optionals.tag_id, user_id = optionals.user_id }
+    { created_at = optionals.created_at, id = optionals.id, post_id = optionals.post_id, tag_id = optionals.tag_id, updated_at = optionals.updated_at, user_id = optionals.user_id }
 
 
 type alias Post_tag_min_order_byOptionalFields =
-    { id : OptionalArgument Api.Enum.Order_by.Order_by
+    { created_at : OptionalArgument Api.Enum.Order_by.Order_by
+    , id : OptionalArgument Api.Enum.Order_by.Order_by
     , post_id : OptionalArgument Api.Enum.Order_by.Order_by
     , tag_id : OptionalArgument Api.Enum.Order_by.Order_by
+    , updated_at : OptionalArgument Api.Enum.Order_by.Order_by
     , user_id : OptionalArgument Api.Enum.Order_by.Order_by
     }
 
@@ -778,9 +856,11 @@ type alias Post_tag_min_order_byOptionalFields =
 {-| Type for the Post\_tag\_min\_order\_by input object.
 -}
 type alias Post_tag_min_order_by =
-    { id : OptionalArgument Api.Enum.Order_by.Order_by
+    { created_at : OptionalArgument Api.Enum.Order_by.Order_by
+    , id : OptionalArgument Api.Enum.Order_by.Order_by
     , post_id : OptionalArgument Api.Enum.Order_by.Order_by
     , tag_id : OptionalArgument Api.Enum.Order_by.Order_by
+    , updated_at : OptionalArgument Api.Enum.Order_by.Order_by
     , user_id : OptionalArgument Api.Enum.Order_by.Order_by
     }
 
@@ -790,10 +870,13 @@ type alias Post_tag_min_order_by =
 encodePost_tag_min_order_by : Post_tag_min_order_by -> Value
 encodePost_tag_min_order_by input =
     Encode.maybeObject
-        [ ( "id", Encode.enum Api.Enum.Order_by.toString |> Encode.optional input.id ), ( "post_id", Encode.enum Api.Enum.Order_by.toString |> Encode.optional input.post_id ), ( "tag_id", Encode.enum Api.Enum.Order_by.toString |> Encode.optional input.tag_id ), ( "user_id", Encode.enum Api.Enum.Order_by.toString |> Encode.optional input.user_id ) ]
+        [ ( "created_at", Encode.enum Api.Enum.Order_by.toString |> Encode.optional input.created_at ), ( "id", Encode.enum Api.Enum.Order_by.toString |> Encode.optional input.id ), ( "post_id", Encode.enum Api.Enum.Order_by.toString |> Encode.optional input.post_id ), ( "tag_id", Encode.enum Api.Enum.Order_by.toString |> Encode.optional input.tag_id ), ( "updated_at", Encode.enum Api.Enum.Order_by.toString |> Encode.optional input.updated_at ), ( "user_id", Encode.enum Api.Enum.Order_by.toString |> Encode.optional input.user_id ) ]
 
 
-buildPost_tag_obj_rel_insert_input : Post_tag_obj_rel_insert_inputRequiredFields -> (Post_tag_obj_rel_insert_inputOptionalFields -> Post_tag_obj_rel_insert_inputOptionalFields) -> Post_tag_obj_rel_insert_input
+buildPost_tag_obj_rel_insert_input :
+    Post_tag_obj_rel_insert_inputRequiredFields
+    -> (Post_tag_obj_rel_insert_inputOptionalFields -> Post_tag_obj_rel_insert_inputOptionalFields)
+    -> Post_tag_obj_rel_insert_input
 buildPost_tag_obj_rel_insert_input required fillOptionals =
     let
         optionals =
@@ -836,7 +919,10 @@ encodePost_tag_obj_rel_insert_input (Post_tag_obj_rel_insert_input input) =
         [ ( "data", encodePost_tag_insert_input input.data |> Just ), ( "on_conflict", encodePost_tag_on_conflict |> Encode.optional input.on_conflict ) ]
 
 
-buildPost_tag_on_conflict : Post_tag_on_conflictRequiredFields -> (Post_tag_on_conflictOptionalFields -> Post_tag_on_conflictOptionalFields) -> Post_tag_on_conflict
+buildPost_tag_on_conflict :
+    Post_tag_on_conflictRequiredFields
+    -> (Post_tag_on_conflictOptionalFields -> Post_tag_on_conflictOptionalFields)
+    -> Post_tag_on_conflict
 buildPost_tag_on_conflict required fillOptionals =
     let
         optionals =
@@ -882,22 +968,26 @@ encodePost_tag_on_conflict (Post_tag_on_conflict input) =
         [ ( "constraint", Encode.enum Api.Enum.Post_tag_constraint.toString input.constraint |> Just ), ( "update_columns", (Encode.enum Api.Enum.Post_tag_update_column.toString |> Encode.list) input.update_columns |> Just ), ( "where", encodePost_tag_bool_exp |> Encode.optional input.where_ ) ]
 
 
-buildPost_tag_order_by : (Post_tag_order_byOptionalFields -> Post_tag_order_byOptionalFields) -> Post_tag_order_by
+buildPost_tag_order_by :
+    (Post_tag_order_byOptionalFields -> Post_tag_order_byOptionalFields)
+    -> Post_tag_order_by
 buildPost_tag_order_by fillOptionals =
     let
         optionals =
             fillOptionals
-                { id = Absent, postBypostId = Absent, post_id = Absent, tagBytagId = Absent, tag_id = Absent, userByuserId = Absent, user_id = Absent }
+                { created_at = Absent, id = Absent, postBypostId = Absent, post_id = Absent, tagBytagId = Absent, tag_id = Absent, updated_at = Absent, userByuserId = Absent, user_id = Absent }
     in
-    Post_tag_order_by { id = optionals.id, postBypostId = optionals.postBypostId, post_id = optionals.post_id, tagBytagId = optionals.tagBytagId, tag_id = optionals.tag_id, userByuserId = optionals.userByuserId, user_id = optionals.user_id }
+    Post_tag_order_by { created_at = optionals.created_at, id = optionals.id, postBypostId = optionals.postBypostId, post_id = optionals.post_id, tagBytagId = optionals.tagBytagId, tag_id = optionals.tag_id, updated_at = optionals.updated_at, userByuserId = optionals.userByuserId, user_id = optionals.user_id }
 
 
 type alias Post_tag_order_byOptionalFields =
-    { id : OptionalArgument Api.Enum.Order_by.Order_by
+    { created_at : OptionalArgument Api.Enum.Order_by.Order_by
+    , id : OptionalArgument Api.Enum.Order_by.Order_by
     , postBypostId : OptionalArgument Post_order_by
     , post_id : OptionalArgument Api.Enum.Order_by.Order_by
     , tagBytagId : OptionalArgument Tag_order_by
     , tag_id : OptionalArgument Api.Enum.Order_by.Order_by
+    , updated_at : OptionalArgument Api.Enum.Order_by.Order_by
     , userByuserId : OptionalArgument User_order_by
     , user_id : OptionalArgument Api.Enum.Order_by.Order_by
     }
@@ -909,11 +999,13 @@ references to itself either directly (recursive) or indirectly (circular). See
 <https://github.com/dillonkearns/elm-graphql/issues/33>.
 -}
 type alias Post_tag_order_byRaw =
-    { id : OptionalArgument Api.Enum.Order_by.Order_by
+    { created_at : OptionalArgument Api.Enum.Order_by.Order_by
+    , id : OptionalArgument Api.Enum.Order_by.Order_by
     , postBypostId : OptionalArgument Post_order_by
     , post_id : OptionalArgument Api.Enum.Order_by.Order_by
     , tagBytagId : OptionalArgument Tag_order_by
     , tag_id : OptionalArgument Api.Enum.Order_by.Order_by
+    , updated_at : OptionalArgument Api.Enum.Order_by.Order_by
     , userByuserId : OptionalArgument User_order_by
     , user_id : OptionalArgument Api.Enum.Order_by.Order_by
     }
@@ -930,10 +1022,12 @@ type Post_tag_order_by
 encodePost_tag_order_by : Post_tag_order_by -> Value
 encodePost_tag_order_by (Post_tag_order_by input) =
     Encode.maybeObject
-        [ ( "id", Encode.enum Api.Enum.Order_by.toString |> Encode.optional input.id ), ( "postBypostId", encodePost_order_by |> Encode.optional input.postBypostId ), ( "post_id", Encode.enum Api.Enum.Order_by.toString |> Encode.optional input.post_id ), ( "tagBytagId", encodeTag_order_by |> Encode.optional input.tagBytagId ), ( "tag_id", Encode.enum Api.Enum.Order_by.toString |> Encode.optional input.tag_id ), ( "userByuserId", encodeUser_order_by |> Encode.optional input.userByuserId ), ( "user_id", Encode.enum Api.Enum.Order_by.toString |> Encode.optional input.user_id ) ]
+        [ ( "created_at", Encode.enum Api.Enum.Order_by.toString |> Encode.optional input.created_at ), ( "id", Encode.enum Api.Enum.Order_by.toString |> Encode.optional input.id ), ( "postBypostId", encodePost_order_by |> Encode.optional input.postBypostId ), ( "post_id", Encode.enum Api.Enum.Order_by.toString |> Encode.optional input.post_id ), ( "tagBytagId", encodeTag_order_by |> Encode.optional input.tagBytagId ), ( "tag_id", Encode.enum Api.Enum.Order_by.toString |> Encode.optional input.tag_id ), ( "updated_at", Encode.enum Api.Enum.Order_by.toString |> Encode.optional input.updated_at ), ( "userByuserId", encodeUser_order_by |> Encode.optional input.userByuserId ), ( "user_id", Encode.enum Api.Enum.Order_by.toString |> Encode.optional input.user_id ) ]
 
 
-buildPost_tag_pk_columns_input : Post_tag_pk_columns_inputRequiredFields -> Post_tag_pk_columns_input
+buildPost_tag_pk_columns_input :
+    Post_tag_pk_columns_inputRequiredFields
+    -> Post_tag_pk_columns_input
 buildPost_tag_pk_columns_input required =
     { id = required.id }
 
@@ -956,20 +1050,24 @@ encodePost_tag_pk_columns_input input =
         [ ( "id", (CustomScalars.codecs |> Api.Scalar.unwrapEncoder .codecUuid) input.id |> Just ) ]
 
 
-buildPost_tag_set_input : (Post_tag_set_inputOptionalFields -> Post_tag_set_inputOptionalFields) -> Post_tag_set_input
+buildPost_tag_set_input :
+    (Post_tag_set_inputOptionalFields -> Post_tag_set_inputOptionalFields)
+    -> Post_tag_set_input
 buildPost_tag_set_input fillOptionals =
     let
         optionals =
             fillOptionals
-                { id = Absent, post_id = Absent, tag_id = Absent, user_id = Absent }
+                { created_at = Absent, id = Absent, post_id = Absent, tag_id = Absent, updated_at = Absent, user_id = Absent }
     in
-    { id = optionals.id, post_id = optionals.post_id, tag_id = optionals.tag_id, user_id = optionals.user_id }
+    { created_at = optionals.created_at, id = optionals.id, post_id = optionals.post_id, tag_id = optionals.tag_id, updated_at = optionals.updated_at, user_id = optionals.user_id }
 
 
 type alias Post_tag_set_inputOptionalFields =
-    { id : OptionalArgument CustomScalars.Uuid
+    { created_at : OptionalArgument CustomScalars.Timestamptz
+    , id : OptionalArgument CustomScalars.Uuid
     , post_id : OptionalArgument CustomScalars.Uuid
     , tag_id : OptionalArgument CustomScalars.Uuid
+    , updated_at : OptionalArgument CustomScalars.Timestamptz
     , user_id : OptionalArgument CustomScalars.Uuid
     }
 
@@ -977,9 +1075,11 @@ type alias Post_tag_set_inputOptionalFields =
 {-| Type for the Post\_tag\_set\_input input object.
 -}
 type alias Post_tag_set_input =
-    { id : OptionalArgument CustomScalars.Uuid
+    { created_at : OptionalArgument CustomScalars.Timestamptz
+    , id : OptionalArgument CustomScalars.Uuid
     , post_id : OptionalArgument CustomScalars.Uuid
     , tag_id : OptionalArgument CustomScalars.Uuid
+    , updated_at : OptionalArgument CustomScalars.Timestamptz
     , user_id : OptionalArgument CustomScalars.Uuid
     }
 
@@ -989,10 +1089,12 @@ type alias Post_tag_set_input =
 encodePost_tag_set_input : Post_tag_set_input -> Value
 encodePost_tag_set_input input =
     Encode.maybeObject
-        [ ( "id", (CustomScalars.codecs |> Api.Scalar.unwrapEncoder .codecUuid) |> Encode.optional input.id ), ( "post_id", (CustomScalars.codecs |> Api.Scalar.unwrapEncoder .codecUuid) |> Encode.optional input.post_id ), ( "tag_id", (CustomScalars.codecs |> Api.Scalar.unwrapEncoder .codecUuid) |> Encode.optional input.tag_id ), ( "user_id", (CustomScalars.codecs |> Api.Scalar.unwrapEncoder .codecUuid) |> Encode.optional input.user_id ) ]
+        [ ( "created_at", (CustomScalars.codecs |> Api.Scalar.unwrapEncoder .codecTimestamptz) |> Encode.optional input.created_at ), ( "id", (CustomScalars.codecs |> Api.Scalar.unwrapEncoder .codecUuid) |> Encode.optional input.id ), ( "post_id", (CustomScalars.codecs |> Api.Scalar.unwrapEncoder .codecUuid) |> Encode.optional input.post_id ), ( "tag_id", (CustomScalars.codecs |> Api.Scalar.unwrapEncoder .codecUuid) |> Encode.optional input.tag_id ), ( "updated_at", (CustomScalars.codecs |> Api.Scalar.unwrapEncoder .codecTimestamptz) |> Encode.optional input.updated_at ), ( "user_id", (CustomScalars.codecs |> Api.Scalar.unwrapEncoder .codecUuid) |> Encode.optional input.user_id ) ]
 
 
-buildPurchase_aggregate_order_by : (Purchase_aggregate_order_byOptionalFields -> Purchase_aggregate_order_byOptionalFields) -> Purchase_aggregate_order_by
+buildPurchase_aggregate_order_by :
+    (Purchase_aggregate_order_byOptionalFields -> Purchase_aggregate_order_byOptionalFields)
+    -> Purchase_aggregate_order_by
 buildPurchase_aggregate_order_by fillOptionals =
     let
         optionals =
@@ -1026,7 +1128,10 @@ encodePurchase_aggregate_order_by input =
         [ ( "count", Encode.enum Api.Enum.Order_by.toString |> Encode.optional input.count ), ( "max", encodePurchase_max_order_by |> Encode.optional input.max ), ( "min", encodePurchase_min_order_by |> Encode.optional input.min ) ]
 
 
-buildPurchase_arr_rel_insert_input : Purchase_arr_rel_insert_inputRequiredFields -> (Purchase_arr_rel_insert_inputOptionalFields -> Purchase_arr_rel_insert_inputOptionalFields) -> Purchase_arr_rel_insert_input
+buildPurchase_arr_rel_insert_input :
+    Purchase_arr_rel_insert_inputRequiredFields
+    -> (Purchase_arr_rel_insert_inputOptionalFields -> Purchase_arr_rel_insert_inputOptionalFields)
+    -> Purchase_arr_rel_insert_input
 buildPurchase_arr_rel_insert_input required fillOptionals =
     let
         optionals =
@@ -1069,7 +1174,9 @@ encodePurchase_arr_rel_insert_input (Purchase_arr_rel_insert_input input) =
         [ ( "data", (encodePurchase_insert_input |> Encode.list) input.data |> Just ), ( "on_conflict", encodePurchase_on_conflict |> Encode.optional input.on_conflict ) ]
 
 
-buildPurchase_bool_exp : (Purchase_bool_expOptionalFields -> Purchase_bool_expOptionalFields) -> Purchase_bool_exp
+buildPurchase_bool_exp :
+    (Purchase_bool_expOptionalFields -> Purchase_bool_expOptionalFields)
+    -> Purchase_bool_exp
 buildPurchase_bool_exp fillOptionals =
     let
         optionals =
@@ -1124,7 +1231,9 @@ encodePurchase_bool_exp (Purchase_bool_exp input) =
         [ ( "_and", (encodePurchase_bool_exp |> Encode.maybe |> Encode.list) |> Encode.optional input.and_ ), ( "_not", encodePurchase_bool_exp |> Encode.optional input.not_ ), ( "_or", (encodePurchase_bool_exp |> Encode.maybe |> Encode.list) |> Encode.optional input.or_ ), ( "checkout_session_id", encodeString_comparison_exp |> Encode.optional input.checkout_session_id ), ( "created_at", encodeTimestamptz_comparison_exp |> Encode.optional input.created_at ), ( "email", encodeString_comparison_exp |> Encode.optional input.email ), ( "id", encodeUuid_comparison_exp |> Encode.optional input.id ), ( "updated_at", encodeTimestamptz_comparison_exp |> Encode.optional input.updated_at ), ( "user", encodeUser_bool_exp |> Encode.optional input.user ) ]
 
 
-buildPurchase_insert_input : (Purchase_insert_inputOptionalFields -> Purchase_insert_inputOptionalFields) -> Purchase_insert_input
+buildPurchase_insert_input :
+    (Purchase_insert_inputOptionalFields -> Purchase_insert_inputOptionalFields)
+    -> Purchase_insert_input
 buildPurchase_insert_input fillOptionals =
     let
         optionals =
@@ -1173,7 +1282,9 @@ encodePurchase_insert_input (Purchase_insert_input input) =
         [ ( "checkout_session_id", Encode.string |> Encode.optional input.checkout_session_id ), ( "created_at", (CustomScalars.codecs |> Api.Scalar.unwrapEncoder .codecTimestamptz) |> Encode.optional input.created_at ), ( "email", Encode.string |> Encode.optional input.email ), ( "id", (CustomScalars.codecs |> Api.Scalar.unwrapEncoder .codecUuid) |> Encode.optional input.id ), ( "updated_at", (CustomScalars.codecs |> Api.Scalar.unwrapEncoder .codecTimestamptz) |> Encode.optional input.updated_at ), ( "user", encodeUser_obj_rel_insert_input |> Encode.optional input.user ) ]
 
 
-buildPurchase_max_order_by : (Purchase_max_order_byOptionalFields -> Purchase_max_order_byOptionalFields) -> Purchase_max_order_by
+buildPurchase_max_order_by :
+    (Purchase_max_order_byOptionalFields -> Purchase_max_order_byOptionalFields)
+    -> Purchase_max_order_by
 buildPurchase_max_order_by fillOptionals =
     let
         optionals =
@@ -1211,7 +1322,9 @@ encodePurchase_max_order_by input =
         [ ( "checkout_session_id", Encode.enum Api.Enum.Order_by.toString |> Encode.optional input.checkout_session_id ), ( "created_at", Encode.enum Api.Enum.Order_by.toString |> Encode.optional input.created_at ), ( "email", Encode.enum Api.Enum.Order_by.toString |> Encode.optional input.email ), ( "id", Encode.enum Api.Enum.Order_by.toString |> Encode.optional input.id ), ( "updated_at", Encode.enum Api.Enum.Order_by.toString |> Encode.optional input.updated_at ) ]
 
 
-buildPurchase_min_order_by : (Purchase_min_order_byOptionalFields -> Purchase_min_order_byOptionalFields) -> Purchase_min_order_by
+buildPurchase_min_order_by :
+    (Purchase_min_order_byOptionalFields -> Purchase_min_order_byOptionalFields)
+    -> Purchase_min_order_by
 buildPurchase_min_order_by fillOptionals =
     let
         optionals =
@@ -1249,7 +1362,10 @@ encodePurchase_min_order_by input =
         [ ( "checkout_session_id", Encode.enum Api.Enum.Order_by.toString |> Encode.optional input.checkout_session_id ), ( "created_at", Encode.enum Api.Enum.Order_by.toString |> Encode.optional input.created_at ), ( "email", Encode.enum Api.Enum.Order_by.toString |> Encode.optional input.email ), ( "id", Encode.enum Api.Enum.Order_by.toString |> Encode.optional input.id ), ( "updated_at", Encode.enum Api.Enum.Order_by.toString |> Encode.optional input.updated_at ) ]
 
 
-buildPurchase_obj_rel_insert_input : Purchase_obj_rel_insert_inputRequiredFields -> (Purchase_obj_rel_insert_inputOptionalFields -> Purchase_obj_rel_insert_inputOptionalFields) -> Purchase_obj_rel_insert_input
+buildPurchase_obj_rel_insert_input :
+    Purchase_obj_rel_insert_inputRequiredFields
+    -> (Purchase_obj_rel_insert_inputOptionalFields -> Purchase_obj_rel_insert_inputOptionalFields)
+    -> Purchase_obj_rel_insert_input
 buildPurchase_obj_rel_insert_input required fillOptionals =
     let
         optionals =
@@ -1292,7 +1408,10 @@ encodePurchase_obj_rel_insert_input (Purchase_obj_rel_insert_input input) =
         [ ( "data", encodePurchase_insert_input input.data |> Just ), ( "on_conflict", encodePurchase_on_conflict |> Encode.optional input.on_conflict ) ]
 
 
-buildPurchase_on_conflict : Purchase_on_conflictRequiredFields -> (Purchase_on_conflictOptionalFields -> Purchase_on_conflictOptionalFields) -> Purchase_on_conflict
+buildPurchase_on_conflict :
+    Purchase_on_conflictRequiredFields
+    -> (Purchase_on_conflictOptionalFields -> Purchase_on_conflictOptionalFields)
+    -> Purchase_on_conflict
 buildPurchase_on_conflict required fillOptionals =
     let
         optionals =
@@ -1338,7 +1457,9 @@ encodePurchase_on_conflict (Purchase_on_conflict input) =
         [ ( "constraint", Encode.enum Api.Enum.Purchase_constraint.toString input.constraint |> Just ), ( "update_columns", (Encode.enum Api.Enum.Purchase_update_column.toString |> Encode.list) input.update_columns |> Just ), ( "where", encodePurchase_bool_exp |> Encode.optional input.where_ ) ]
 
 
-buildPurchase_order_by : (Purchase_order_byOptionalFields -> Purchase_order_byOptionalFields) -> Purchase_order_by
+buildPurchase_order_by :
+    (Purchase_order_byOptionalFields -> Purchase_order_byOptionalFields)
+    -> Purchase_order_by
 buildPurchase_order_by fillOptionals =
     let
         optionals =
@@ -1387,7 +1508,9 @@ encodePurchase_order_by (Purchase_order_by input) =
         [ ( "checkout_session_id", Encode.enum Api.Enum.Order_by.toString |> Encode.optional input.checkout_session_id ), ( "created_at", Encode.enum Api.Enum.Order_by.toString |> Encode.optional input.created_at ), ( "email", Encode.enum Api.Enum.Order_by.toString |> Encode.optional input.email ), ( "id", Encode.enum Api.Enum.Order_by.toString |> Encode.optional input.id ), ( "updated_at", Encode.enum Api.Enum.Order_by.toString |> Encode.optional input.updated_at ), ( "user", encodeUser_order_by |> Encode.optional input.user ) ]
 
 
-buildPurchase_pk_columns_input : Purchase_pk_columns_inputRequiredFields -> Purchase_pk_columns_input
+buildPurchase_pk_columns_input :
+    Purchase_pk_columns_inputRequiredFields
+    -> Purchase_pk_columns_input
 buildPurchase_pk_columns_input required =
     { id = required.id }
 
@@ -1410,7 +1533,9 @@ encodePurchase_pk_columns_input input =
         [ ( "id", (CustomScalars.codecs |> Api.Scalar.unwrapEncoder .codecUuid) input.id |> Just ) ]
 
 
-buildPurchase_set_input : (Purchase_set_inputOptionalFields -> Purchase_set_inputOptionalFields) -> Purchase_set_input
+buildPurchase_set_input :
+    (Purchase_set_inputOptionalFields -> Purchase_set_inputOptionalFields)
+    -> Purchase_set_input
 buildPurchase_set_input fillOptionals =
     let
         optionals =
@@ -1448,7 +1573,9 @@ encodePurchase_set_input input =
         [ ( "checkout_session_id", Encode.string |> Encode.optional input.checkout_session_id ), ( "created_at", (CustomScalars.codecs |> Api.Scalar.unwrapEncoder .codecTimestamptz) |> Encode.optional input.created_at ), ( "email", Encode.string |> Encode.optional input.email ), ( "id", (CustomScalars.codecs |> Api.Scalar.unwrapEncoder .codecUuid) |> Encode.optional input.id ), ( "updated_at", (CustomScalars.codecs |> Api.Scalar.unwrapEncoder .codecTimestamptz) |> Encode.optional input.updated_at ) ]
 
 
-buildString_comparison_exp : (String_comparison_expOptionalFields -> String_comparison_expOptionalFields) -> String_comparison_exp
+buildString_comparison_exp :
+    (String_comparison_expOptionalFields -> String_comparison_expOptionalFields)
+    -> String_comparison_exp
 buildString_comparison_exp fillOptionals =
     let
         optionals =
@@ -1506,7 +1633,9 @@ encodeString_comparison_exp input =
         [ ( "_eq", Encode.string |> Encode.optional input.eq_ ), ( "_gt", Encode.string |> Encode.optional input.gt_ ), ( "_gte", Encode.string |> Encode.optional input.gte_ ), ( "_ilike", Encode.string |> Encode.optional input.ilike_ ), ( "_in", (Encode.string |> Encode.list) |> Encode.optional input.in_ ), ( "_is_null", Encode.bool |> Encode.optional input.is_null_ ), ( "_like", Encode.string |> Encode.optional input.like_ ), ( "_lt", Encode.string |> Encode.optional input.lt_ ), ( "_lte", Encode.string |> Encode.optional input.lte_ ), ( "_neq", Encode.string |> Encode.optional input.neq_ ), ( "_nilike", Encode.string |> Encode.optional input.nilike_ ), ( "_nin", (Encode.string |> Encode.list) |> Encode.optional input.nin_ ), ( "_nlike", Encode.string |> Encode.optional input.nlike_ ), ( "_nsimilar", Encode.string |> Encode.optional input.nsimilar_ ), ( "_similar", Encode.string |> Encode.optional input.similar_ ) ]
 
 
-buildTag_aggregate_order_by : (Tag_aggregate_order_byOptionalFields -> Tag_aggregate_order_byOptionalFields) -> Tag_aggregate_order_by
+buildTag_aggregate_order_by :
+    (Tag_aggregate_order_byOptionalFields -> Tag_aggregate_order_byOptionalFields)
+    -> Tag_aggregate_order_by
 buildTag_aggregate_order_by fillOptionals =
     let
         optionals =
@@ -1540,7 +1669,10 @@ encodeTag_aggregate_order_by input =
         [ ( "count", Encode.enum Api.Enum.Order_by.toString |> Encode.optional input.count ), ( "max", encodeTag_max_order_by |> Encode.optional input.max ), ( "min", encodeTag_min_order_by |> Encode.optional input.min ) ]
 
 
-buildTag_arr_rel_insert_input : Tag_arr_rel_insert_inputRequiredFields -> (Tag_arr_rel_insert_inputOptionalFields -> Tag_arr_rel_insert_inputOptionalFields) -> Tag_arr_rel_insert_input
+buildTag_arr_rel_insert_input :
+    Tag_arr_rel_insert_inputRequiredFields
+    -> (Tag_arr_rel_insert_inputOptionalFields -> Tag_arr_rel_insert_inputOptionalFields)
+    -> Tag_arr_rel_insert_input
 buildTag_arr_rel_insert_input required fillOptionals =
     let
         optionals =
@@ -1583,24 +1715,28 @@ encodeTag_arr_rel_insert_input (Tag_arr_rel_insert_input input) =
         [ ( "data", (encodeTag_insert_input |> Encode.list) input.data |> Just ), ( "on_conflict", encodeTag_on_conflict |> Encode.optional input.on_conflict ) ]
 
 
-buildTag_bool_exp : (Tag_bool_expOptionalFields -> Tag_bool_expOptionalFields) -> Tag_bool_exp
+buildTag_bool_exp :
+    (Tag_bool_expOptionalFields -> Tag_bool_expOptionalFields)
+    -> Tag_bool_exp
 buildTag_bool_exp fillOptionals =
     let
         optionals =
             fillOptionals
-                { and_ = Absent, not_ = Absent, or_ = Absent, id = Absent, iv = Absent, name = Absent, postTagsBytagId = Absent, userByuserId = Absent, user_id = Absent }
+                { and_ = Absent, not_ = Absent, or_ = Absent, created_at = Absent, id = Absent, iv = Absent, name = Absent, postTagsBytagId = Absent, updated_at = Absent, userByuserId = Absent, user_id = Absent }
     in
-    Tag_bool_exp { and_ = optionals.and_, not_ = optionals.not_, or_ = optionals.or_, id = optionals.id, iv = optionals.iv, name = optionals.name, postTagsBytagId = optionals.postTagsBytagId, userByuserId = optionals.userByuserId, user_id = optionals.user_id }
+    Tag_bool_exp { and_ = optionals.and_, not_ = optionals.not_, or_ = optionals.or_, created_at = optionals.created_at, id = optionals.id, iv = optionals.iv, name = optionals.name, postTagsBytagId = optionals.postTagsBytagId, updated_at = optionals.updated_at, userByuserId = optionals.userByuserId, user_id = optionals.user_id }
 
 
 type alias Tag_bool_expOptionalFields =
     { and_ : OptionalArgument (List (Maybe Tag_bool_exp))
     , not_ : OptionalArgument Tag_bool_exp
     , or_ : OptionalArgument (List (Maybe Tag_bool_exp))
+    , created_at : OptionalArgument Timestamptz_comparison_exp
     , id : OptionalArgument Uuid_comparison_exp
     , iv : OptionalArgument String_comparison_exp
     , name : OptionalArgument String_comparison_exp
     , postTagsBytagId : OptionalArgument Post_tag_bool_exp
+    , updated_at : OptionalArgument Timestamptz_comparison_exp
     , userByuserId : OptionalArgument User_bool_exp
     , user_id : OptionalArgument Uuid_comparison_exp
     }
@@ -1615,10 +1751,12 @@ type alias Tag_bool_expRaw =
     { and_ : OptionalArgument (List (Maybe Tag_bool_exp))
     , not_ : OptionalArgument Tag_bool_exp
     , or_ : OptionalArgument (List (Maybe Tag_bool_exp))
+    , created_at : OptionalArgument Timestamptz_comparison_exp
     , id : OptionalArgument Uuid_comparison_exp
     , iv : OptionalArgument String_comparison_exp
     , name : OptionalArgument String_comparison_exp
     , postTagsBytagId : OptionalArgument Post_tag_bool_exp
+    , updated_at : OptionalArgument Timestamptz_comparison_exp
     , userByuserId : OptionalArgument User_bool_exp
     , user_id : OptionalArgument Uuid_comparison_exp
     }
@@ -1635,24 +1773,28 @@ type Tag_bool_exp
 encodeTag_bool_exp : Tag_bool_exp -> Value
 encodeTag_bool_exp (Tag_bool_exp input) =
     Encode.maybeObject
-        [ ( "_and", (encodeTag_bool_exp |> Encode.maybe |> Encode.list) |> Encode.optional input.and_ ), ( "_not", encodeTag_bool_exp |> Encode.optional input.not_ ), ( "_or", (encodeTag_bool_exp |> Encode.maybe |> Encode.list) |> Encode.optional input.or_ ), ( "id", encodeUuid_comparison_exp |> Encode.optional input.id ), ( "iv", encodeString_comparison_exp |> Encode.optional input.iv ), ( "name", encodeString_comparison_exp |> Encode.optional input.name ), ( "postTagsBytagId", encodePost_tag_bool_exp |> Encode.optional input.postTagsBytagId ), ( "userByuserId", encodeUser_bool_exp |> Encode.optional input.userByuserId ), ( "user_id", encodeUuid_comparison_exp |> Encode.optional input.user_id ) ]
+        [ ( "_and", (encodeTag_bool_exp |> Encode.maybe |> Encode.list) |> Encode.optional input.and_ ), ( "_not", encodeTag_bool_exp |> Encode.optional input.not_ ), ( "_or", (encodeTag_bool_exp |> Encode.maybe |> Encode.list) |> Encode.optional input.or_ ), ( "created_at", encodeTimestamptz_comparison_exp |> Encode.optional input.created_at ), ( "id", encodeUuid_comparison_exp |> Encode.optional input.id ), ( "iv", encodeString_comparison_exp |> Encode.optional input.iv ), ( "name", encodeString_comparison_exp |> Encode.optional input.name ), ( "postTagsBytagId", encodePost_tag_bool_exp |> Encode.optional input.postTagsBytagId ), ( "updated_at", encodeTimestamptz_comparison_exp |> Encode.optional input.updated_at ), ( "userByuserId", encodeUser_bool_exp |> Encode.optional input.userByuserId ), ( "user_id", encodeUuid_comparison_exp |> Encode.optional input.user_id ) ]
 
 
-buildTag_insert_input : (Tag_insert_inputOptionalFields -> Tag_insert_inputOptionalFields) -> Tag_insert_input
+buildTag_insert_input :
+    (Tag_insert_inputOptionalFields -> Tag_insert_inputOptionalFields)
+    -> Tag_insert_input
 buildTag_insert_input fillOptionals =
     let
         optionals =
             fillOptionals
-                { id = Absent, iv = Absent, name = Absent, postTagsBytagId = Absent, userByuserId = Absent, user_id = Absent }
+                { created_at = Absent, id = Absent, iv = Absent, name = Absent, postTagsBytagId = Absent, updated_at = Absent, userByuserId = Absent, user_id = Absent }
     in
-    Tag_insert_input { id = optionals.id, iv = optionals.iv, name = optionals.name, postTagsBytagId = optionals.postTagsBytagId, userByuserId = optionals.userByuserId, user_id = optionals.user_id }
+    Tag_insert_input { created_at = optionals.created_at, id = optionals.id, iv = optionals.iv, name = optionals.name, postTagsBytagId = optionals.postTagsBytagId, updated_at = optionals.updated_at, userByuserId = optionals.userByuserId, user_id = optionals.user_id }
 
 
 type alias Tag_insert_inputOptionalFields =
-    { id : OptionalArgument CustomScalars.Uuid
+    { created_at : OptionalArgument CustomScalars.Timestamptz
+    , id : OptionalArgument CustomScalars.Uuid
     , iv : OptionalArgument String
     , name : OptionalArgument String
     , postTagsBytagId : OptionalArgument Post_tag_arr_rel_insert_input
+    , updated_at : OptionalArgument CustomScalars.Timestamptz
     , userByuserId : OptionalArgument User_obj_rel_insert_input
     , user_id : OptionalArgument CustomScalars.Uuid
     }
@@ -1664,10 +1806,12 @@ references to itself either directly (recursive) or indirectly (circular). See
 <https://github.com/dillonkearns/elm-graphql/issues/33>.
 -}
 type alias Tag_insert_inputRaw =
-    { id : OptionalArgument CustomScalars.Uuid
+    { created_at : OptionalArgument CustomScalars.Timestamptz
+    , id : OptionalArgument CustomScalars.Uuid
     , iv : OptionalArgument String
     , name : OptionalArgument String
     , postTagsBytagId : OptionalArgument Post_tag_arr_rel_insert_input
+    , updated_at : OptionalArgument CustomScalars.Timestamptz
     , userByuserId : OptionalArgument User_obj_rel_insert_input
     , user_id : OptionalArgument CustomScalars.Uuid
     }
@@ -1684,23 +1828,27 @@ type Tag_insert_input
 encodeTag_insert_input : Tag_insert_input -> Value
 encodeTag_insert_input (Tag_insert_input input) =
     Encode.maybeObject
-        [ ( "id", (CustomScalars.codecs |> Api.Scalar.unwrapEncoder .codecUuid) |> Encode.optional input.id ), ( "iv", Encode.string |> Encode.optional input.iv ), ( "name", Encode.string |> Encode.optional input.name ), ( "postTagsBytagId", encodePost_tag_arr_rel_insert_input |> Encode.optional input.postTagsBytagId ), ( "userByuserId", encodeUser_obj_rel_insert_input |> Encode.optional input.userByuserId ), ( "user_id", (CustomScalars.codecs |> Api.Scalar.unwrapEncoder .codecUuid) |> Encode.optional input.user_id ) ]
+        [ ( "created_at", (CustomScalars.codecs |> Api.Scalar.unwrapEncoder .codecTimestamptz) |> Encode.optional input.created_at ), ( "id", (CustomScalars.codecs |> Api.Scalar.unwrapEncoder .codecUuid) |> Encode.optional input.id ), ( "iv", Encode.string |> Encode.optional input.iv ), ( "name", Encode.string |> Encode.optional input.name ), ( "postTagsBytagId", encodePost_tag_arr_rel_insert_input |> Encode.optional input.postTagsBytagId ), ( "updated_at", (CustomScalars.codecs |> Api.Scalar.unwrapEncoder .codecTimestamptz) |> Encode.optional input.updated_at ), ( "userByuserId", encodeUser_obj_rel_insert_input |> Encode.optional input.userByuserId ), ( "user_id", (CustomScalars.codecs |> Api.Scalar.unwrapEncoder .codecUuid) |> Encode.optional input.user_id ) ]
 
 
-buildTag_max_order_by : (Tag_max_order_byOptionalFields -> Tag_max_order_byOptionalFields) -> Tag_max_order_by
+buildTag_max_order_by :
+    (Tag_max_order_byOptionalFields -> Tag_max_order_byOptionalFields)
+    -> Tag_max_order_by
 buildTag_max_order_by fillOptionals =
     let
         optionals =
             fillOptionals
-                { id = Absent, iv = Absent, name = Absent, user_id = Absent }
+                { created_at = Absent, id = Absent, iv = Absent, name = Absent, updated_at = Absent, user_id = Absent }
     in
-    { id = optionals.id, iv = optionals.iv, name = optionals.name, user_id = optionals.user_id }
+    { created_at = optionals.created_at, id = optionals.id, iv = optionals.iv, name = optionals.name, updated_at = optionals.updated_at, user_id = optionals.user_id }
 
 
 type alias Tag_max_order_byOptionalFields =
-    { id : OptionalArgument Api.Enum.Order_by.Order_by
+    { created_at : OptionalArgument Api.Enum.Order_by.Order_by
+    , id : OptionalArgument Api.Enum.Order_by.Order_by
     , iv : OptionalArgument Api.Enum.Order_by.Order_by
     , name : OptionalArgument Api.Enum.Order_by.Order_by
+    , updated_at : OptionalArgument Api.Enum.Order_by.Order_by
     , user_id : OptionalArgument Api.Enum.Order_by.Order_by
     }
 
@@ -1708,9 +1856,11 @@ type alias Tag_max_order_byOptionalFields =
 {-| Type for the Tag\_max\_order\_by input object.
 -}
 type alias Tag_max_order_by =
-    { id : OptionalArgument Api.Enum.Order_by.Order_by
+    { created_at : OptionalArgument Api.Enum.Order_by.Order_by
+    , id : OptionalArgument Api.Enum.Order_by.Order_by
     , iv : OptionalArgument Api.Enum.Order_by.Order_by
     , name : OptionalArgument Api.Enum.Order_by.Order_by
+    , updated_at : OptionalArgument Api.Enum.Order_by.Order_by
     , user_id : OptionalArgument Api.Enum.Order_by.Order_by
     }
 
@@ -1720,23 +1870,27 @@ type alias Tag_max_order_by =
 encodeTag_max_order_by : Tag_max_order_by -> Value
 encodeTag_max_order_by input =
     Encode.maybeObject
-        [ ( "id", Encode.enum Api.Enum.Order_by.toString |> Encode.optional input.id ), ( "iv", Encode.enum Api.Enum.Order_by.toString |> Encode.optional input.iv ), ( "name", Encode.enum Api.Enum.Order_by.toString |> Encode.optional input.name ), ( "user_id", Encode.enum Api.Enum.Order_by.toString |> Encode.optional input.user_id ) ]
+        [ ( "created_at", Encode.enum Api.Enum.Order_by.toString |> Encode.optional input.created_at ), ( "id", Encode.enum Api.Enum.Order_by.toString |> Encode.optional input.id ), ( "iv", Encode.enum Api.Enum.Order_by.toString |> Encode.optional input.iv ), ( "name", Encode.enum Api.Enum.Order_by.toString |> Encode.optional input.name ), ( "updated_at", Encode.enum Api.Enum.Order_by.toString |> Encode.optional input.updated_at ), ( "user_id", Encode.enum Api.Enum.Order_by.toString |> Encode.optional input.user_id ) ]
 
 
-buildTag_min_order_by : (Tag_min_order_byOptionalFields -> Tag_min_order_byOptionalFields) -> Tag_min_order_by
+buildTag_min_order_by :
+    (Tag_min_order_byOptionalFields -> Tag_min_order_byOptionalFields)
+    -> Tag_min_order_by
 buildTag_min_order_by fillOptionals =
     let
         optionals =
             fillOptionals
-                { id = Absent, iv = Absent, name = Absent, user_id = Absent }
+                { created_at = Absent, id = Absent, iv = Absent, name = Absent, updated_at = Absent, user_id = Absent }
     in
-    { id = optionals.id, iv = optionals.iv, name = optionals.name, user_id = optionals.user_id }
+    { created_at = optionals.created_at, id = optionals.id, iv = optionals.iv, name = optionals.name, updated_at = optionals.updated_at, user_id = optionals.user_id }
 
 
 type alias Tag_min_order_byOptionalFields =
-    { id : OptionalArgument Api.Enum.Order_by.Order_by
+    { created_at : OptionalArgument Api.Enum.Order_by.Order_by
+    , id : OptionalArgument Api.Enum.Order_by.Order_by
     , iv : OptionalArgument Api.Enum.Order_by.Order_by
     , name : OptionalArgument Api.Enum.Order_by.Order_by
+    , updated_at : OptionalArgument Api.Enum.Order_by.Order_by
     , user_id : OptionalArgument Api.Enum.Order_by.Order_by
     }
 
@@ -1744,9 +1898,11 @@ type alias Tag_min_order_byOptionalFields =
 {-| Type for the Tag\_min\_order\_by input object.
 -}
 type alias Tag_min_order_by =
-    { id : OptionalArgument Api.Enum.Order_by.Order_by
+    { created_at : OptionalArgument Api.Enum.Order_by.Order_by
+    , id : OptionalArgument Api.Enum.Order_by.Order_by
     , iv : OptionalArgument Api.Enum.Order_by.Order_by
     , name : OptionalArgument Api.Enum.Order_by.Order_by
+    , updated_at : OptionalArgument Api.Enum.Order_by.Order_by
     , user_id : OptionalArgument Api.Enum.Order_by.Order_by
     }
 
@@ -1756,10 +1912,13 @@ type alias Tag_min_order_by =
 encodeTag_min_order_by : Tag_min_order_by -> Value
 encodeTag_min_order_by input =
     Encode.maybeObject
-        [ ( "id", Encode.enum Api.Enum.Order_by.toString |> Encode.optional input.id ), ( "iv", Encode.enum Api.Enum.Order_by.toString |> Encode.optional input.iv ), ( "name", Encode.enum Api.Enum.Order_by.toString |> Encode.optional input.name ), ( "user_id", Encode.enum Api.Enum.Order_by.toString |> Encode.optional input.user_id ) ]
+        [ ( "created_at", Encode.enum Api.Enum.Order_by.toString |> Encode.optional input.created_at ), ( "id", Encode.enum Api.Enum.Order_by.toString |> Encode.optional input.id ), ( "iv", Encode.enum Api.Enum.Order_by.toString |> Encode.optional input.iv ), ( "name", Encode.enum Api.Enum.Order_by.toString |> Encode.optional input.name ), ( "updated_at", Encode.enum Api.Enum.Order_by.toString |> Encode.optional input.updated_at ), ( "user_id", Encode.enum Api.Enum.Order_by.toString |> Encode.optional input.user_id ) ]
 
 
-buildTag_obj_rel_insert_input : Tag_obj_rel_insert_inputRequiredFields -> (Tag_obj_rel_insert_inputOptionalFields -> Tag_obj_rel_insert_inputOptionalFields) -> Tag_obj_rel_insert_input
+buildTag_obj_rel_insert_input :
+    Tag_obj_rel_insert_inputRequiredFields
+    -> (Tag_obj_rel_insert_inputOptionalFields -> Tag_obj_rel_insert_inputOptionalFields)
+    -> Tag_obj_rel_insert_input
 buildTag_obj_rel_insert_input required fillOptionals =
     let
         optionals =
@@ -1802,7 +1961,10 @@ encodeTag_obj_rel_insert_input (Tag_obj_rel_insert_input input) =
         [ ( "data", encodeTag_insert_input input.data |> Just ), ( "on_conflict", encodeTag_on_conflict |> Encode.optional input.on_conflict ) ]
 
 
-buildTag_on_conflict : Tag_on_conflictRequiredFields -> (Tag_on_conflictOptionalFields -> Tag_on_conflictOptionalFields) -> Tag_on_conflict
+buildTag_on_conflict :
+    Tag_on_conflictRequiredFields
+    -> (Tag_on_conflictOptionalFields -> Tag_on_conflictOptionalFields)
+    -> Tag_on_conflict
 buildTag_on_conflict required fillOptionals =
     let
         optionals =
@@ -1848,21 +2010,25 @@ encodeTag_on_conflict (Tag_on_conflict input) =
         [ ( "constraint", Encode.enum Api.Enum.Tag_constraint.toString input.constraint |> Just ), ( "update_columns", (Encode.enum Api.Enum.Tag_update_column.toString |> Encode.list) input.update_columns |> Just ), ( "where", encodeTag_bool_exp |> Encode.optional input.where_ ) ]
 
 
-buildTag_order_by : (Tag_order_byOptionalFields -> Tag_order_byOptionalFields) -> Tag_order_by
+buildTag_order_by :
+    (Tag_order_byOptionalFields -> Tag_order_byOptionalFields)
+    -> Tag_order_by
 buildTag_order_by fillOptionals =
     let
         optionals =
             fillOptionals
-                { id = Absent, iv = Absent, name = Absent, postTagsBytagId_aggregate = Absent, userByuserId = Absent, user_id = Absent }
+                { created_at = Absent, id = Absent, iv = Absent, name = Absent, postTagsBytagId_aggregate = Absent, updated_at = Absent, userByuserId = Absent, user_id = Absent }
     in
-    Tag_order_by { id = optionals.id, iv = optionals.iv, name = optionals.name, postTagsBytagId_aggregate = optionals.postTagsBytagId_aggregate, userByuserId = optionals.userByuserId, user_id = optionals.user_id }
+    Tag_order_by { created_at = optionals.created_at, id = optionals.id, iv = optionals.iv, name = optionals.name, postTagsBytagId_aggregate = optionals.postTagsBytagId_aggregate, updated_at = optionals.updated_at, userByuserId = optionals.userByuserId, user_id = optionals.user_id }
 
 
 type alias Tag_order_byOptionalFields =
-    { id : OptionalArgument Api.Enum.Order_by.Order_by
+    { created_at : OptionalArgument Api.Enum.Order_by.Order_by
+    , id : OptionalArgument Api.Enum.Order_by.Order_by
     , iv : OptionalArgument Api.Enum.Order_by.Order_by
     , name : OptionalArgument Api.Enum.Order_by.Order_by
     , postTagsBytagId_aggregate : OptionalArgument Post_tag_aggregate_order_by
+    , updated_at : OptionalArgument Api.Enum.Order_by.Order_by
     , userByuserId : OptionalArgument User_order_by
     , user_id : OptionalArgument Api.Enum.Order_by.Order_by
     }
@@ -1874,10 +2040,12 @@ references to itself either directly (recursive) or indirectly (circular). See
 <https://github.com/dillonkearns/elm-graphql/issues/33>.
 -}
 type alias Tag_order_byRaw =
-    { id : OptionalArgument Api.Enum.Order_by.Order_by
+    { created_at : OptionalArgument Api.Enum.Order_by.Order_by
+    , id : OptionalArgument Api.Enum.Order_by.Order_by
     , iv : OptionalArgument Api.Enum.Order_by.Order_by
     , name : OptionalArgument Api.Enum.Order_by.Order_by
     , postTagsBytagId_aggregate : OptionalArgument Post_tag_aggregate_order_by
+    , updated_at : OptionalArgument Api.Enum.Order_by.Order_by
     , userByuserId : OptionalArgument User_order_by
     , user_id : OptionalArgument Api.Enum.Order_by.Order_by
     }
@@ -1894,10 +2062,12 @@ type Tag_order_by
 encodeTag_order_by : Tag_order_by -> Value
 encodeTag_order_by (Tag_order_by input) =
     Encode.maybeObject
-        [ ( "id", Encode.enum Api.Enum.Order_by.toString |> Encode.optional input.id ), ( "iv", Encode.enum Api.Enum.Order_by.toString |> Encode.optional input.iv ), ( "name", Encode.enum Api.Enum.Order_by.toString |> Encode.optional input.name ), ( "postTagsBytagId_aggregate", encodePost_tag_aggregate_order_by |> Encode.optional input.postTagsBytagId_aggregate ), ( "userByuserId", encodeUser_order_by |> Encode.optional input.userByuserId ), ( "user_id", Encode.enum Api.Enum.Order_by.toString |> Encode.optional input.user_id ) ]
+        [ ( "created_at", Encode.enum Api.Enum.Order_by.toString |> Encode.optional input.created_at ), ( "id", Encode.enum Api.Enum.Order_by.toString |> Encode.optional input.id ), ( "iv", Encode.enum Api.Enum.Order_by.toString |> Encode.optional input.iv ), ( "name", Encode.enum Api.Enum.Order_by.toString |> Encode.optional input.name ), ( "postTagsBytagId_aggregate", encodePost_tag_aggregate_order_by |> Encode.optional input.postTagsBytagId_aggregate ), ( "updated_at", Encode.enum Api.Enum.Order_by.toString |> Encode.optional input.updated_at ), ( "userByuserId", encodeUser_order_by |> Encode.optional input.userByuserId ), ( "user_id", Encode.enum Api.Enum.Order_by.toString |> Encode.optional input.user_id ) ]
 
 
-buildTag_pk_columns_input : Tag_pk_columns_inputRequiredFields -> Tag_pk_columns_input
+buildTag_pk_columns_input :
+    Tag_pk_columns_inputRequiredFields
+    -> Tag_pk_columns_input
 buildTag_pk_columns_input required =
     { id = required.id }
 
@@ -1920,20 +2090,24 @@ encodeTag_pk_columns_input input =
         [ ( "id", (CustomScalars.codecs |> Api.Scalar.unwrapEncoder .codecUuid) input.id |> Just ) ]
 
 
-buildTag_set_input : (Tag_set_inputOptionalFields -> Tag_set_inputOptionalFields) -> Tag_set_input
+buildTag_set_input :
+    (Tag_set_inputOptionalFields -> Tag_set_inputOptionalFields)
+    -> Tag_set_input
 buildTag_set_input fillOptionals =
     let
         optionals =
             fillOptionals
-                { id = Absent, iv = Absent, name = Absent, user_id = Absent }
+                { created_at = Absent, id = Absent, iv = Absent, name = Absent, updated_at = Absent, user_id = Absent }
     in
-    { id = optionals.id, iv = optionals.iv, name = optionals.name, user_id = optionals.user_id }
+    { created_at = optionals.created_at, id = optionals.id, iv = optionals.iv, name = optionals.name, updated_at = optionals.updated_at, user_id = optionals.user_id }
 
 
 type alias Tag_set_inputOptionalFields =
-    { id : OptionalArgument CustomScalars.Uuid
+    { created_at : OptionalArgument CustomScalars.Timestamptz
+    , id : OptionalArgument CustomScalars.Uuid
     , iv : OptionalArgument String
     , name : OptionalArgument String
+    , updated_at : OptionalArgument CustomScalars.Timestamptz
     , user_id : OptionalArgument CustomScalars.Uuid
     }
 
@@ -1941,9 +2115,11 @@ type alias Tag_set_inputOptionalFields =
 {-| Type for the Tag\_set\_input input object.
 -}
 type alias Tag_set_input =
-    { id : OptionalArgument CustomScalars.Uuid
+    { created_at : OptionalArgument CustomScalars.Timestamptz
+    , id : OptionalArgument CustomScalars.Uuid
     , iv : OptionalArgument String
     , name : OptionalArgument String
+    , updated_at : OptionalArgument CustomScalars.Timestamptz
     , user_id : OptionalArgument CustomScalars.Uuid
     }
 
@@ -1953,10 +2129,12 @@ type alias Tag_set_input =
 encodeTag_set_input : Tag_set_input -> Value
 encodeTag_set_input input =
     Encode.maybeObject
-        [ ( "id", (CustomScalars.codecs |> Api.Scalar.unwrapEncoder .codecUuid) |> Encode.optional input.id ), ( "iv", Encode.string |> Encode.optional input.iv ), ( "name", Encode.string |> Encode.optional input.name ), ( "user_id", (CustomScalars.codecs |> Api.Scalar.unwrapEncoder .codecUuid) |> Encode.optional input.user_id ) ]
+        [ ( "created_at", (CustomScalars.codecs |> Api.Scalar.unwrapEncoder .codecTimestamptz) |> Encode.optional input.created_at ), ( "id", (CustomScalars.codecs |> Api.Scalar.unwrapEncoder .codecUuid) |> Encode.optional input.id ), ( "iv", Encode.string |> Encode.optional input.iv ), ( "name", Encode.string |> Encode.optional input.name ), ( "updated_at", (CustomScalars.codecs |> Api.Scalar.unwrapEncoder .codecTimestamptz) |> Encode.optional input.updated_at ), ( "user_id", (CustomScalars.codecs |> Api.Scalar.unwrapEncoder .codecUuid) |> Encode.optional input.user_id ) ]
 
 
-buildTimestamptz_comparison_exp : (Timestamptz_comparison_expOptionalFields -> Timestamptz_comparison_expOptionalFields) -> Timestamptz_comparison_exp
+buildTimestamptz_comparison_exp :
+    (Timestamptz_comparison_expOptionalFields -> Timestamptz_comparison_expOptionalFields)
+    -> Timestamptz_comparison_exp
 buildTimestamptz_comparison_exp fillOptionals =
     let
         optionals =
@@ -2002,7 +2180,9 @@ encodeTimestamptz_comparison_exp input =
         [ ( "_eq", (CustomScalars.codecs |> Api.Scalar.unwrapEncoder .codecTimestamptz) |> Encode.optional input.eq_ ), ( "_gt", (CustomScalars.codecs |> Api.Scalar.unwrapEncoder .codecTimestamptz) |> Encode.optional input.gt_ ), ( "_gte", (CustomScalars.codecs |> Api.Scalar.unwrapEncoder .codecTimestamptz) |> Encode.optional input.gte_ ), ( "_in", ((CustomScalars.codecs |> Api.Scalar.unwrapEncoder .codecTimestamptz) |> Encode.list) |> Encode.optional input.in_ ), ( "_is_null", Encode.bool |> Encode.optional input.is_null_ ), ( "_lt", (CustomScalars.codecs |> Api.Scalar.unwrapEncoder .codecTimestamptz) |> Encode.optional input.lt_ ), ( "_lte", (CustomScalars.codecs |> Api.Scalar.unwrapEncoder .codecTimestamptz) |> Encode.optional input.lte_ ), ( "_neq", (CustomScalars.codecs |> Api.Scalar.unwrapEncoder .codecTimestamptz) |> Encode.optional input.neq_ ), ( "_nin", ((CustomScalars.codecs |> Api.Scalar.unwrapEncoder .codecTimestamptz) |> Encode.list) |> Encode.optional input.nin_ ) ]
 
 
-buildUser_aggregate_order_by : (User_aggregate_order_byOptionalFields -> User_aggregate_order_byOptionalFields) -> User_aggregate_order_by
+buildUser_aggregate_order_by :
+    (User_aggregate_order_byOptionalFields -> User_aggregate_order_byOptionalFields)
+    -> User_aggregate_order_by
 buildUser_aggregate_order_by fillOptionals =
     let
         optionals =
@@ -2036,7 +2216,10 @@ encodeUser_aggregate_order_by input =
         [ ( "count", Encode.enum Api.Enum.Order_by.toString |> Encode.optional input.count ), ( "max", encodeUser_max_order_by |> Encode.optional input.max ), ( "min", encodeUser_min_order_by |> Encode.optional input.min ) ]
 
 
-buildUser_arr_rel_insert_input : User_arr_rel_insert_inputRequiredFields -> (User_arr_rel_insert_inputOptionalFields -> User_arr_rel_insert_inputOptionalFields) -> User_arr_rel_insert_input
+buildUser_arr_rel_insert_input :
+    User_arr_rel_insert_inputRequiredFields
+    -> (User_arr_rel_insert_inputOptionalFields -> User_arr_rel_insert_inputOptionalFields)
+    -> User_arr_rel_insert_input
 buildUser_arr_rel_insert_input required fillOptionals =
     let
         optionals =
@@ -2079,20 +2262,23 @@ encodeUser_arr_rel_insert_input (User_arr_rel_insert_input input) =
         [ ( "data", (encodeUser_insert_input |> Encode.list) input.data |> Just ), ( "on_conflict", encodeUser_on_conflict |> Encode.optional input.on_conflict ) ]
 
 
-buildUser_bool_exp : (User_bool_expOptionalFields -> User_bool_expOptionalFields) -> User_bool_exp
+buildUser_bool_exp :
+    (User_bool_expOptionalFields -> User_bool_expOptionalFields)
+    -> User_bool_exp
 buildUser_bool_exp fillOptionals =
     let
         optionals =
             fillOptionals
-                { and_ = Absent, not_ = Absent, or_ = Absent, id = Absent, nonce = Absent, password = Absent, postTagsByuserId = Absent, postsByuserId = Absent, purchase = Absent, purchase_id = Absent, tagsByuserId = Absent }
+                { and_ = Absent, not_ = Absent, or_ = Absent, created_at = Absent, id = Absent, nonce = Absent, password = Absent, postTagsByuserId = Absent, postsByuserId = Absent, purchase = Absent, purchase_id = Absent, tagsByuserId = Absent, token = Absent, updated_at = Absent }
     in
-    User_bool_exp { and_ = optionals.and_, not_ = optionals.not_, or_ = optionals.or_, id = optionals.id, nonce = optionals.nonce, password = optionals.password, postTagsByuserId = optionals.postTagsByuserId, postsByuserId = optionals.postsByuserId, purchase = optionals.purchase, purchase_id = optionals.purchase_id, tagsByuserId = optionals.tagsByuserId }
+    User_bool_exp { and_ = optionals.and_, not_ = optionals.not_, or_ = optionals.or_, created_at = optionals.created_at, id = optionals.id, nonce = optionals.nonce, password = optionals.password, postTagsByuserId = optionals.postTagsByuserId, postsByuserId = optionals.postsByuserId, purchase = optionals.purchase, purchase_id = optionals.purchase_id, tagsByuserId = optionals.tagsByuserId, token = optionals.token, updated_at = optionals.updated_at }
 
 
 type alias User_bool_expOptionalFields =
     { and_ : OptionalArgument (List (Maybe User_bool_exp))
     , not_ : OptionalArgument User_bool_exp
     , or_ : OptionalArgument (List (Maybe User_bool_exp))
+    , created_at : OptionalArgument Timestamptz_comparison_exp
     , id : OptionalArgument Uuid_comparison_exp
     , nonce : OptionalArgument String_comparison_exp
     , password : OptionalArgument String_comparison_exp
@@ -2101,6 +2287,8 @@ type alias User_bool_expOptionalFields =
     , purchase : OptionalArgument Purchase_bool_exp
     , purchase_id : OptionalArgument Uuid_comparison_exp
     , tagsByuserId : OptionalArgument Tag_bool_exp
+    , token : OptionalArgument String_comparison_exp
+    , updated_at : OptionalArgument Timestamptz_comparison_exp
     }
 
 
@@ -2113,6 +2301,7 @@ type alias User_bool_expRaw =
     { and_ : OptionalArgument (List (Maybe User_bool_exp))
     , not_ : OptionalArgument User_bool_exp
     , or_ : OptionalArgument (List (Maybe User_bool_exp))
+    , created_at : OptionalArgument Timestamptz_comparison_exp
     , id : OptionalArgument Uuid_comparison_exp
     , nonce : OptionalArgument String_comparison_exp
     , password : OptionalArgument String_comparison_exp
@@ -2121,6 +2310,8 @@ type alias User_bool_expRaw =
     , purchase : OptionalArgument Purchase_bool_exp
     , purchase_id : OptionalArgument Uuid_comparison_exp
     , tagsByuserId : OptionalArgument Tag_bool_exp
+    , token : OptionalArgument String_comparison_exp
+    , updated_at : OptionalArgument Timestamptz_comparison_exp
     }
 
 
@@ -2135,21 +2326,24 @@ type User_bool_exp
 encodeUser_bool_exp : User_bool_exp -> Value
 encodeUser_bool_exp (User_bool_exp input) =
     Encode.maybeObject
-        [ ( "_and", (encodeUser_bool_exp |> Encode.maybe |> Encode.list) |> Encode.optional input.and_ ), ( "_not", encodeUser_bool_exp |> Encode.optional input.not_ ), ( "_or", (encodeUser_bool_exp |> Encode.maybe |> Encode.list) |> Encode.optional input.or_ ), ( "id", encodeUuid_comparison_exp |> Encode.optional input.id ), ( "nonce", encodeString_comparison_exp |> Encode.optional input.nonce ), ( "password", encodeString_comparison_exp |> Encode.optional input.password ), ( "postTagsByuserId", encodePost_tag_bool_exp |> Encode.optional input.postTagsByuserId ), ( "postsByuserId", encodePost_bool_exp |> Encode.optional input.postsByuserId ), ( "purchase", encodePurchase_bool_exp |> Encode.optional input.purchase ), ( "purchase_id", encodeUuid_comparison_exp |> Encode.optional input.purchase_id ), ( "tagsByuserId", encodeTag_bool_exp |> Encode.optional input.tagsByuserId ) ]
+        [ ( "_and", (encodeUser_bool_exp |> Encode.maybe |> Encode.list) |> Encode.optional input.and_ ), ( "_not", encodeUser_bool_exp |> Encode.optional input.not_ ), ( "_or", (encodeUser_bool_exp |> Encode.maybe |> Encode.list) |> Encode.optional input.or_ ), ( "created_at", encodeTimestamptz_comparison_exp |> Encode.optional input.created_at ), ( "id", encodeUuid_comparison_exp |> Encode.optional input.id ), ( "nonce", encodeString_comparison_exp |> Encode.optional input.nonce ), ( "password", encodeString_comparison_exp |> Encode.optional input.password ), ( "postTagsByuserId", encodePost_tag_bool_exp |> Encode.optional input.postTagsByuserId ), ( "postsByuserId", encodePost_bool_exp |> Encode.optional input.postsByuserId ), ( "purchase", encodePurchase_bool_exp |> Encode.optional input.purchase ), ( "purchase_id", encodeUuid_comparison_exp |> Encode.optional input.purchase_id ), ( "tagsByuserId", encodeTag_bool_exp |> Encode.optional input.tagsByuserId ), ( "token", encodeString_comparison_exp |> Encode.optional input.token ), ( "updated_at", encodeTimestamptz_comparison_exp |> Encode.optional input.updated_at ) ]
 
 
-buildUser_insert_input : (User_insert_inputOptionalFields -> User_insert_inputOptionalFields) -> User_insert_input
+buildUser_insert_input :
+    (User_insert_inputOptionalFields -> User_insert_inputOptionalFields)
+    -> User_insert_input
 buildUser_insert_input fillOptionals =
     let
         optionals =
             fillOptionals
-                { id = Absent, nonce = Absent, password = Absent, postTagsByuserId = Absent, postsByuserId = Absent, purchase = Absent, purchase_id = Absent, tagsByuserId = Absent }
+                { created_at = Absent, id = Absent, nonce = Absent, password = Absent, postTagsByuserId = Absent, postsByuserId = Absent, purchase = Absent, purchase_id = Absent, tagsByuserId = Absent, token = Absent, updated_at = Absent }
     in
-    User_insert_input { id = optionals.id, nonce = optionals.nonce, password = optionals.password, postTagsByuserId = optionals.postTagsByuserId, postsByuserId = optionals.postsByuserId, purchase = optionals.purchase, purchase_id = optionals.purchase_id, tagsByuserId = optionals.tagsByuserId }
+    User_insert_input { created_at = optionals.created_at, id = optionals.id, nonce = optionals.nonce, password = optionals.password, postTagsByuserId = optionals.postTagsByuserId, postsByuserId = optionals.postsByuserId, purchase = optionals.purchase, purchase_id = optionals.purchase_id, tagsByuserId = optionals.tagsByuserId, token = optionals.token, updated_at = optionals.updated_at }
 
 
 type alias User_insert_inputOptionalFields =
-    { id : OptionalArgument CustomScalars.Uuid
+    { created_at : OptionalArgument CustomScalars.Timestamptz
+    , id : OptionalArgument CustomScalars.Uuid
     , nonce : OptionalArgument String
     , password : OptionalArgument String
     , postTagsByuserId : OptionalArgument Post_tag_arr_rel_insert_input
@@ -2157,6 +2351,8 @@ type alias User_insert_inputOptionalFields =
     , purchase : OptionalArgument Purchase_obj_rel_insert_input
     , purchase_id : OptionalArgument CustomScalars.Uuid
     , tagsByuserId : OptionalArgument Tag_arr_rel_insert_input
+    , token : OptionalArgument String
+    , updated_at : OptionalArgument CustomScalars.Timestamptz
     }
 
 
@@ -2166,7 +2362,8 @@ references to itself either directly (recursive) or indirectly (circular). See
 <https://github.com/dillonkearns/elm-graphql/issues/33>.
 -}
 type alias User_insert_inputRaw =
-    { id : OptionalArgument CustomScalars.Uuid
+    { created_at : OptionalArgument CustomScalars.Timestamptz
+    , id : OptionalArgument CustomScalars.Uuid
     , nonce : OptionalArgument String
     , password : OptionalArgument String
     , postTagsByuserId : OptionalArgument Post_tag_arr_rel_insert_input
@@ -2174,6 +2371,8 @@ type alias User_insert_inputRaw =
     , purchase : OptionalArgument Purchase_obj_rel_insert_input
     , purchase_id : OptionalArgument CustomScalars.Uuid
     , tagsByuserId : OptionalArgument Tag_arr_rel_insert_input
+    , token : OptionalArgument String
+    , updated_at : OptionalArgument CustomScalars.Timestamptz
     }
 
 
@@ -2188,34 +2387,42 @@ type User_insert_input
 encodeUser_insert_input : User_insert_input -> Value
 encodeUser_insert_input (User_insert_input input) =
     Encode.maybeObject
-        [ ( "id", (CustomScalars.codecs |> Api.Scalar.unwrapEncoder .codecUuid) |> Encode.optional input.id ), ( "nonce", Encode.string |> Encode.optional input.nonce ), ( "password", Encode.string |> Encode.optional input.password ), ( "postTagsByuserId", encodePost_tag_arr_rel_insert_input |> Encode.optional input.postTagsByuserId ), ( "postsByuserId", encodePost_arr_rel_insert_input |> Encode.optional input.postsByuserId ), ( "purchase", encodePurchase_obj_rel_insert_input |> Encode.optional input.purchase ), ( "purchase_id", (CustomScalars.codecs |> Api.Scalar.unwrapEncoder .codecUuid) |> Encode.optional input.purchase_id ), ( "tagsByuserId", encodeTag_arr_rel_insert_input |> Encode.optional input.tagsByuserId ) ]
+        [ ( "created_at", (CustomScalars.codecs |> Api.Scalar.unwrapEncoder .codecTimestamptz) |> Encode.optional input.created_at ), ( "id", (CustomScalars.codecs |> Api.Scalar.unwrapEncoder .codecUuid) |> Encode.optional input.id ), ( "nonce", Encode.string |> Encode.optional input.nonce ), ( "password", Encode.string |> Encode.optional input.password ), ( "postTagsByuserId", encodePost_tag_arr_rel_insert_input |> Encode.optional input.postTagsByuserId ), ( "postsByuserId", encodePost_arr_rel_insert_input |> Encode.optional input.postsByuserId ), ( "purchase", encodePurchase_obj_rel_insert_input |> Encode.optional input.purchase ), ( "purchase_id", (CustomScalars.codecs |> Api.Scalar.unwrapEncoder .codecUuid) |> Encode.optional input.purchase_id ), ( "tagsByuserId", encodeTag_arr_rel_insert_input |> Encode.optional input.tagsByuserId ), ( "token", Encode.string |> Encode.optional input.token ), ( "updated_at", (CustomScalars.codecs |> Api.Scalar.unwrapEncoder .codecTimestamptz) |> Encode.optional input.updated_at ) ]
 
 
-buildUser_max_order_by : (User_max_order_byOptionalFields -> User_max_order_byOptionalFields) -> User_max_order_by
+buildUser_max_order_by :
+    (User_max_order_byOptionalFields -> User_max_order_byOptionalFields)
+    -> User_max_order_by
 buildUser_max_order_by fillOptionals =
     let
         optionals =
             fillOptionals
-                { id = Absent, nonce = Absent, password = Absent, purchase_id = Absent }
+                { created_at = Absent, id = Absent, nonce = Absent, password = Absent, purchase_id = Absent, token = Absent, updated_at = Absent }
     in
-    { id = optionals.id, nonce = optionals.nonce, password = optionals.password, purchase_id = optionals.purchase_id }
+    { created_at = optionals.created_at, id = optionals.id, nonce = optionals.nonce, password = optionals.password, purchase_id = optionals.purchase_id, token = optionals.token, updated_at = optionals.updated_at }
 
 
 type alias User_max_order_byOptionalFields =
-    { id : OptionalArgument Api.Enum.Order_by.Order_by
+    { created_at : OptionalArgument Api.Enum.Order_by.Order_by
+    , id : OptionalArgument Api.Enum.Order_by.Order_by
     , nonce : OptionalArgument Api.Enum.Order_by.Order_by
     , password : OptionalArgument Api.Enum.Order_by.Order_by
     , purchase_id : OptionalArgument Api.Enum.Order_by.Order_by
+    , token : OptionalArgument Api.Enum.Order_by.Order_by
+    , updated_at : OptionalArgument Api.Enum.Order_by.Order_by
     }
 
 
 {-| Type for the User\_max\_order\_by input object.
 -}
 type alias User_max_order_by =
-    { id : OptionalArgument Api.Enum.Order_by.Order_by
+    { created_at : OptionalArgument Api.Enum.Order_by.Order_by
+    , id : OptionalArgument Api.Enum.Order_by.Order_by
     , nonce : OptionalArgument Api.Enum.Order_by.Order_by
     , password : OptionalArgument Api.Enum.Order_by.Order_by
     , purchase_id : OptionalArgument Api.Enum.Order_by.Order_by
+    , token : OptionalArgument Api.Enum.Order_by.Order_by
+    , updated_at : OptionalArgument Api.Enum.Order_by.Order_by
     }
 
 
@@ -2224,34 +2431,42 @@ type alias User_max_order_by =
 encodeUser_max_order_by : User_max_order_by -> Value
 encodeUser_max_order_by input =
     Encode.maybeObject
-        [ ( "id", Encode.enum Api.Enum.Order_by.toString |> Encode.optional input.id ), ( "nonce", Encode.enum Api.Enum.Order_by.toString |> Encode.optional input.nonce ), ( "password", Encode.enum Api.Enum.Order_by.toString |> Encode.optional input.password ), ( "purchase_id", Encode.enum Api.Enum.Order_by.toString |> Encode.optional input.purchase_id ) ]
+        [ ( "created_at", Encode.enum Api.Enum.Order_by.toString |> Encode.optional input.created_at ), ( "id", Encode.enum Api.Enum.Order_by.toString |> Encode.optional input.id ), ( "nonce", Encode.enum Api.Enum.Order_by.toString |> Encode.optional input.nonce ), ( "password", Encode.enum Api.Enum.Order_by.toString |> Encode.optional input.password ), ( "purchase_id", Encode.enum Api.Enum.Order_by.toString |> Encode.optional input.purchase_id ), ( "token", Encode.enum Api.Enum.Order_by.toString |> Encode.optional input.token ), ( "updated_at", Encode.enum Api.Enum.Order_by.toString |> Encode.optional input.updated_at ) ]
 
 
-buildUser_min_order_by : (User_min_order_byOptionalFields -> User_min_order_byOptionalFields) -> User_min_order_by
+buildUser_min_order_by :
+    (User_min_order_byOptionalFields -> User_min_order_byOptionalFields)
+    -> User_min_order_by
 buildUser_min_order_by fillOptionals =
     let
         optionals =
             fillOptionals
-                { id = Absent, nonce = Absent, password = Absent, purchase_id = Absent }
+                { created_at = Absent, id = Absent, nonce = Absent, password = Absent, purchase_id = Absent, token = Absent, updated_at = Absent }
     in
-    { id = optionals.id, nonce = optionals.nonce, password = optionals.password, purchase_id = optionals.purchase_id }
+    { created_at = optionals.created_at, id = optionals.id, nonce = optionals.nonce, password = optionals.password, purchase_id = optionals.purchase_id, token = optionals.token, updated_at = optionals.updated_at }
 
 
 type alias User_min_order_byOptionalFields =
-    { id : OptionalArgument Api.Enum.Order_by.Order_by
+    { created_at : OptionalArgument Api.Enum.Order_by.Order_by
+    , id : OptionalArgument Api.Enum.Order_by.Order_by
     , nonce : OptionalArgument Api.Enum.Order_by.Order_by
     , password : OptionalArgument Api.Enum.Order_by.Order_by
     , purchase_id : OptionalArgument Api.Enum.Order_by.Order_by
+    , token : OptionalArgument Api.Enum.Order_by.Order_by
+    , updated_at : OptionalArgument Api.Enum.Order_by.Order_by
     }
 
 
 {-| Type for the User\_min\_order\_by input object.
 -}
 type alias User_min_order_by =
-    { id : OptionalArgument Api.Enum.Order_by.Order_by
+    { created_at : OptionalArgument Api.Enum.Order_by.Order_by
+    , id : OptionalArgument Api.Enum.Order_by.Order_by
     , nonce : OptionalArgument Api.Enum.Order_by.Order_by
     , password : OptionalArgument Api.Enum.Order_by.Order_by
     , purchase_id : OptionalArgument Api.Enum.Order_by.Order_by
+    , token : OptionalArgument Api.Enum.Order_by.Order_by
+    , updated_at : OptionalArgument Api.Enum.Order_by.Order_by
     }
 
 
@@ -2260,10 +2475,13 @@ type alias User_min_order_by =
 encodeUser_min_order_by : User_min_order_by -> Value
 encodeUser_min_order_by input =
     Encode.maybeObject
-        [ ( "id", Encode.enum Api.Enum.Order_by.toString |> Encode.optional input.id ), ( "nonce", Encode.enum Api.Enum.Order_by.toString |> Encode.optional input.nonce ), ( "password", Encode.enum Api.Enum.Order_by.toString |> Encode.optional input.password ), ( "purchase_id", Encode.enum Api.Enum.Order_by.toString |> Encode.optional input.purchase_id ) ]
+        [ ( "created_at", Encode.enum Api.Enum.Order_by.toString |> Encode.optional input.created_at ), ( "id", Encode.enum Api.Enum.Order_by.toString |> Encode.optional input.id ), ( "nonce", Encode.enum Api.Enum.Order_by.toString |> Encode.optional input.nonce ), ( "password", Encode.enum Api.Enum.Order_by.toString |> Encode.optional input.password ), ( "purchase_id", Encode.enum Api.Enum.Order_by.toString |> Encode.optional input.purchase_id ), ( "token", Encode.enum Api.Enum.Order_by.toString |> Encode.optional input.token ), ( "updated_at", Encode.enum Api.Enum.Order_by.toString |> Encode.optional input.updated_at ) ]
 
 
-buildUser_obj_rel_insert_input : User_obj_rel_insert_inputRequiredFields -> (User_obj_rel_insert_inputOptionalFields -> User_obj_rel_insert_inputOptionalFields) -> User_obj_rel_insert_input
+buildUser_obj_rel_insert_input :
+    User_obj_rel_insert_inputRequiredFields
+    -> (User_obj_rel_insert_inputOptionalFields -> User_obj_rel_insert_inputOptionalFields)
+    -> User_obj_rel_insert_input
 buildUser_obj_rel_insert_input required fillOptionals =
     let
         optionals =
@@ -2306,7 +2524,10 @@ encodeUser_obj_rel_insert_input (User_obj_rel_insert_input input) =
         [ ( "data", encodeUser_insert_input input.data |> Just ), ( "on_conflict", encodeUser_on_conflict |> Encode.optional input.on_conflict ) ]
 
 
-buildUser_on_conflict : User_on_conflictRequiredFields -> (User_on_conflictOptionalFields -> User_on_conflictOptionalFields) -> User_on_conflict
+buildUser_on_conflict :
+    User_on_conflictRequiredFields
+    -> (User_on_conflictOptionalFields -> User_on_conflictOptionalFields)
+    -> User_on_conflict
 buildUser_on_conflict required fillOptionals =
     let
         optionals =
@@ -2352,18 +2573,21 @@ encodeUser_on_conflict (User_on_conflict input) =
         [ ( "constraint", Encode.enum Api.Enum.User_constraint.toString input.constraint |> Just ), ( "update_columns", (Encode.enum Api.Enum.User_update_column.toString |> Encode.list) input.update_columns |> Just ), ( "where", encodeUser_bool_exp |> Encode.optional input.where_ ) ]
 
 
-buildUser_order_by : (User_order_byOptionalFields -> User_order_byOptionalFields) -> User_order_by
+buildUser_order_by :
+    (User_order_byOptionalFields -> User_order_byOptionalFields)
+    -> User_order_by
 buildUser_order_by fillOptionals =
     let
         optionals =
             fillOptionals
-                { id = Absent, nonce = Absent, password = Absent, postTagsByuserId_aggregate = Absent, postsByuserId_aggregate = Absent, purchase = Absent, purchase_id = Absent, tagsByuserId_aggregate = Absent }
+                { created_at = Absent, id = Absent, nonce = Absent, password = Absent, postTagsByuserId_aggregate = Absent, postsByuserId_aggregate = Absent, purchase = Absent, purchase_id = Absent, tagsByuserId_aggregate = Absent, token = Absent, updated_at = Absent }
     in
-    User_order_by { id = optionals.id, nonce = optionals.nonce, password = optionals.password, postTagsByuserId_aggregate = optionals.postTagsByuserId_aggregate, postsByuserId_aggregate = optionals.postsByuserId_aggregate, purchase = optionals.purchase, purchase_id = optionals.purchase_id, tagsByuserId_aggregate = optionals.tagsByuserId_aggregate }
+    User_order_by { created_at = optionals.created_at, id = optionals.id, nonce = optionals.nonce, password = optionals.password, postTagsByuserId_aggregate = optionals.postTagsByuserId_aggregate, postsByuserId_aggregate = optionals.postsByuserId_aggregate, purchase = optionals.purchase, purchase_id = optionals.purchase_id, tagsByuserId_aggregate = optionals.tagsByuserId_aggregate, token = optionals.token, updated_at = optionals.updated_at }
 
 
 type alias User_order_byOptionalFields =
-    { id : OptionalArgument Api.Enum.Order_by.Order_by
+    { created_at : OptionalArgument Api.Enum.Order_by.Order_by
+    , id : OptionalArgument Api.Enum.Order_by.Order_by
     , nonce : OptionalArgument Api.Enum.Order_by.Order_by
     , password : OptionalArgument Api.Enum.Order_by.Order_by
     , postTagsByuserId_aggregate : OptionalArgument Post_tag_aggregate_order_by
@@ -2371,6 +2595,8 @@ type alias User_order_byOptionalFields =
     , purchase : OptionalArgument Purchase_order_by
     , purchase_id : OptionalArgument Api.Enum.Order_by.Order_by
     , tagsByuserId_aggregate : OptionalArgument Tag_aggregate_order_by
+    , token : OptionalArgument Api.Enum.Order_by.Order_by
+    , updated_at : OptionalArgument Api.Enum.Order_by.Order_by
     }
 
 
@@ -2380,7 +2606,8 @@ references to itself either directly (recursive) or indirectly (circular). See
 <https://github.com/dillonkearns/elm-graphql/issues/33>.
 -}
 type alias User_order_byRaw =
-    { id : OptionalArgument Api.Enum.Order_by.Order_by
+    { created_at : OptionalArgument Api.Enum.Order_by.Order_by
+    , id : OptionalArgument Api.Enum.Order_by.Order_by
     , nonce : OptionalArgument Api.Enum.Order_by.Order_by
     , password : OptionalArgument Api.Enum.Order_by.Order_by
     , postTagsByuserId_aggregate : OptionalArgument Post_tag_aggregate_order_by
@@ -2388,6 +2615,8 @@ type alias User_order_byRaw =
     , purchase : OptionalArgument Purchase_order_by
     , purchase_id : OptionalArgument Api.Enum.Order_by.Order_by
     , tagsByuserId_aggregate : OptionalArgument Tag_aggregate_order_by
+    , token : OptionalArgument Api.Enum.Order_by.Order_by
+    , updated_at : OptionalArgument Api.Enum.Order_by.Order_by
     }
 
 
@@ -2402,10 +2631,12 @@ type User_order_by
 encodeUser_order_by : User_order_by -> Value
 encodeUser_order_by (User_order_by input) =
     Encode.maybeObject
-        [ ( "id", Encode.enum Api.Enum.Order_by.toString |> Encode.optional input.id ), ( "nonce", Encode.enum Api.Enum.Order_by.toString |> Encode.optional input.nonce ), ( "password", Encode.enum Api.Enum.Order_by.toString |> Encode.optional input.password ), ( "postTagsByuserId_aggregate", encodePost_tag_aggregate_order_by |> Encode.optional input.postTagsByuserId_aggregate ), ( "postsByuserId_aggregate", encodePost_aggregate_order_by |> Encode.optional input.postsByuserId_aggregate ), ( "purchase", encodePurchase_order_by |> Encode.optional input.purchase ), ( "purchase_id", Encode.enum Api.Enum.Order_by.toString |> Encode.optional input.purchase_id ), ( "tagsByuserId_aggregate", encodeTag_aggregate_order_by |> Encode.optional input.tagsByuserId_aggregate ) ]
+        [ ( "created_at", Encode.enum Api.Enum.Order_by.toString |> Encode.optional input.created_at ), ( "id", Encode.enum Api.Enum.Order_by.toString |> Encode.optional input.id ), ( "nonce", Encode.enum Api.Enum.Order_by.toString |> Encode.optional input.nonce ), ( "password", Encode.enum Api.Enum.Order_by.toString |> Encode.optional input.password ), ( "postTagsByuserId_aggregate", encodePost_tag_aggregate_order_by |> Encode.optional input.postTagsByuserId_aggregate ), ( "postsByuserId_aggregate", encodePost_aggregate_order_by |> Encode.optional input.postsByuserId_aggregate ), ( "purchase", encodePurchase_order_by |> Encode.optional input.purchase ), ( "purchase_id", Encode.enum Api.Enum.Order_by.toString |> Encode.optional input.purchase_id ), ( "tagsByuserId_aggregate", encodeTag_aggregate_order_by |> Encode.optional input.tagsByuserId_aggregate ), ( "token", Encode.enum Api.Enum.Order_by.toString |> Encode.optional input.token ), ( "updated_at", Encode.enum Api.Enum.Order_by.toString |> Encode.optional input.updated_at ) ]
 
 
-buildUser_pk_columns_input : User_pk_columns_inputRequiredFields -> User_pk_columns_input
+buildUser_pk_columns_input :
+    User_pk_columns_inputRequiredFields
+    -> User_pk_columns_input
 buildUser_pk_columns_input required =
     { id = required.id }
 
@@ -2428,31 +2659,39 @@ encodeUser_pk_columns_input input =
         [ ( "id", (CustomScalars.codecs |> Api.Scalar.unwrapEncoder .codecUuid) input.id |> Just ) ]
 
 
-buildUser_set_input : (User_set_inputOptionalFields -> User_set_inputOptionalFields) -> User_set_input
+buildUser_set_input :
+    (User_set_inputOptionalFields -> User_set_inputOptionalFields)
+    -> User_set_input
 buildUser_set_input fillOptionals =
     let
         optionals =
             fillOptionals
-                { id = Absent, nonce = Absent, password = Absent, purchase_id = Absent }
+                { created_at = Absent, id = Absent, nonce = Absent, password = Absent, purchase_id = Absent, token = Absent, updated_at = Absent }
     in
-    { id = optionals.id, nonce = optionals.nonce, password = optionals.password, purchase_id = optionals.purchase_id }
+    { created_at = optionals.created_at, id = optionals.id, nonce = optionals.nonce, password = optionals.password, purchase_id = optionals.purchase_id, token = optionals.token, updated_at = optionals.updated_at }
 
 
 type alias User_set_inputOptionalFields =
-    { id : OptionalArgument CustomScalars.Uuid
+    { created_at : OptionalArgument CustomScalars.Timestamptz
+    , id : OptionalArgument CustomScalars.Uuid
     , nonce : OptionalArgument String
     , password : OptionalArgument String
     , purchase_id : OptionalArgument CustomScalars.Uuid
+    , token : OptionalArgument String
+    , updated_at : OptionalArgument CustomScalars.Timestamptz
     }
 
 
 {-| Type for the User\_set\_input input object.
 -}
 type alias User_set_input =
-    { id : OptionalArgument CustomScalars.Uuid
+    { created_at : OptionalArgument CustomScalars.Timestamptz
+    , id : OptionalArgument CustomScalars.Uuid
     , nonce : OptionalArgument String
     , password : OptionalArgument String
     , purchase_id : OptionalArgument CustomScalars.Uuid
+    , token : OptionalArgument String
+    , updated_at : OptionalArgument CustomScalars.Timestamptz
     }
 
 
@@ -2461,10 +2700,12 @@ type alias User_set_input =
 encodeUser_set_input : User_set_input -> Value
 encodeUser_set_input input =
     Encode.maybeObject
-        [ ( "id", (CustomScalars.codecs |> Api.Scalar.unwrapEncoder .codecUuid) |> Encode.optional input.id ), ( "nonce", Encode.string |> Encode.optional input.nonce ), ( "password", Encode.string |> Encode.optional input.password ), ( "purchase_id", (CustomScalars.codecs |> Api.Scalar.unwrapEncoder .codecUuid) |> Encode.optional input.purchase_id ) ]
+        [ ( "created_at", (CustomScalars.codecs |> Api.Scalar.unwrapEncoder .codecTimestamptz) |> Encode.optional input.created_at ), ( "id", (CustomScalars.codecs |> Api.Scalar.unwrapEncoder .codecUuid) |> Encode.optional input.id ), ( "nonce", Encode.string |> Encode.optional input.nonce ), ( "password", Encode.string |> Encode.optional input.password ), ( "purchase_id", (CustomScalars.codecs |> Api.Scalar.unwrapEncoder .codecUuid) |> Encode.optional input.purchase_id ), ( "token", Encode.string |> Encode.optional input.token ), ( "updated_at", (CustomScalars.codecs |> Api.Scalar.unwrapEncoder .codecTimestamptz) |> Encode.optional input.updated_at ) ]
 
 
-buildUuid_comparison_exp : (Uuid_comparison_expOptionalFields -> Uuid_comparison_expOptionalFields) -> Uuid_comparison_exp
+buildUuid_comparison_exp :
+    (Uuid_comparison_expOptionalFields -> Uuid_comparison_expOptionalFields)
+    -> Uuid_comparison_exp
 buildUuid_comparison_exp fillOptionals =
     let
         optionals =

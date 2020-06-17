@@ -10,14 +10,6 @@ const stripeMonthly = STRIPE_MONTHLY;
 /* eslint-enable no-undef */
 
 window.navigator.serviceWorker.register("/sw.js").then(() => {
-  const auth = (() => {
-    try {
-      return JSON.parse(localStorage.getItem("APP"));
-    } catch (e) {
-      return null;
-    }
-  })();
-
   const updateOnlineStatus = (event) => {
     switch (event.type) {
       case "online":
@@ -28,6 +20,8 @@ window.navigator.serviceWorker.register("/sw.js").then(() => {
   };
 
   const now = new Date();
+
+  const auth = localStorage.getItem("authed");
 
   const flags = {
     auth,
@@ -57,7 +51,7 @@ window.navigator.serviceWorker.register("/sw.js").then(() => {
 
   app.ports.log.subscribe(console.log);
 
-  app.ports.clearAuth.subscribe(() => localStorage.removeItem("APP"));
+  app.ports.clearAuth.subscribe(() => localStorage.removeItem("authed"));
 
   app.ports.buy.subscribe(async ({ email, annual }) => {
     const stripe = await loadStripe(stripeProjectId);
@@ -72,8 +66,8 @@ window.navigator.serviceWorker.register("/sw.js").then(() => {
       .then(console.log);
   });
 
-  app.ports.saveAuth.subscribe((x) =>
-    localStorage.setItem("APP", JSON.stringify(x))
+  app.ports.saveAuth.subscribe((key) =>
+    localStorage.setItem("authed", JSON.stringify(key))
   );
 
   window.addEventListener("online", updateOnlineStatus);

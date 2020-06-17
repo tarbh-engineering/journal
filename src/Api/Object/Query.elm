@@ -20,18 +20,29 @@ import Json.Decode as Decode
 
 
 type alias CheckRequiredArguments =
-    { txt : String }
+    { ciph : String
+    , iv : String
+    }
 
 
-check : CheckRequiredArguments -> SelectionSet Bool Api.Object.Query
+check :
+    CheckRequiredArguments
+    -> SelectionSet Bool Api.Object.Query
 check requiredArgs =
-    Object.selectionForField "Bool" "check" [ Argument.required "txt" requiredArgs.txt Encode.string ] Decode.bool
+    Object.selectionForField "Bool" "check" [ Argument.required "ciph" requiredArgs.ciph Encode.string, Argument.required "iv" requiredArgs.iv Encode.string ] Decode.bool
 
 
 type alias NonceRequiredArguments =
     { email : String }
 
 
-nonce : NonceRequiredArguments -> SelectionSet String Api.Object.Query
+nonce :
+    NonceRequiredArguments
+    -> SelectionSet String Api.Object.Query
 nonce requiredArgs =
     Object.selectionForField "String" "nonce" [ Argument.required "email" requiredArgs.email Encode.string ] Decode.string
+
+
+refresh : SelectionSet (Maybe CustomScalars.Jwt) Api.Object.Query
+refresh =
+    Object.selectionForField "(Maybe CustomScalars.Jwt)" "refresh" [] (CustomScalars.codecs |> Api.Scalar.unwrapCodecs |> .codecJwt |> .decoder |> Decode.nullable)

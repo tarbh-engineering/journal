@@ -3,7 +3,7 @@ module View exposing (purple, textShadow, view, white, yellow)
 import Calendar exposing (Day)
 import Date exposing (Date)
 import Day
-import Element exposing (Attribute, Color, Element, centerX, centerY, column, el, fill, height, html, none, padding, paddingXY, px, rgb255, row, spaceEvenly, spacing, text, width, wrappedRow)
+import Element exposing (Attribute, Color, Element, centerX, centerY, column, el, fill, height, html, none, padding, paddingXY, paragraph, px, rgb255, row, spaceEvenly, spacing, text, width, wrappedRow)
 import Element.Background as Background
 import Element.Border as Border
 import Element.Font as Font
@@ -17,12 +17,12 @@ import Html.Events
 import Icon
 import Json.Decode as Decode exposing (Decoder)
 import Material.Icons as Icons
-import Material.Icons.Types exposing (Coloring(..))
+import Material.Icons.Types exposing (Coloring(..), Icon)
 import Maybe.Extra exposing (unwrap)
 import Ordinal
 import Time exposing (Month(..))
 import Time.Format.I18n.I_en_us exposing (monthName)
-import Types exposing (Def(..), Funnel(..), Model, Msg(..), PostView(..), Route(..), Sort(..), Status(..), View(..))
+import Types exposing (Def(..), Funnel(..), Model, Msg(..), Route(..), Sort(..), Status(..), View(..))
 import Validate exposing (isValidEmail)
 
 
@@ -297,11 +297,6 @@ purple =
     rgb255 145 130 254
 
 
-violet : Color
-violet =
-    rgb255 92 39 81
-
-
 white : Color
 white =
     rgb255 255 255 255
@@ -378,7 +373,7 @@ view model =
                                         |> Just
                                 , text = ""
                                 }
-                            , btn "Submit" <| SignupSubmit model.mg
+                            , btn "Submit" <| SignupSubmit
                             ]
                                 |> column
                                     [ cappedWidth 450
@@ -405,26 +400,15 @@ view model =
             model.auth
                 |> unwrap
                     ([ text "You're a guest, you don't have settings!"
-                     , Input.button
-                        [ Font.bold
-                        , centerX
-                        , Element.mouseOver
-                            [ Font.color blue
-                            ]
-                        ]
-                        { onPress = Just <| NavigateTo RouteHome, label = text "Sign up now" }
+                     , btn "Sign up now" (NavigateTo RouteHome)
+                        |> el [ centerX ]
                      ]
                         |> column [ spacing 50, centerX ]
                     )
-                    (\auth ->
-                        [ [ text "Email: "
-                          , text auth.email
-                          ]
-                            |> row [ spacing 10 ]
-                        , Input.button []
-                            { onPress = Just Logout
-                            , label = text "LOGOUT"
-                            }
+                    (\_ ->
+                        [ cool False Icons.save "Export posts" ExportPosts
+                        , cool model.inProgress.logout Icons.power_off "Logout" Logout
+                            |> el [ centerX ]
                         ]
                             |> column [ spacing 20 ]
                     )
@@ -436,39 +420,22 @@ view model =
         ViewTags ->
             [ [ [ Input.text
                     [ Border.rounded 0
-                    , Border.width 0
+                    , Border.width 1
                     , width fill
                     , padding 10
-
-                    --, style "cursor" "wait"
-                    --|> whenAttr model.inProgress
-                    , Html.Attributes.disabled (model.funnel /= Types.Hello)
-                        |> Element.htmlAttribute
-                    , (if model.funnel /= Types.Hello then
-                        grey
-
-                       else
-                        white
-                      )
-                        |> Background.color
-
-                    --, onEnter Submit
-                    --|> whenAttr valid
+                    , onKeydown [ onEnter TagCreateSubmit ]
                     ]
                     { onChange = TagCreateNameUpdate
                     , label = Input.labelHidden ""
                     , placeholder =
-                        Just <|
-                            Input.placeholder
-                                [--rale
-                                ]
-                            <|
-                                text "New tag"
+                        text "New tag"
+                            |> Input.placeholder []
+                            |> Just
                     , text = model.tagCreateName
                     }
                 , btn "Submit" TagCreateSubmit
                 ]
-                    |> row []
+                    |> row [ spacing 20 ]
               , model.tags
                     |> UD.values
                     |> List.map
@@ -509,7 +476,7 @@ view model =
                         )
                     |> column []
               ]
-                |> column [ cappedWidth 450, centerX ]
+                |> column [ cappedWidth 450, centerX, Element.alignTop ]
             , model.tag
                 |> whenJust
                     (\t ->
@@ -520,15 +487,30 @@ view model =
                                 (\p ->
                                     List.member t p.tags
                                 )
-                            |> List.map (.date >> Date.toIsoString >> text)
-                            |> column [ spacing 10 ]
+                            |> List.map
+                                (\p ->
+                                    [ p.date |> formatDay |> text
+                                    , [ text p.body ]
+                                        |> paragraph []
+                                    ]
+                                        |> column [ spacing 10, Border.width 1, padding 10 ]
+                                )
+                            |> column
+                                [ spacing 10
+                                , cappedWidth 600
+                                , Element.scrollbarY
+                                , Element.alignTop
+
+                                --, height fill
+                                , height <| px 700
+                                ]
                     )
             ]
-                |> row [ centerX, spacing 50 ]
+                |> row [ centerX, spacing 50, height fill ]
                 |> viewFrame model
 
         ViewSuccess ->
-            [ text "BLOCKOUT"
+            [ text "BOLSTER"
                 |> el
                     [ varela
                     , Font.semiBold
@@ -549,7 +531,7 @@ view model =
         |> Element.layoutWith
             { options =
                 [ Element.focusStyle
-                    { borderColor = Nothing
+                    { borderColor = Just <| Element.rgb255 255 0 0
                     , backgroundColor = Nothing
                     , shadow = Nothing
                     }
@@ -600,7 +582,7 @@ viewHome model =
             , padding 50
             , Font.size 50
             ]
-    , [ text "BLOCKOUT"
+    , [ text "BOLSTER"
             |> el
                 [ varela
                 , Font.semiBold
@@ -669,13 +651,15 @@ viewHome model =
                 { onPress = Just <| NavigateTo RouteCalendar
                 , label = text "Try the demo"
                 }
+                |> when (model.auth == Nothing)
           ]
             |> column [ spacing 20, width fill ]
         , if model.auth == Nothing then
             viewFunnel model
 
           else
-            btn "Return to app" <| NavigateTo RouteCalendar
+            btn "Return to app" (NavigateTo RouteCalendar)
+                |> el [ Element.alignRight ]
         ]
             |> column [ spacing 40, Element.alignRight ]
       ]
@@ -895,7 +879,7 @@ viewFrame model elem =
             ]
             { onPress = Just <| NavigateTo RouteHome
             , label =
-                [ text "BLOCKOUT"
+                [ text "BOLSTER"
                 , text "DEMO"
                     |> el [ Font.light ]
                     |> when (model.auth == Nothing)
@@ -914,7 +898,12 @@ viewFrame model elem =
                             [ Font.color blue
                             ]
                         ]
-                        { onPress = Just <| NavigateTo r
+                        { onPress =
+                            if v == model.view then
+                                Nothing
+
+                            else
+                                Just <| NavigateTo r
                         , label = text n
                         }
                 )
@@ -1046,61 +1035,80 @@ viewPost model =
                         |> row [ spacing 10 ]
                   , pst
                         |> unwrap
-                            (btn "Submit" (PostCreateSubmit d)
+                            ([ cool model.postSaveInProgress Icons.save "Submit" (PostCreateSubmit d)
                                 |> when (model.postEditorBody /= "")
+                             , cool False Icons.close "Cancel" PostCancel
+                             ]
+                                |> row [ spacing 10 ]
                             )
                             (\p ->
-                                [ btn
-                                    (if String.isEmpty model.postEditorBody then
-                                        "Delete"
-
-                                     else
+                                if model.postBeingEdited then
+                                    [ cool
+                                        model.postSaveInProgress
+                                        Icons.save
                                         "Submit"
-                                    )
-                                    (PostUpdateSubmit p.id)
-                                    |> when (model.postEditorBody /= p.body)
-                                , btn "Cancel" PostUpdateCancel
-                                ]
-                                    |> row [ spacing 10 ]
-                                    |> when model.postBeingEdited
+                                        (PostUpdateSubmit p.id)
+                                        |> when (model.postEditorBody /= p.body && model.postEditorBody /= "")
+                                    , cool False Icons.delete "Delete" (PostDelete p.id p.date)
+                                    , cool False Icons.close "Cancel" PostUpdateCancel
+                                    ]
+                                        |> row [ spacing 10 ]
+
+                                else
+                                    cool False
+                                        (if model.postView then
+                                            Icons.edit
+
+                                         else
+                                            Icons.label
+                                        )
+                                        (if model.postView then
+                                            "Pad"
+
+                                         else
+                                            "Tags"
+                                        )
+                                        PostViewToggle
                             )
                   ]
                     |> row [ width fill, spaceEvenly, height <| px 55 ]
-                , Nothing
-                    --pst
-                    |> whenJust
-                        (\p ->
-                            model.tags
-                                |> UD.values
-                                |> List.map
-                                    (\t ->
-                                        Input.button
-                                            [ padding 10
-                                            , Border.width 1
-                                            , (if List.member t.id p.tags then
-                                                blue
+                , if model.postView then
+                    pst
+                        |> whenJust
+                            (\p ->
+                                model.tags
+                                    |> UD.values
+                                    |> List.map
+                                        (\t ->
+                                            Input.button
+                                                [ padding 10
+                                                , Border.width 1
+                                                , (if List.member t.id p.tags then
+                                                    blue
 
-                                               else
-                                                white
-                                              )
-                                                |> Background.color
-                                            ]
-                                            { onPress = Just <| PostTagToggle p t
-                                            , label = text t.name
-                                            }
-                                    )
-                                |> Element.wrappedRow [ spacing 20 ]
-                        )
-                , case data of
-                    Missing ->
-                        create
+                                                   else
+                                                    white
+                                                  )
+                                                    |> Background.color
+                                                ]
+                                                { onPress = Just <| PostTagToggle p t
+                                                , label = text t.name
+                                                }
+                                        )
+                                    |> Element.wrappedRow [ spacing 20 ]
+                            )
 
-                    Loading ma ->
-                        ma
-                            |> unwrap create make
+                  else
+                    case data of
+                        Missing ->
+                            create
 
-                    Found a ->
-                        make a
+                        Loading ma ->
+                            ma
+                                |> unwrap create make
+
+                        Found a ->
+                            make a
                 ]
                     |> column [ height fill, width fill, spacing 10 ]
             )
@@ -1183,6 +1191,48 @@ monthToString month =
 
         Dec ->
             "December"
+
+
+cool : Bool -> Icon msg -> String -> msg -> Element msg
+cool inProg icon str msg =
+    Input.button
+        [ padding 10
+        , style "transition" "all 0.2s"
+        , Element.mouseOver
+            [ Font.color white
+            , Background.color black
+            ]
+        , Border.color black
+        , Border.width 1
+        , style "cursor" "wait"
+            |> whenAttr inProg
+        , Font.color black
+        ]
+        { onPress =
+            if inProg then
+                Nothing
+
+            else
+                Just msg
+        , label =
+            [ (if inProg then
+                Icons.refresh
+
+               else
+                icon
+              )
+                |> (\ic ->
+                        ic 25 Inherit
+                   )
+                |> Element.html
+                |> el
+                    [ rotate
+                        |> whenAttr inProg
+                    ]
+            , text str
+            ]
+                |> row [ spacing 10 ]
+        }
 
 
 btn : String -> msg -> Element msg

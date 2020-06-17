@@ -1,392 +1,39 @@
-module Update exposing (new, update)
+module Update exposing (update)
 
-import Api.Enum.Post_constraint
-import Api.Enum.Post_update_column
-import Api.InputObject
-import Api.Mutation
-import Api.Object.Post
-import Api.Object.Post_mutation_response
-import Api.Object.Post_tag
-import Api.Object.Post_tag_mutation_response
-import Api.Object.Tag
-import Api.Object.Tag_mutation_response
-import Api.Query
 import Browser
 import Browser.Dom
 import Browser.Events exposing (Visibility(..))
 import Browser.Navigation as Navigation
 import Crypto
-import CustomScalars exposing (Uuid)
-import Data exposing (fetchTags, graphqlEndpoint, ignoreParsedErrorData, mutate, postSelection, query, range, tagSelection)
-import Date exposing (Date)
+import Data
+import Date
 import Day exposing (DayDict)
 import Derberos.Date.Utils exposing (getNextMonth, getPrevMonth)
 import Dict
+import File.Download
 import Graphql.Http exposing (HttpError(..), RawError(..))
-import Graphql.Http.GraphqlError
 import Graphql.OptionalArgument exposing (OptionalArgument(..))
-import Graphql.SelectionSet exposing (SelectionSet)
 import Helpers
 import Helpers.Parse
 import Helpers.UuidDict as UD
 import Json.Decode as JD
-import Json.Encode as Encode
+import Json.Encode as JE
 import Maybe.Extra exposing (unwrap)
 import Ports
+import Process
 import Random
 import Result.Extra exposing (unpack)
 import Routing exposing (goTo)
-import Task
+import Task exposing (Task)
 import Time exposing (Month(..))
-import Types exposing (Auth, GqlTask, Model, Msg(..), Post, PostView(..), Route(..), Sort(..), Status(..), Tag, View(..))
+import Types exposing (Auth, GqlResult, GqlTask, Model, Msg(..), Route(..), Sort(..), Status(..), View(..))
 import Url
 import Uuid
 
 
-headOrFail : SelectionSet (List a) b -> SelectionSet a b
-headOrFail =
-    Graphql.SelectionSet.mapOrFail
-        (List.head >> Result.fromMaybe "empty list response")
-
-
-fetchPostsByTag : Uuid -> Auth -> GqlTask (List Post)
-fetchPostsByTag id { key, token } =
-    Api.Query.post_tag
-        (\r ->
-            { r
-                | where_ =
-                    Api.InputObject.buildPost_tag_bool_exp
-                        (\r2 ->
-                            { r2
-                                | tag_id = equalToId id
-                            }
-                        )
-                        |> Present
-            }
-        )
-        (Api.Object.Post_tag.postBypostId postSelection)
-        |> query token
-        |> Task.andThen
-            (List.map
-                (\post ->
-                    Crypto.decrypt key post.cipher
-                        |> Task.map
-                            (\str ->
-                                { id = post.id
-                                , body = str
-                                , date = post.date
-                                , tags = post.tags
-                                }
-                            )
-                )
-                >> Task.sequence
-            )
-
-
-editTag : Tag -> Auth -> GqlTask Tag
-editTag { id, name } { token, key } =
-    Crypto.encrypt key name
-        |> Task.andThen
-            (\res ->
-                Api.Mutation.update_tag
-                    (\r ->
-                        { r
-                            | set_ =
-                                Api.InputObject.buildTag_set_input
-                                    (\a ->
-                                        { a
-                                            | name = Present res.ciphertext
-                                            , iv = Present res.iv
-                                        }
-                                    )
-                                    |> Present
-                        }
-                    )
-                    { where_ =
-                        Api.InputObject.buildTag_bool_exp
-                            (\a ->
-                                { a
-                                    | id = equalToId id
-                                }
-                            )
-                    }
-                    (Api.Object.Tag_mutation_response.returning tagSelection
-                        |> Graphql.SelectionSet.mapOrFail
-                            (List.head >> Result.fromMaybe "uh oh")
-                    )
-                    |> mutate token
-            )
-        |> Task.andThen
-            (unwrap
-                (Task.fail (makeGqlError "post doesn't exist"))
-                (Data.tp key)
-            )
-
-
-deleteTag : Tag -> Auth -> GqlTask Uuid
-deleteTag { id } { token } =
-    Graphql.SelectionSet.map2 Tuple.pair
-        (Api.Mutation.delete_post_tag
-            { where_ =
-                Api.InputObject.buildPost_tag_bool_exp
-                    (\a ->
-                        { a
-                            | tag_id = equalToId id
-                        }
-                    )
-            }
-            (Graphql.SelectionSet.succeed ())
-        )
-        (Api.Mutation.delete_tag
-            { where_ =
-                Api.InputObject.buildTag_bool_exp
-                    (\a ->
-                        { a
-                            | id = equalToId id
-                        }
-                    )
-            }
-            (Api.Object.Tag_mutation_response.returning Api.Object.Tag.id
-                |> Graphql.SelectionSet.mapOrFail
-                    (List.head >> Result.fromMaybe "uh oh")
-            )
-        )
-        |> Graphql.SelectionSet.map Tuple.second
-        |> mutate token
-        |> Task.andThen
-            (unwrap
-                (makeGqlError "tag doesn't exist"
-                    |> Task.fail
-                )
-                Task.succeed
-            )
-
-
-delete : Uuid -> Auth -> GqlTask Date
-delete id { token } =
-    Graphql.SelectionSet.map2 Tuple.pair
-        (Api.Mutation.delete_post_tag
-            { where_ =
-                Api.InputObject.buildPost_tag_bool_exp
-                    (\a ->
-                        { a
-                            | post_id = equalToId id
-                        }
-                    )
-            }
-            (Graphql.SelectionSet.succeed ())
-        )
-        (Api.Mutation.delete_post
-            { where_ =
-                Api.InputObject.buildPost_bool_exp
-                    (\a ->
-                        { a
-                            | id = equalToId id
-                        }
-                    )
-            }
-            (Api.Object.Post_mutation_response.returning Api.Object.Post.date
-                |> headOrFail
-            )
-        )
-        |> Graphql.SelectionSet.map Tuple.second
-        |> mutate token
-        |> Task.andThen
-            (unwrap
-                (makeGqlError "post doesn't exist"
-                    |> Task.fail
-                )
-                Task.succeed
-            )
-
-
-attachTag : Post -> Uuid -> Auth -> GqlTask Post
-attachTag post tagId { token, key } =
-    Api.Mutation.insert_post_tag
-        identity
-        { objects =
-            [ Api.InputObject.buildPost_tag_insert_input
-                (\r ->
-                    { r
-                        | post_id = Present post.id
-                        , tag_id = Present tagId
-                    }
-                )
-            ]
-        }
-        (Api.Object.Post_tag_mutation_response.returning
-            (Api.Object.Post_tag.postBypostId
-                postSelection
-            )
-            |> headOrFail
-        )
-        |> Graphql.SelectionSet.nonNullOrFail
-        |> mutate token
-        |> Task.andThen (Data.mp key)
-
-
-removeTag : Uuid -> Auth -> GqlTask Post
-removeTag tagId { token, key } =
-    Api.Mutation.delete_post_tag
-        { where_ =
-            Api.InputObject.buildPost_tag_bool_exp
-                (\a ->
-                    { a
-                        | tag_id = equalToId tagId
-                    }
-                )
-        }
-        (Api.Object.Post_tag_mutation_response.returning
-            (Api.Object.Post_tag.postBypostId
-                postSelection
-            )
-            |> headOrFail
-        )
-        |> Graphql.SelectionSet.nonNullOrFail
-        |> mutate token
-        |> Task.andThen (Data.mp key)
-
-
-postUpdateBody : Uuid -> String -> Auth -> GqlTask Post
-postUpdateBody id body { key, token } =
-    Crypto.encrypt key body
-        |> Task.andThen
-            (\res ->
-                Api.Mutation.update_post
-                    (\r ->
-                        { r
-                            | set_ =
-                                Api.InputObject.buildPost_set_input
-                                    (\a ->
-                                        { a
-                                            | body =
-                                                Present res.ciphertext
-                                            , iv =
-                                                Present res.iv
-                                        }
-                                    )
-                                    |> Present
-                        }
-                    )
-                    { where_ =
-                        Api.InputObject.buildPost_bool_exp
-                            (\a ->
-                                { a
-                                    | id = equalToId id
-                                }
-                            )
-                    }
-                    (Api.Object.Post_mutation_response.returning postSelection
-                        |> headOrFail
-                    )
-                    |> mutate token
-            )
-        |> Task.andThen
-            (unwrap
-                (makeGqlError "post doesn't exist"
-                    |> Task.fail
-                )
-                (Data.mp key)
-            )
-
-
-tagCreate : String -> Auth -> GqlTask Tag
-tagCreate name { key, token } =
-    Crypto.encrypt key name
-        |> Task.andThen
-            (\res ->
-                Api.Mutation.insert_tag
-                    identity
-                    { objects =
-                        [ Api.InputObject.buildTag_insert_input
-                            (\r ->
-                                { r
-                                    | name =
-                                        Present res.ciphertext
-                                    , iv =
-                                        Present res.iv
-                                }
-                            )
-                        ]
-                    }
-                    (Api.Object.Tag_mutation_response.returning tagSelection
-                        |> headOrFail
-                    )
-                    |> mutate token
-            )
-        |> Task.andThen
-            (unwrap
-                (makeGqlError "tag doesn't exist"
-                    |> Task.fail
-                )
-                (Data.tp key)
-            )
-
-
-new : String -> List Uuid -> Date -> Auth -> GqlTask Post
-new body tags d { key, token } =
-    Crypto.encrypt key body
-        |> Task.andThen
-            (\res ->
-                Api.Mutation.insert_post
-                    (\r ->
-                        { r
-                            | on_conflict =
-                                Api.InputObject.buildPost_on_conflict
-                                    { constraint = Api.Enum.Post_constraint.Unique_post
-                                    , update_columns = [ Api.Enum.Post_update_column.Body ]
-                                    }
-                                    identity
-                                    |> Present
-                        }
-                    )
-                    { objects =
-                        [ Api.InputObject.buildPost_insert_input
-                            (\r ->
-                                { r
-                                    | body =
-                                        Present res.ciphertext
-                                    , iv =
-                                        Present res.iv
-                                    , date =
-                                        d
-                                            |> Present
-                                    , postTagsBypostId =
-                                        if List.isEmpty tags then
-                                            Absent
-
-                                        else
-                                            Api.InputObject.Post_tag_arr_rel_insert_input
-                                                { data =
-                                                    tags
-                                                        |> List.map
-                                                            (\id ->
-                                                                Api.InputObject.buildPost_tag_insert_input
-                                                                    (\r_ ->
-                                                                        { r_
-                                                                            | tag_id = Present id
-                                                                        }
-                                                                    )
-                                                            )
-                                                , on_conflict = Absent
-                                                }
-                                                |> Present
-                                }
-                            )
-                        ]
-                    }
-                    (Api.Object.Post_mutation_response.returning postSelection
-                        |> headOrFail
-                    )
-                    |> mutate token
-            )
-        |> Task.andThen
-            (unwrap
-                (makeGqlError "post doesn't exist"
-                    |> Task.fail
-                )
-                (Data.mp key)
-            )
+wait : Task Never ()
+wait =
+    Process.sleep 500
 
 
 focusOnEditor : Cmd Msg
@@ -416,6 +63,41 @@ clearLoading =
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
+        ExportPosts ->
+            ( model
+            , model.posts
+                |> Day.values
+                |> List.filterMap Helpers.extract
+                |> JE.list
+                    (\p ->
+                        [ ( "day"
+                          , p.date
+                                |> Day.toString
+                                |> JE.string
+                          )
+                        , ( "body"
+                          , p.body
+                                |> JE.string
+                          )
+                        , ( "id"
+                          , p.id
+                                |> Uuid.toString
+                                |> JE.string
+                          )
+                        , ( "tags"
+                          , p.tags
+                                |> JE.list
+                                    (Uuid.toString
+                                        >> JE.string
+                                    )
+                          )
+                        ]
+                            |> JE.object
+                    )
+                |> JE.encode 2
+                |> File.Download.string "posts.json" "application/json"
+            )
+
         NextMonth ->
             ( { model
                 | year =
@@ -465,6 +147,79 @@ update msg model =
         Resize screen ->
             ( { model | screen = screen }, Cmd.none )
 
+        InitCb route res ->
+            res
+                |> unpack
+                    (\err ->
+                        ( model
+                        , logGqlError "InitCb" err
+                        )
+                    )
+                    (unwrap
+                        ( model
+                        , Ports.clearAuth ()
+                        )
+                        (\auth ->
+                            ( { model
+                                | auth = Just auth
+                              }
+                            , Cmd.batch
+                                [ trip
+                                    (\aa ->
+                                        Helpers.today
+                                            |> Task.andThen
+                                                (\t ->
+                                                    let
+                                                        start =
+                                                            Date.floor Date.Month t
+                                                    in
+                                                    Data.range
+                                                        start
+                                                        (start
+                                                            |> Date.add Date.Months 1
+                                                        )
+                                                        aa
+                                                )
+                                    )
+                                    PostsCb
+                                    auth
+                                , Ports.saveAuth auth.key
+                                , route
+                                    |> unwrap Cmd.none
+                                        (\route_ ->
+                                            case route_ of
+                                                RouteToday ->
+                                                    Task.map2
+                                                        Date.fromPosix
+                                                        Time.here
+                                                        Time.now
+                                                        |> Task.perform (RouteDay >> NavigateTo)
+
+                                                RouteHome ->
+                                                    Cmd.none
+
+                                                RouteTags ->
+                                                    Data.tags auth
+                                                        |> Task.attempt TagsCb
+
+                                                RouteSettings ->
+                                                    Cmd.none
+
+                                                RouteCalendar ->
+                                                    Cmd.none
+
+                                                RouteDay d ->
+                                                    Data.fetchDay d auth
+                                                        |> Task.attempt (PostCb d)
+                                        )
+                                ]
+                            )
+                        )
+                    )
+
+        PostCancel ->
+            ( { model | current = Nothing }, Cmd.none )
+
         FocusCb res ->
             res
                 |> unpack
@@ -484,41 +239,51 @@ update msg model =
                 ( model, Cmd.none )
 
             else if model.auth == Nothing then
-                ( model
-                , Uuid.uuidGenerator
-                    |> Random.map
-                        (\uuid ->
-                            { id = uuid
-                            , body = model.postEditorBody
-                            , tags = []
-                            , date = d
-                            }
-                                |> Ok
+                ( { model | postSaveInProgress = True }
+                , wait
+                    |> Task.andThen (always Time.now)
+                    |> Task.map
+                        (Time.posixToMillis
+                            >> Random.initialSeed
+                            >> Random.step Uuid.uuidGenerator
+                            >> Tuple.first
+                            >> (\uuid ->
+                                    { id = uuid
+                                    , body = model.postEditorBody
+                                    , tags = []
+                                    , date = d
+                                    }
+                                        |> Ok
+                               )
                         )
-                    |> Random.generate PostMutateCb
+                    |> Task.perform PostMutateCb
                 )
 
             else
                 ( { model | postSaveInProgress = True }
                 , model.auth
                     |> unwrap Cmd.none
-                        (new model.postEditorBody
-                            model.postCreateTags
-                            d
-                            >> Task.attempt PostMutateCb
+                        (trip
+                            (Data.new model.postEditorBody
+                                model.postCreateTags
+                                d
+                            )
+                            PostMutateCb
                         )
                 )
 
-        PostDelete id ->
-            ( model
+        PostDelete id date ->
+            ( { model | postSaveInProgress = True }
             , if model.auth == Nothing then
-                Cmd.none
+                wait
+                    |> Task.map (always <| Ok date)
+                    |> Task.perform PostDeleteCb
 
               else
                 model.auth
                     |> unwrap Cmd.none
-                        (delete id
-                            >> Task.attempt PostDeleteCb
+                        (trip (Data.delete id)
+                            PostDeleteCb
                         )
             )
 
@@ -529,9 +294,9 @@ update msg model =
             , Cmd.none
             )
 
-        PostViewSet value ->
+        PostViewToggle ->
             ( { model
-                | postView = value
+                | postView = not model.postView
               }
             , Cmd.none
             )
@@ -547,20 +312,20 @@ update msg model =
 
         PostUpdateSubmit id ->
             if model.auth == Nothing then
-                ( model
+                ( { model | postSaveInProgress = True }
                 , model.current
                     |> Maybe.andThen (\d -> Day.get d model.posts)
                     |> Maybe.andThen Helpers.extract
                     |> unwrap Cmd.none
                         (\p ->
                             if String.isEmpty model.postEditorBody then
-                                Ok p.date
-                                    |> Task.succeed
+                                wait
+                                    |> Task.map (always <| Ok p.date)
                                     |> Task.perform PostDeleteCb
 
                             else
-                                Ok { p | body = model.postEditorBody }
-                                    |> Task.succeed
+                                wait
+                                    |> Task.map (always <| Ok { p | body = model.postEditorBody })
                                     |> Task.perform PostMutateCb
                         )
                 )
@@ -570,12 +335,11 @@ update msg model =
                 , model.auth
                     |> unwrap Cmd.none
                         (if String.isEmpty model.postEditorBody then
-                            delete id
-                                >> Task.attempt PostDeleteCb
+                            trip (Data.delete id) PostDeleteCb
 
                          else
-                            postUpdateBody id model.postEditorBody
-                                >> Task.attempt PostMutateCb
+                            trip (Data.postUpdateBody id model.postEditorBody)
+                                PostMutateCb
                         )
                 )
 
@@ -659,6 +423,7 @@ update msg model =
                                     model.posts
                             , postEditorBody = ""
                             , postSaveInProgress = False
+                            , current = Nothing
                           }
                         , Cmd.none
                         )
@@ -702,7 +467,6 @@ update msg model =
                                     |> Day.insert
                                         post.date
                                         (Found post)
-                            , postView = PostView
                             , postBeingEdited = False
                             , postSaveInProgress = False
                             , online = True
@@ -723,8 +487,8 @@ update msg model =
                         , logGqlError "PostCb" err
                         )
                     )
-                    (\resPost ->
-                        case resPost of
+                    (\data ->
+                        case data of
                             Just post ->
                                 ( { model
                                     | posts =
@@ -766,6 +530,38 @@ update msg model =
                         )
                     )
 
+        LogoutCb res ->
+            res
+                |> unpack
+                    (\err ->
+                        ( { model
+                            | inProgress = model.inProgress |> (\p -> { p | logout = False })
+                          }
+                        , logGqlError "LogoutCb" err
+                        )
+                    )
+                    (\_ ->
+                        ( { model
+                            | posts = Day.newDayDict
+                            , auth = Nothing
+                            , tags = UD.empty
+                            , current = Nothing
+                            , inProgress =
+                                model.inProgress
+                                    |> (\p ->
+                                            { p | logout = False }
+                                       )
+                            , loginForm =
+                                { email = ""
+                                , password = ""
+                                , passwordVisible = False
+                                }
+                            , funnel = Types.Hello
+                          }
+                        , goTo RouteHome
+                        )
+                    )
+
         TagCreateSubmit ->
             ( model
             , if String.isEmpty model.tagCreateName then
@@ -786,8 +582,8 @@ update msg model =
               else
                 model.auth
                     |> unwrap Cmd.none
-                        (tagCreate model.tagCreateName
-                            >> Task.attempt TagCreateCb
+                        (trip (Data.tagCreate model.tagCreateName)
+                            TagCreateCb
                         )
             )
 
@@ -806,36 +602,31 @@ update msg model =
                         )
                     )
                     (\auth ->
-                        let
-                            now =
-                                Task.map2
-                                    Date.fromPosix
-                                    Time.here
-                                    Time.now
-                        in
                         ( { model
                             | auth = Just auth
                             , view = ViewCalendar
                           }
                         , Cmd.batch
-                            [ now
-                                |> Task.andThen
-                                    (\t ->
-                                        let
-                                            start =
-                                                Date.floor Date.Month t
-                                        in
-                                        range
-                                            start
-                                            (start
-                                                |> Date.add Date.Months 1
+                            [ trip
+                                (\aa ->
+                                    Helpers.today
+                                        |> Task.andThen
+                                            (\t ->
+                                                let
+                                                    start =
+                                                        Date.floor Date.Month t
+                                                in
+                                                Data.range
+                                                    start
+                                                    (start
+                                                        |> Date.add Date.Months 1
+                                                    )
+                                                    aa
                                             )
-                                            auth
-                                    )
-                                |> Task.attempt PostsCb
-                            , Ports.saveAuth auth
-                            , fetchTags auth
-                                |> Task.attempt TagsCb
+                                )
+                                PostsCb
+                                auth
+                            , Ports.saveAuth auth.key
                             ]
                         )
                     )
@@ -876,7 +667,7 @@ update msg model =
 
             else
                 ( { model | errors = [] }
-                , getNonce email
+                , Data.nonce email
                     |> Task.attempt NonceCb
                 )
 
@@ -943,12 +734,11 @@ update msg model =
                 , Crypto.keys model.loginForm.password nonce
                     |> Task.andThen
                         (\keys ->
-                            login email keys.serverKey
+                            Data.login email keys.serverKey
                                 |> Task.map
                                     (\token ->
                                         { key = keys.encryptionKey
                                         , token = token
-                                        , email = email
                                         }
                                     )
                         )
@@ -960,24 +750,23 @@ update msg model =
 
         Logout ->
             ( { model
-                | auth = Nothing
-                , posts = Day.newDayDict
-                , tags = UD.empty
-                , loginForm =
-                    { email = ""
-                    , password = ""
-                    , passwordVisible = False
-                    }
-                , funnel = Types.Hello
-                , view = ViewHome
+                | inProgress = model.inProgress |> (\p -> { p | logout = True })
               }
-            , Cmd.batch [ Ports.clearAuth (), goTo RouteHome ]
+            , Cmd.batch
+                [ Ports.clearAuth ()
+                , Data.logout
+                    |> Task.attempt LogoutCb
+                ]
             )
 
         Buy annual ->
             ( model, Ports.buy { email = model.loginForm.email, annual = annual } )
 
-        SignupSubmit txt ->
+        SignupSubmit ->
+            let
+                ( iv, ciph ) =
+                    model.mg
+            in
             if String.isEmpty model.loginForm.password then
                 ( { model | errors = [ "empty field(s)" ] }
                 , Cmd.none
@@ -991,12 +780,11 @@ update msg model =
                             Crypto.keys model.loginForm.password nonce
                                 |> Task.andThen
                                     (\keys ->
-                                        signup keys.serverKey nonce txt
+                                        Data.signup keys.serverKey nonce iv ciph
                                             |> Task.map
                                                 (\token ->
                                                     { key = keys.encryptionKey
                                                     , token = token
-                                                    , email = "ok"
                                                     }
                                                 )
                                     )
@@ -1014,7 +802,7 @@ update msg model =
               else
                 model.auth
                     |> unwrap Cmd.none
-                        (deleteTag tag >> Task.attempt TagDeleteCb)
+                        (trip (Data.deleteTag tag) TagDeleteCb)
             )
 
         TagUpdate value ->
@@ -1042,8 +830,8 @@ update msg model =
               else
                 model.auth
                     |> unwrap Cmd.none
-                        (editTag t
-                            >> Task.attempt TagUpdateCb
+                        (trip (Data.editTag t)
+                            TagUpdateCb
                         )
             )
 
@@ -1068,33 +856,62 @@ update msg model =
                         )
                     )
 
+        RefreshCb msg_ res ->
+            res
+                |> unpack
+                    (\err ->
+                        ( { model | online = not <| isNetworkError err }
+                        , logGqlError "TagUpdateCb" err
+                        )
+                    )
+                    (unwrap
+                        ( { model | auth = Nothing }
+                        , Cmd.batch
+                            [ Ports.clearAuth ()
+                            , goTo RouteHome
+                            ]
+                        )
+                        (\tk ->
+                            model.auth
+                                |> unwrap
+                                    ( model, Cmd.none )
+                                    (\auth ->
+                                        ( { model
+                                            | auth = Just { auth | token = tk }
+                                          }
+                                        , msg_ { auth | token = tk }
+                                        )
+                                    )
+                        )
+                    )
+
         PostTagToggle post tag ->
             ( model
-            , if model.auth == Nothing then
-                { post
-                    | tags =
-                        post.tags
-                            |> toggle tag.id
-                }
-                    |> Task.succeed
-                    |> Task.map Just
-                    |> Task.attempt (PostCb post.date)
+            , model.auth
+                |> unwrap
+                    ({ post
+                        | tags =
+                            post.tags
+                                |> toggle tag.id
+                     }
+                        |> Task.succeed
+                        |> Task.map Just
+                        |> Task.attempt (PostCb post.date)
+                    )
+                    (if List.member tag.id post.tags then
+                        trip
+                            (Data.removeTag tag.id
+                                >> Task.map Just
+                            )
+                            (PostCb post.date)
 
-              else if List.member tag.id post.tags then
-                model.auth
-                    |> unwrap Cmd.none
-                        (removeTag tag.id
-                            >> Task.map Just
-                            >> Task.attempt (PostCb post.date)
-                        )
-
-              else
-                model.auth
-                    |> unwrap Cmd.none
-                        (attachTag post tag.id
-                            >> Task.map Just
-                            >> Task.attempt (PostCb post.date)
-                        )
+                     else
+                        trip
+                            (Data.attachTag post tag.id
+                                >> Task.map Just
+                            )
+                            (PostCb post.date)
+                    )
             )
 
         Force ->
@@ -1165,156 +982,237 @@ update msg model =
               }
             , model.auth
                 |> unwrap Cmd.none
-                    (fetchPostsByTag id
-                        >> Task.attempt PostsCb
+                    (trip (Data.fetchPostsByTag id)
+                        PostsCb
                     )
             )
 
-        UrlChange route ->
-            case route of
-                RouteToday ->
+        UrlChange r_ ->
+            r_
+                |> unwrap
                     ( model
-                    , Task.map2
-                        Date.fromPosix
-                        Time.here
-                        Time.now
-                        |> Task.perform (RouteDay >> NavigateTo)
+                    , Ports.log "Missing route"
+                    )
+                    (model.auth
+                        |> unwrap
+                            (routeDemo model)
+                            (routeLive model)
                     )
 
-                RouteHome ->
-                    ( { model
-                        | view = ViewHome
-                      }
-                    , Cmd.none
-                    )
-
-                RouteTags ->
-                    ( { model
-                        | view = ViewTags
-                        , tags =
-                            if model.auth == Nothing then
-                                model.tags
-                                    |> UD.values
-                                    |> List.map
-                                        (\t ->
-                                            { t
-                                                | count =
-                                                    model.posts
-                                                        |> Day.values
-                                                        |> List.filterMap Helpers.extract
-                                                        |> List.filter
-                                                            (.tags >> List.member t.id)
-                                                        |> List.length
-                                            }
-                                        )
-                                    |> UD.fromList
-
-                            else
-                                model.tags
-                      }
-                    , model.auth
-                        |> unwrap Cmd.none
-                            (fetchTags >> Task.attempt TagsCb)
-                    )
-
-                RouteSettings ->
-                    ( { model
-                        | view = ViewSettings
-                      }
-                    , Cmd.none
-                    )
-
-                RouteCalendar ->
-                    ( { model
-                        | view = ViewCalendar
-                      }
-                    , Cmd.none
-                    )
-
-                RouteDay d ->
-                    model.posts
-                        |> Helpers.getStatus d
-                        |> (\data ->
-                                let
-                                    newPost =
-                                        case data of
-                                            Missing ->
-                                                Loading Nothing
-
-                                            Loading ma ->
-                                                Loading ma
-
-                                            Found a ->
-                                                Loading (Just a)
-
-                                    shouldFocusOnEditor =
-                                        case data of
-                                            Missing ->
-                                                True
-
-                                            Loading _ ->
-                                                False
-
-                                            Found _ ->
-                                                model.postBeingEdited
-
-                                    editorText =
-                                        case data of
-                                            Missing ->
-                                                ""
-
-                                            Loading ma ->
-                                                ma
-                                                    |> unwrap "" .body
-
-                                            Found a ->
-                                                a.body
-                                in
-                                ( { model
-                                    --| view = ViewPost d
-                                    | postView = PostView
-                                    , posts =
-                                        if model.auth == Nothing then
-                                            model.posts
-
-                                        else
-                                            model.posts
-                                                |> Day.insert d newPost
-                                    , postEditorBody = editorText
-                                    , postCreateTags = []
-                                    , postBeingEdited = False
-                                    , postSaveInProgress = False
-                                    , current = Just d
-                                    , month = Date.month d
-                                    , year = Date.year d
-                                  }
-                                , Cmd.batch
-                                    [ model.auth
-                                        |> unwrap Cmd.none
-                                            (Data.fetchDay d
-                                                >> Task.attempt (PostCb d)
-                                            )
-                                    , if shouldFocusOnEditor then
-                                        focusOnEditor
-
-                                      else
-                                        Cmd.none
-                                    ]
-                                )
-                           )
-
-                NotFound ->
-                    ( model
-                      --, Debug.log "bad route" route
-                    , Cmd.none
-                      --, Cmd.batch
-                      --[ Ports.log "redirecting..."
-                      --, goTo RouteHome
-                      --]
-                    )
+        Bad mm ->
+            ( model
+            , Data.refresh
+                |> Task.attempt (RefreshCb mm)
+            )
 
         NavigateTo route ->
             ( model, goTo route )
+
+
+routeDemo : Model -> Route -> ( Model, Cmd Msg )
+routeDemo model route =
+    case route of
+        RouteToday ->
+            ( model
+            , Helpers.today
+                |> Task.perform (RouteDay >> NavigateTo)
+            )
+
+        RouteHome ->
+            ( { model
+                | view = ViewHome
+              }
+            , Cmd.none
+            )
+
+        RouteTags ->
+            ( { model
+                | view = ViewTags
+                , tags =
+                    model.tags
+                        |> UD.values
+                        |> List.map
+                            (\t ->
+                                { t
+                                    | count =
+                                        model.posts
+                                            |> Day.values
+                                            |> List.filterMap Helpers.extract
+                                            |> List.filter
+                                                (.tags >> List.member t.id)
+                                            |> List.length
+                                }
+                            )
+                        |> UD.fromList
+              }
+            , Cmd.none
+            )
+
+        RouteSettings ->
+            ( { model
+                | view = ViewSettings
+              }
+            , Cmd.none
+            )
+
+        RouteCalendar ->
+            ( { model
+                | view = ViewCalendar
+              }
+            , Cmd.none
+            )
+
+        RouteDay d ->
+            model.posts
+                |> Helpers.getStatus d
+                |> (\data ->
+                        let
+                            shouldFocusOnEditor =
+                                case data of
+                                    Missing ->
+                                        True
+
+                                    Loading _ ->
+                                        False
+
+                                    Found _ ->
+                                        model.postBeingEdited
+
+                            editorText =
+                                case data of
+                                    Missing ->
+                                        ""
+
+                                    Loading ma ->
+                                        ma
+                                            |> unwrap "" .body
+
+                                    Found a ->
+                                        a.body
+                        in
+                        ( { model
+                            | postEditorBody = editorText
+                            , postCreateTags = []
+                            , postBeingEdited = False
+                            , postSaveInProgress = False
+                            , current = Just d
+                            , month = Date.month d
+                            , year = Date.year d
+                          }
+                        , if shouldFocusOnEditor then
+                            focusOnEditor
+
+                          else
+                            Cmd.none
+                        )
+                   )
+
+
+routeLive : Model -> Auth -> Route -> ( Model, Cmd Msg )
+routeLive model auth route =
+    case route of
+        RouteToday ->
+            ( model
+            , Helpers.today
+                |> Task.perform (RouteDay >> NavigateTo)
+            )
+
+        RouteHome ->
+            ( { model
+                | view = ViewHome
+              }
+            , Cmd.none
+            )
+
+        RouteTags ->
+            ( { model
+                | view = ViewTags
+              }
+            , trip
+                Data.tags
+                TagsCb
+                auth
+            )
+
+        RouteSettings ->
+            ( { model
+                | view = ViewSettings
+              }
+            , Cmd.none
+            )
+
+        RouteCalendar ->
+            ( { model
+                | view = ViewCalendar
+              }
+            , Cmd.none
+            )
+
+        RouteDay d ->
+            model.posts
+                |> Helpers.getStatus d
+                |> (\data ->
+                        let
+                            newPost =
+                                case data of
+                                    Missing ->
+                                        Loading Nothing
+
+                                    Loading ma ->
+                                        Loading ma
+
+                                    Found a ->
+                                        Loading (Just a)
+
+                            shouldFocusOnEditor =
+                                case data of
+                                    Missing ->
+                                        True
+
+                                    Loading _ ->
+                                        False
+
+                                    Found _ ->
+                                        model.postBeingEdited
+
+                            editorText =
+                                case data of
+                                    Missing ->
+                                        ""
+
+                                    Loading ma ->
+                                        ma
+                                            |> unwrap "" .body
+
+                                    Found a ->
+                                        a.body
+                        in
+                        ( { model
+                            | posts =
+                                model.posts
+                                    |> Day.insert d newPost
+                            , postEditorBody = editorText
+                            , postCreateTags = []
+                            , postBeingEdited = False
+                            , postSaveInProgress = False
+                            , current = Just d
+                            , month = Date.month d
+                            , year = Date.year d
+                            , postView = False
+                          }
+                        , Cmd.batch
+                            [ trip
+                                (Data.fetchDay d)
+                                (PostCb d)
+                                auth
+                            , if shouldFocusOnEditor then
+                                focusOnEditor
+
+                              else
+                                Cmd.none
+                            ]
+                        )
+                   )
 
 
 isNetworkError : Graphql.Http.Error () -> Bool
@@ -1337,62 +1235,9 @@ parseErrors err =
             [ "uh oh" ]
 
 
-signup : String -> String -> String -> GqlTask String
-signup pw nonce txt =
-    Api.Mutation.signup
-        { nonce = nonce
-        , password = pw
-        , txt = txt
-        }
-        |> Graphql.Http.mutationRequest graphqlEndpoint
-        |> Graphql.Http.toTask
-        |> Task.mapError ignoreParsedErrorData
-
-
-login : String -> String -> GqlTask String
-login email pw =
-    Api.Mutation.login
-        { email = email
-        , password = pw
-        }
-        |> Graphql.Http.mutationRequest graphqlEndpoint
-        |> Graphql.Http.toTask
-        |> Task.mapError ignoreParsedErrorData
-
-
-getNonce : String -> GqlTask String
-getNonce email =
-    Api.Query.nonce
-        { email = email
-        }
-        |> Graphql.Http.queryRequest graphqlEndpoint
-        |> Graphql.Http.toTask
-        |> Task.mapError ignoreParsedErrorData
-
-
 logGqlError : String -> Graphql.Http.Error a -> Cmd msg
 logGqlError tag err =
     Ports.log (tag ++ ":\n" ++ Helpers.Parse.gqlError err)
-
-
-equalToId : Uuid -> OptionalArgument Api.InputObject.Uuid_comparison_exp
-equalToId id =
-    Present <|
-        Api.InputObject.buildUuid_comparison_exp
-            (\r ->
-                { r | eq_ = Present id }
-            )
-
-
-makeGqlError : String -> Graphql.Http.Error ()
-makeGqlError str =
-    Graphql.Http.GraphqlError
-        (Graphql.Http.GraphqlError.UnparsedData Encode.null)
-        [ { message = str
-          , locations = Nothing
-          , details = Dict.empty
-          }
-        ]
 
 
 toggle : a -> List a -> List a
@@ -1402,6 +1247,27 @@ toggle v ls =
 
     else
         v :: ls
+
+
+trip : (Auth -> GqlTask a) -> (GqlResult a -> Msg) -> Auth -> Cmd Msg
+trip task msg =
+    task
+        >> Task.attempt
+            (unpack
+                (\err ->
+                    if check "invalid-jwt" err then
+                        Bad
+                            (task
+                                >> Task.attempt msg
+                            )
+
+                    else
+                        err
+                            |> Err
+                            |> msg
+                )
+                (Ok >> msg)
+            )
 
 
 check : String -> Graphql.Http.Error () -> Bool

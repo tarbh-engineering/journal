@@ -16,6 +16,10 @@ type alias Id =
     Api.Scalar.Id
 
 
+type alias Jwt =
+    Api.Scalar.Jwt
+
+
 type alias Timestamptz =
     Api.Scalar.Timestamptz
 
@@ -24,11 +28,12 @@ type alias Uuid =
     Api.Scalar.Uuid
 
 
-codecs : Api.Scalar.Codecs Date Id Timestamptz Uuid
+codecs : Api.Scalar.Codecs Date Id Jwt Timestamptz Uuid
 codecs =
     Api.Scalar.defineCodecs
         { codecDate = defaultCodecs.codecDate
         , codecId = defaultCodecs.codecId
+        , codecJwt = defaultCodecs.codecJwt
         , codecTimestamptz = defaultCodecs.codecTimestamptz
         , codecUuid = defaultCodecs.codecUuid
         }

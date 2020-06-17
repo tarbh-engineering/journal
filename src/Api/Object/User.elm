@@ -22,6 +22,11 @@ import Graphql.SelectionSet exposing (SelectionSet)
 import Json.Decode as Decode
 
 
+created_at : SelectionSet CustomScalars.Timestamptz Api.Object.User
+created_at =
+    Object.selectionForField "CustomScalars.Timestamptz" "created_at" [] (CustomScalars.codecs |> Api.Scalar.unwrapCodecs |> .codecTimestamptz |> .decoder)
+
+
 id : SelectionSet CustomScalars.Uuid Api.Object.User
 id =
     Object.selectionForField "CustomScalars.Uuid" "id" [] (CustomScalars.codecs |> Api.Scalar.unwrapCodecs |> .codecUuid |> .decoder)
@@ -55,7 +60,10 @@ type alias PostTagsByuserIdOptionalArguments =
   - where\_ - filter the rows returned
 
 -}
-postTagsByuserId : (PostTagsByuserIdOptionalArguments -> PostTagsByuserIdOptionalArguments) -> SelectionSet decodesTo Api.Object.Post_tag -> SelectionSet (List decodesTo) Api.Object.User
+postTagsByuserId :
+    (PostTagsByuserIdOptionalArguments -> PostTagsByuserIdOptionalArguments)
+    -> SelectionSet decodesTo Api.Object.Post_tag
+    -> SelectionSet (List decodesTo) Api.Object.User
 postTagsByuserId fillInOptionals object_ =
     let
         filledInOptionals =
@@ -86,7 +94,10 @@ type alias PostTagsByuserIdAggregateOptionalArguments =
   - where\_ - filter the rows returned
 
 -}
-postTagsByuserId_aggregate : (PostTagsByuserIdAggregateOptionalArguments -> PostTagsByuserIdAggregateOptionalArguments) -> SelectionSet decodesTo Api.Object.Post_tag_aggregate -> SelectionSet decodesTo Api.Object.User
+postTagsByuserId_aggregate :
+    (PostTagsByuserIdAggregateOptionalArguments -> PostTagsByuserIdAggregateOptionalArguments)
+    -> SelectionSet decodesTo Api.Object.Post_tag_aggregate
+    -> SelectionSet decodesTo Api.Object.User
 postTagsByuserId_aggregate fillInOptionals object_ =
     let
         filledInOptionals =
@@ -117,7 +128,10 @@ type alias PostsByuserIdOptionalArguments =
   - where\_ - filter the rows returned
 
 -}
-postsByuserId : (PostsByuserIdOptionalArguments -> PostsByuserIdOptionalArguments) -> SelectionSet decodesTo Api.Object.Post -> SelectionSet (List decodesTo) Api.Object.User
+postsByuserId :
+    (PostsByuserIdOptionalArguments -> PostsByuserIdOptionalArguments)
+    -> SelectionSet decodesTo Api.Object.Post
+    -> SelectionSet (List decodesTo) Api.Object.User
 postsByuserId fillInOptionals object_ =
     let
         filledInOptionals =
@@ -148,7 +162,10 @@ type alias PostsByuserIdAggregateOptionalArguments =
   - where\_ - filter the rows returned
 
 -}
-postsByuserId_aggregate : (PostsByuserIdAggregateOptionalArguments -> PostsByuserIdAggregateOptionalArguments) -> SelectionSet decodesTo Api.Object.Post_aggregate -> SelectionSet decodesTo Api.Object.User
+postsByuserId_aggregate :
+    (PostsByuserIdAggregateOptionalArguments -> PostsByuserIdAggregateOptionalArguments)
+    -> SelectionSet decodesTo Api.Object.Post_aggregate
+    -> SelectionSet decodesTo Api.Object.User
 postsByuserId_aggregate fillInOptionals object_ =
     let
         filledInOptionals =
@@ -163,7 +180,9 @@ postsByuserId_aggregate fillInOptionals object_ =
 
 {-| An object relationship
 -}
-purchase : SelectionSet decodesTo Api.Object.Purchase -> SelectionSet decodesTo Api.Object.User
+purchase :
+    SelectionSet decodesTo Api.Object.Purchase
+    -> SelectionSet decodesTo Api.Object.User
 purchase object_ =
     Object.selectionForCompositeField "purchase" [] object_ identity
 
@@ -191,7 +210,10 @@ type alias TagsByuserIdOptionalArguments =
   - where\_ - filter the rows returned
 
 -}
-tagsByuserId : (TagsByuserIdOptionalArguments -> TagsByuserIdOptionalArguments) -> SelectionSet decodesTo Api.Object.Tag -> SelectionSet (List decodesTo) Api.Object.User
+tagsByuserId :
+    (TagsByuserIdOptionalArguments -> TagsByuserIdOptionalArguments)
+    -> SelectionSet decodesTo Api.Object.Tag
+    -> SelectionSet (List decodesTo) Api.Object.User
 tagsByuserId fillInOptionals object_ =
     let
         filledInOptionals =
@@ -222,7 +244,10 @@ type alias TagsByuserIdAggregateOptionalArguments =
   - where\_ - filter the rows returned
 
 -}
-tagsByuserId_aggregate : (TagsByuserIdAggregateOptionalArguments -> TagsByuserIdAggregateOptionalArguments) -> SelectionSet decodesTo Api.Object.Tag_aggregate -> SelectionSet decodesTo Api.Object.User
+tagsByuserId_aggregate :
+    (TagsByuserIdAggregateOptionalArguments -> TagsByuserIdAggregateOptionalArguments)
+    -> SelectionSet decodesTo Api.Object.Tag_aggregate
+    -> SelectionSet decodesTo Api.Object.User
 tagsByuserId_aggregate fillInOptionals object_ =
     let
         filledInOptionals =
@@ -233,3 +258,13 @@ tagsByuserId_aggregate fillInOptionals object_ =
                 |> List.filterMap identity
     in
     Object.selectionForCompositeField "tagsByuserId_aggregate" optionalArgs object_ identity
+
+
+token : SelectionSet (Maybe String) Api.Object.User
+token =
+    Object.selectionForField "(Maybe String)" "token" [] (Decode.string |> Decode.nullable)
+
+
+updated_at : SelectionSet CustomScalars.Timestamptz Api.Object.User
+updated_at =
+    Object.selectionForField "CustomScalars.Timestamptz" "updated_at" [] (CustomScalars.codecs |> Api.Scalar.unwrapCodecs |> .codecTimestamptz |> .decoder)

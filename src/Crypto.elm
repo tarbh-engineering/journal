@@ -4,7 +4,7 @@ import Graphql.Http exposing (HttpError(..), RawError(..))
 import Http
 import Json.Decode as Decode exposing (Decoder, Value)
 import Json.Encode as Encode
-import Types exposing (Cipher, GqlTask, Keys, Msg(..), PostView(..), Route(..), Sort(..), Status(..), View(..))
+import Types exposing (Cipher, GqlTask, Keys, Msg(..), Route(..), Sort(..), Status(..), View(..))
 
 
 nonce : GqlTask String

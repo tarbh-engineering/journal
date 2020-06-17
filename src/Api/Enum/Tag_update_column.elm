@@ -9,22 +9,26 @@ import Json.Decode as Decode exposing (Decoder)
 
 {-| update columns of table "tag"
 
+  - Created\_at - column name
   - Id - column name
   - Iv - column name
   - Name - column name
+  - Updated\_at - column name
   - User\_id - column name
 
 -}
 type Tag_update_column
-    = Id
+    = Created_at
+    | Id
     | Iv
     | Name
+    | Updated_at
     | User_id
 
 
 list : List Tag_update_column
 list =
-    [ Id, Iv, Name, User_id ]
+    [ Created_at, Id, Iv, Name, Updated_at, User_id ]
 
 
 decoder : Decoder Tag_update_column
@@ -33,6 +37,9 @@ decoder =
         |> Decode.andThen
             (\string ->
                 case string of
+                    "created_at" ->
+                        Decode.succeed Created_at
+
                     "id" ->
                         Decode.succeed Id
 
@@ -42,6 +49,9 @@ decoder =
                     "name" ->
                         Decode.succeed Name
 
+                    "updated_at" ->
+                        Decode.succeed Updated_at
+
                     "user_id" ->
                         Decode.succeed User_id
 
@@ -50,11 +60,14 @@ decoder =
             )
 
 
-{-| Convert from the union type representating the Enum to a string that the GraphQL server will recognize.
+{-| Convert from the union type representing the Enum to a string that the GraphQL server will recognize.
 -}
 toString : Tag_update_column -> String
 toString enum =
     case enum of
+        Created_at ->
+            "created_at"
+
         Id ->
             "id"
 
@@ -63,6 +76,9 @@ toString enum =
 
         Name ->
             "name"
+
+        Updated_at ->
+            "updated_at"
 
         User_id ->
             "user_id"
@@ -82,6 +98,9 @@ This can be useful for generating Strings to use for <select> menus to check whi
 fromString : String -> Maybe Tag_update_column
 fromString enumString =
     case enumString of
+        "created_at" ->
+            Just Created_at
+
         "id" ->
             Just Id
 
@@ -90,6 +109,9 @@ fromString enumString =
 
         "name" ->
             Just Name
+
+        "updated_at" ->
+            Just Updated_at
 
         "user_id" ->
             Just User_id

@@ -1,9 +1,10 @@
-module Types exposing (Auth, Cipher, Def(..), Flags, Funnel(..), GqlResult, GqlTask, Keys, Model, Msg(..), Post, PostRaw, PostView(..), Route(..), Screen, Sort(..), Status(..), Tag, TagRaw, View(..))
+module Types exposing (Auth, Cipher, Def(..), Flags, Funnel(..), GqlResult, GqlTask, Keys, Model, Msg(..), Post, PostRaw, Route(..), Screen, Sort(..), Status(..), Tag, TagRaw, View(..))
 
 import Array exposing (Array)
 import Browser exposing (UrlRequest)
 import Browser.Dom
 import Browser.Events exposing (Visibility(..))
+import CustomScalars exposing (Jwt, Uuid)
 import Date exposing (Date)
 import Day exposing (DayDict)
 import Graphql.Http
@@ -11,7 +12,6 @@ import Helpers.UuidDict exposing (UuidDict)
 import Json.Decode exposing (Value)
 import Task exposing (Task)
 import Time exposing (Month(..))
-import Uuid exposing (Uuid)
 
 
 type Status a
@@ -21,19 +21,18 @@ type Status a
 
 
 type alias Flags =
-    { auth : Maybe Auth
-    , month : Int
+    { month : Int
     , year : Int
     , online : Bool
     , href : String
     , screen : Screen
+    , auth : Maybe String
     }
 
 
 type alias Auth =
     { key : Value
-    , token : String
-    , email : String
+    , token : Jwt
     }
 
 
@@ -48,10 +47,13 @@ type alias Model =
     , tags : UuidDict Tag
     , errors : List String
     , view : View
+    , inProgress :
+        { logout : Bool
+        }
     , postEditorBody : String
     , postSaveInProgress : Bool
     , postBeingEdited : Bool
-    , postView : PostView
+    , postView : Bool
     , postCreateTags : List Uuid
     , auth : Maybe Auth
     , tagCreateName : String
@@ -71,7 +73,7 @@ type alias Model =
     , tag : Maybe Uuid
     , def : Maybe Def
     , magic : Maybe Bool
-    , mg : String
+    , mg : ( String, String )
     }
 
 
@@ -112,8 +114,9 @@ type Msg
     | PostMutateCb (GqlResult Post)
     | PostDeleteCb (GqlResult Date)
     | TagsCb (GqlResult (List Tag))
+    | PostCancel
     | PostCreateSubmit Date
-    | PostDelete Uuid
+    | PostDelete Uuid Date
     | PostUpdateStart String
     | PostUpdateCancel
     | PostUpdateSubmit Uuid
@@ -123,12 +126,14 @@ type Msg
     | AuthCb (GqlResult Auth)
     | EmailSubmit
     | LoginSubmit String
-    | SignupSubmit String
+    | SignupSubmit
     | Buy Bool
     | LoginFormEmailUpdate String
     | LoginFormPasswordUpdate String
     | LoginFormPasswordVisibleToggle
     | Logout
+    | LogoutCb (GqlResult Bool)
+    | InitCb (Maybe Route) (GqlResult (Maybe Auth))
     | TagDelete Tag
     | TagDeleteCb (GqlResult Uuid)
     | TagUpdate String
@@ -142,12 +147,12 @@ type Msg
     | PostTagToggle Post Tag
     | PostCreateTagToggle Tag
     | FocusCb (Result Browser.Dom.Error ())
-    | UrlChange Route
+    | UrlChange (Maybe Route)
     | UrlRequest UrlRequest
     | NavigateTo Route
     | SetOnline Bool
     | SetSelectedResult Uuid
-    | PostViewSet PostView
+    | PostViewToggle
     | VisibilityChange Visibility
     | Resize Screen
     | PrevMonth
@@ -156,11 +161,13 @@ type Msg
     | Change
     | TagSelect Uuid
     | SetDef Def
+    | RefreshCb (Auth -> Cmd Msg) (GqlResult (Maybe Jwt))
+    | Bad (Auth -> Cmd Msg)
+    | ExportPosts
 
 
 type Route
-    = NotFound
-    | RouteToday
+    = RouteToday
     | RouteCalendar
     | RouteDay Date
     | RouteHome
@@ -219,8 +226,3 @@ type View
     | ViewSuccess
     | ViewTags
     | ViewMagic
-
-
-type PostView
-    = PostView
-    | PostTags

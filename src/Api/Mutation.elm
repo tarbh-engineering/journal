@@ -28,7 +28,10 @@ type alias DeletePostRequiredArguments =
   - where\_ - filter the rows which have to be deleted
 
 -}
-delete_post : DeletePostRequiredArguments -> SelectionSet decodesTo Api.Object.Post_mutation_response -> SelectionSet (Maybe decodesTo) RootMutation
+delete_post :
+    DeletePostRequiredArguments
+    -> SelectionSet decodesTo Api.Object.Post_mutation_response
+    -> SelectionSet (Maybe decodesTo) RootMutation
 delete_post requiredArgs object_ =
     Object.selectionForCompositeField "delete_post" [ Argument.required "where" requiredArgs.where_ Api.InputObject.encodePost_bool_exp ] object_ (identity >> Decode.nullable)
 
@@ -39,7 +42,10 @@ type alias DeletePostByPkRequiredArguments =
 
 {-| delete single row from the table: "post"
 -}
-delete_post_by_pk : DeletePostByPkRequiredArguments -> SelectionSet decodesTo Api.Object.Post -> SelectionSet (Maybe decodesTo) RootMutation
+delete_post_by_pk :
+    DeletePostByPkRequiredArguments
+    -> SelectionSet decodesTo Api.Object.Post
+    -> SelectionSet (Maybe decodesTo) RootMutation
 delete_post_by_pk requiredArgs object_ =
     Object.selectionForCompositeField "delete_post_by_pk" [ Argument.required "id" requiredArgs.id (CustomScalars.codecs |> Api.Scalar.unwrapEncoder .codecUuid) ] object_ (identity >> Decode.nullable)
 
@@ -53,7 +59,10 @@ type alias DeletePostTagRequiredArguments =
   - where\_ - filter the rows which have to be deleted
 
 -}
-delete_post_tag : DeletePostTagRequiredArguments -> SelectionSet decodesTo Api.Object.Post_tag_mutation_response -> SelectionSet (Maybe decodesTo) RootMutation
+delete_post_tag :
+    DeletePostTagRequiredArguments
+    -> SelectionSet decodesTo Api.Object.Post_tag_mutation_response
+    -> SelectionSet (Maybe decodesTo) RootMutation
 delete_post_tag requiredArgs object_ =
     Object.selectionForCompositeField "delete_post_tag" [ Argument.required "where" requiredArgs.where_ Api.InputObject.encodePost_tag_bool_exp ] object_ (identity >> Decode.nullable)
 
@@ -64,7 +73,10 @@ type alias DeletePostTagByPkRequiredArguments =
 
 {-| delete single row from the table: "post\_tag"
 -}
-delete_post_tag_by_pk : DeletePostTagByPkRequiredArguments -> SelectionSet decodesTo Api.Object.Post_tag -> SelectionSet (Maybe decodesTo) RootMutation
+delete_post_tag_by_pk :
+    DeletePostTagByPkRequiredArguments
+    -> SelectionSet decodesTo Api.Object.Post_tag
+    -> SelectionSet (Maybe decodesTo) RootMutation
 delete_post_tag_by_pk requiredArgs object_ =
     Object.selectionForCompositeField "delete_post_tag_by_pk" [ Argument.required "id" requiredArgs.id (CustomScalars.codecs |> Api.Scalar.unwrapEncoder .codecUuid) ] object_ (identity >> Decode.nullable)
 
@@ -78,7 +90,10 @@ type alias DeletePurchaseRequiredArguments =
   - where\_ - filter the rows which have to be deleted
 
 -}
-delete_purchase : DeletePurchaseRequiredArguments -> SelectionSet decodesTo Api.Object.Purchase_mutation_response -> SelectionSet (Maybe decodesTo) RootMutation
+delete_purchase :
+    DeletePurchaseRequiredArguments
+    -> SelectionSet decodesTo Api.Object.Purchase_mutation_response
+    -> SelectionSet (Maybe decodesTo) RootMutation
 delete_purchase requiredArgs object_ =
     Object.selectionForCompositeField "delete_purchase" [ Argument.required "where" requiredArgs.where_ Api.InputObject.encodePurchase_bool_exp ] object_ (identity >> Decode.nullable)
 
@@ -89,7 +104,10 @@ type alias DeletePurchaseByPkRequiredArguments =
 
 {-| delete single row from the table: "purchase"
 -}
-delete_purchase_by_pk : DeletePurchaseByPkRequiredArguments -> SelectionSet decodesTo Api.Object.Purchase -> SelectionSet (Maybe decodesTo) RootMutation
+delete_purchase_by_pk :
+    DeletePurchaseByPkRequiredArguments
+    -> SelectionSet decodesTo Api.Object.Purchase
+    -> SelectionSet (Maybe decodesTo) RootMutation
 delete_purchase_by_pk requiredArgs object_ =
     Object.selectionForCompositeField "delete_purchase_by_pk" [ Argument.required "id" requiredArgs.id (CustomScalars.codecs |> Api.Scalar.unwrapEncoder .codecUuid) ] object_ (identity >> Decode.nullable)
 
@@ -103,7 +121,10 @@ type alias DeleteTagRequiredArguments =
   - where\_ - filter the rows which have to be deleted
 
 -}
-delete_tag : DeleteTagRequiredArguments -> SelectionSet decodesTo Api.Object.Tag_mutation_response -> SelectionSet (Maybe decodesTo) RootMutation
+delete_tag :
+    DeleteTagRequiredArguments
+    -> SelectionSet decodesTo Api.Object.Tag_mutation_response
+    -> SelectionSet (Maybe decodesTo) RootMutation
 delete_tag requiredArgs object_ =
     Object.selectionForCompositeField "delete_tag" [ Argument.required "where" requiredArgs.where_ Api.InputObject.encodeTag_bool_exp ] object_ (identity >> Decode.nullable)
 
@@ -114,7 +135,10 @@ type alias DeleteTagByPkRequiredArguments =
 
 {-| delete single row from the table: "tag"
 -}
-delete_tag_by_pk : DeleteTagByPkRequiredArguments -> SelectionSet decodesTo Api.Object.Tag -> SelectionSet (Maybe decodesTo) RootMutation
+delete_tag_by_pk :
+    DeleteTagByPkRequiredArguments
+    -> SelectionSet decodesTo Api.Object.Tag
+    -> SelectionSet (Maybe decodesTo) RootMutation
 delete_tag_by_pk requiredArgs object_ =
     Object.selectionForCompositeField "delete_tag_by_pk" [ Argument.required "id" requiredArgs.id (CustomScalars.codecs |> Api.Scalar.unwrapEncoder .codecUuid) ] object_ (identity >> Decode.nullable)
 
@@ -128,7 +152,10 @@ type alias DeleteUserRequiredArguments =
   - where\_ - filter the rows which have to be deleted
 
 -}
-delete_user : DeleteUserRequiredArguments -> SelectionSet decodesTo Api.Object.User_mutation_response -> SelectionSet (Maybe decodesTo) RootMutation
+delete_user :
+    DeleteUserRequiredArguments
+    -> SelectionSet decodesTo Api.Object.User_mutation_response
+    -> SelectionSet (Maybe decodesTo) RootMutation
 delete_user requiredArgs object_ =
     Object.selectionForCompositeField "delete_user" [ Argument.required "where" requiredArgs.where_ Api.InputObject.encodeUser_bool_exp ] object_ (identity >> Decode.nullable)
 
@@ -139,7 +166,10 @@ type alias DeleteUserByPkRequiredArguments =
 
 {-| delete single row from the table: "user"
 -}
-delete_user_by_pk : DeleteUserByPkRequiredArguments -> SelectionSet decodesTo Api.Object.User -> SelectionSet (Maybe decodesTo) RootMutation
+delete_user_by_pk :
+    DeleteUserByPkRequiredArguments
+    -> SelectionSet decodesTo Api.Object.User
+    -> SelectionSet (Maybe decodesTo) RootMutation
 delete_user_by_pk requiredArgs object_ =
     Object.selectionForCompositeField "delete_user_by_pk" [ Argument.required "id" requiredArgs.id (CustomScalars.codecs |> Api.Scalar.unwrapEncoder .codecUuid) ] object_ (identity >> Decode.nullable)
 
@@ -158,7 +188,11 @@ type alias InsertPostRequiredArguments =
   - on\_conflict - on conflict condition
 
 -}
-insert_post : (InsertPostOptionalArguments -> InsertPostOptionalArguments) -> InsertPostRequiredArguments -> SelectionSet decodesTo Api.Object.Post_mutation_response -> SelectionSet (Maybe decodesTo) RootMutation
+insert_post :
+    (InsertPostOptionalArguments -> InsertPostOptionalArguments)
+    -> InsertPostRequiredArguments
+    -> SelectionSet decodesTo Api.Object.Post_mutation_response
+    -> SelectionSet (Maybe decodesTo) RootMutation
 insert_post fillInOptionals requiredArgs object_ =
     let
         filledInOptionals =
@@ -185,7 +219,11 @@ type alias InsertPostOneRequiredArguments =
   - on\_conflict - on conflict condition
 
 -}
-insert_post_one : (InsertPostOneOptionalArguments -> InsertPostOneOptionalArguments) -> InsertPostOneRequiredArguments -> SelectionSet decodesTo Api.Object.Post -> SelectionSet (Maybe decodesTo) RootMutation
+insert_post_one :
+    (InsertPostOneOptionalArguments -> InsertPostOneOptionalArguments)
+    -> InsertPostOneRequiredArguments
+    -> SelectionSet decodesTo Api.Object.Post
+    -> SelectionSet (Maybe decodesTo) RootMutation
 insert_post_one fillInOptionals requiredArgs object_ =
     let
         filledInOptionals =
@@ -212,7 +250,11 @@ type alias InsertPostTagRequiredArguments =
   - on\_conflict - on conflict condition
 
 -}
-insert_post_tag : (InsertPostTagOptionalArguments -> InsertPostTagOptionalArguments) -> InsertPostTagRequiredArguments -> SelectionSet decodesTo Api.Object.Post_tag_mutation_response -> SelectionSet (Maybe decodesTo) RootMutation
+insert_post_tag :
+    (InsertPostTagOptionalArguments -> InsertPostTagOptionalArguments)
+    -> InsertPostTagRequiredArguments
+    -> SelectionSet decodesTo Api.Object.Post_tag_mutation_response
+    -> SelectionSet (Maybe decodesTo) RootMutation
 insert_post_tag fillInOptionals requiredArgs object_ =
     let
         filledInOptionals =
@@ -239,7 +281,11 @@ type alias InsertPostTagOneRequiredArguments =
   - on\_conflict - on conflict condition
 
 -}
-insert_post_tag_one : (InsertPostTagOneOptionalArguments -> InsertPostTagOneOptionalArguments) -> InsertPostTagOneRequiredArguments -> SelectionSet decodesTo Api.Object.Post_tag -> SelectionSet (Maybe decodesTo) RootMutation
+insert_post_tag_one :
+    (InsertPostTagOneOptionalArguments -> InsertPostTagOneOptionalArguments)
+    -> InsertPostTagOneRequiredArguments
+    -> SelectionSet decodesTo Api.Object.Post_tag
+    -> SelectionSet (Maybe decodesTo) RootMutation
 insert_post_tag_one fillInOptionals requiredArgs object_ =
     let
         filledInOptionals =
@@ -266,7 +312,11 @@ type alias InsertPurchaseRequiredArguments =
   - on\_conflict - on conflict condition
 
 -}
-insert_purchase : (InsertPurchaseOptionalArguments -> InsertPurchaseOptionalArguments) -> InsertPurchaseRequiredArguments -> SelectionSet decodesTo Api.Object.Purchase_mutation_response -> SelectionSet (Maybe decodesTo) RootMutation
+insert_purchase :
+    (InsertPurchaseOptionalArguments -> InsertPurchaseOptionalArguments)
+    -> InsertPurchaseRequiredArguments
+    -> SelectionSet decodesTo Api.Object.Purchase_mutation_response
+    -> SelectionSet (Maybe decodesTo) RootMutation
 insert_purchase fillInOptionals requiredArgs object_ =
     let
         filledInOptionals =
@@ -293,7 +343,11 @@ type alias InsertPurchaseOneRequiredArguments =
   - on\_conflict - on conflict condition
 
 -}
-insert_purchase_one : (InsertPurchaseOneOptionalArguments -> InsertPurchaseOneOptionalArguments) -> InsertPurchaseOneRequiredArguments -> SelectionSet decodesTo Api.Object.Purchase -> SelectionSet (Maybe decodesTo) RootMutation
+insert_purchase_one :
+    (InsertPurchaseOneOptionalArguments -> InsertPurchaseOneOptionalArguments)
+    -> InsertPurchaseOneRequiredArguments
+    -> SelectionSet decodesTo Api.Object.Purchase
+    -> SelectionSet (Maybe decodesTo) RootMutation
 insert_purchase_one fillInOptionals requiredArgs object_ =
     let
         filledInOptionals =
@@ -320,7 +374,11 @@ type alias InsertTagRequiredArguments =
   - on\_conflict - on conflict condition
 
 -}
-insert_tag : (InsertTagOptionalArguments -> InsertTagOptionalArguments) -> InsertTagRequiredArguments -> SelectionSet decodesTo Api.Object.Tag_mutation_response -> SelectionSet (Maybe decodesTo) RootMutation
+insert_tag :
+    (InsertTagOptionalArguments -> InsertTagOptionalArguments)
+    -> InsertTagRequiredArguments
+    -> SelectionSet decodesTo Api.Object.Tag_mutation_response
+    -> SelectionSet (Maybe decodesTo) RootMutation
 insert_tag fillInOptionals requiredArgs object_ =
     let
         filledInOptionals =
@@ -347,7 +405,11 @@ type alias InsertTagOneRequiredArguments =
   - on\_conflict - on conflict condition
 
 -}
-insert_tag_one : (InsertTagOneOptionalArguments -> InsertTagOneOptionalArguments) -> InsertTagOneRequiredArguments -> SelectionSet decodesTo Api.Object.Tag -> SelectionSet (Maybe decodesTo) RootMutation
+insert_tag_one :
+    (InsertTagOneOptionalArguments -> InsertTagOneOptionalArguments)
+    -> InsertTagOneRequiredArguments
+    -> SelectionSet decodesTo Api.Object.Tag
+    -> SelectionSet (Maybe decodesTo) RootMutation
 insert_tag_one fillInOptionals requiredArgs object_ =
     let
         filledInOptionals =
@@ -374,7 +436,11 @@ type alias InsertUserRequiredArguments =
   - on\_conflict - on conflict condition
 
 -}
-insert_user : (InsertUserOptionalArguments -> InsertUserOptionalArguments) -> InsertUserRequiredArguments -> SelectionSet decodesTo Api.Object.User_mutation_response -> SelectionSet (Maybe decodesTo) RootMutation
+insert_user :
+    (InsertUserOptionalArguments -> InsertUserOptionalArguments)
+    -> InsertUserRequiredArguments
+    -> SelectionSet decodesTo Api.Object.User_mutation_response
+    -> SelectionSet (Maybe decodesTo) RootMutation
 insert_user fillInOptionals requiredArgs object_ =
     let
         filledInOptionals =
@@ -401,7 +467,11 @@ type alias InsertUserOneRequiredArguments =
   - on\_conflict - on conflict condition
 
 -}
-insert_user_one : (InsertUserOneOptionalArguments -> InsertUserOneOptionalArguments) -> InsertUserOneRequiredArguments -> SelectionSet decodesTo Api.Object.User -> SelectionSet (Maybe decodesTo) RootMutation
+insert_user_one :
+    (InsertUserOneOptionalArguments -> InsertUserOneOptionalArguments)
+    -> InsertUserOneRequiredArguments
+    -> SelectionSet decodesTo Api.Object.User
+    -> SelectionSet (Maybe decodesTo) RootMutation
 insert_user_one fillInOptionals requiredArgs object_ =
     let
         filledInOptionals =
@@ -420,21 +490,36 @@ type alias LoginRequiredArguments =
     }
 
 
-login : LoginRequiredArguments -> SelectionSet String RootMutation
+login :
+    LoginRequiredArguments
+    -> SelectionSet CustomScalars.Jwt RootMutation
 login requiredArgs =
-    Object.selectionForField "String" "login" [ Argument.required "email" requiredArgs.email Encode.string, Argument.required "password" requiredArgs.password Encode.string ] Decode.string
+    Object.selectionForField "CustomScalars.Jwt" "login" [ Argument.required "email" requiredArgs.email Encode.string, Argument.required "password" requiredArgs.password Encode.string ] (CustomScalars.codecs |> Api.Scalar.unwrapCodecs |> .codecJwt |> .decoder)
+
+
+logout : SelectionSet Bool RootMutation
+logout =
+    Object.selectionForField "Bool" "logout" [] Decode.bool
+
+
+logoutAll : SelectionSet Bool RootMutation
+logoutAll =
+    Object.selectionForField "Bool" "logoutAll" [] Decode.bool
 
 
 type alias SignupRequiredArguments =
-    { nonce : String
+    { ciph : String
+    , iv : String
+    , nonce : String
     , password : String
-    , txt : String
     }
 
 
-signup : SignupRequiredArguments -> SelectionSet String RootMutation
+signup :
+    SignupRequiredArguments
+    -> SelectionSet CustomScalars.Jwt RootMutation
 signup requiredArgs =
-    Object.selectionForField "String" "signup" [ Argument.required "nonce" requiredArgs.nonce Encode.string, Argument.required "password" requiredArgs.password Encode.string, Argument.required "txt" requiredArgs.txt Encode.string ] Decode.string
+    Object.selectionForField "CustomScalars.Jwt" "signup" [ Argument.required "ciph" requiredArgs.ciph Encode.string, Argument.required "iv" requiredArgs.iv Encode.string, Argument.required "nonce" requiredArgs.nonce Encode.string, Argument.required "password" requiredArgs.password Encode.string ] (CustomScalars.codecs |> Api.Scalar.unwrapCodecs |> .codecJwt |> .decoder)
 
 
 type alias UpdatePostOptionalArguments =
@@ -451,7 +536,11 @@ type alias UpdatePostRequiredArguments =
   - where\_ - filter the rows which have to be updated
 
 -}
-update_post : (UpdatePostOptionalArguments -> UpdatePostOptionalArguments) -> UpdatePostRequiredArguments -> SelectionSet decodesTo Api.Object.Post_mutation_response -> SelectionSet (Maybe decodesTo) RootMutation
+update_post :
+    (UpdatePostOptionalArguments -> UpdatePostOptionalArguments)
+    -> UpdatePostRequiredArguments
+    -> SelectionSet decodesTo Api.Object.Post_mutation_response
+    -> SelectionSet (Maybe decodesTo) RootMutation
 update_post fillInOptionals requiredArgs object_ =
     let
         filledInOptionals =
@@ -477,7 +566,11 @@ type alias UpdatePostByPkRequiredArguments =
   - set\_ - sets the columns of the filtered rows to the given values
 
 -}
-update_post_by_pk : (UpdatePostByPkOptionalArguments -> UpdatePostByPkOptionalArguments) -> UpdatePostByPkRequiredArguments -> SelectionSet decodesTo Api.Object.Post -> SelectionSet (Maybe decodesTo) RootMutation
+update_post_by_pk :
+    (UpdatePostByPkOptionalArguments -> UpdatePostByPkOptionalArguments)
+    -> UpdatePostByPkRequiredArguments
+    -> SelectionSet decodesTo Api.Object.Post
+    -> SelectionSet (Maybe decodesTo) RootMutation
 update_post_by_pk fillInOptionals requiredArgs object_ =
     let
         filledInOptionals =
@@ -504,7 +597,11 @@ type alias UpdatePostTagRequiredArguments =
   - where\_ - filter the rows which have to be updated
 
 -}
-update_post_tag : (UpdatePostTagOptionalArguments -> UpdatePostTagOptionalArguments) -> UpdatePostTagRequiredArguments -> SelectionSet decodesTo Api.Object.Post_tag_mutation_response -> SelectionSet (Maybe decodesTo) RootMutation
+update_post_tag :
+    (UpdatePostTagOptionalArguments -> UpdatePostTagOptionalArguments)
+    -> UpdatePostTagRequiredArguments
+    -> SelectionSet decodesTo Api.Object.Post_tag_mutation_response
+    -> SelectionSet (Maybe decodesTo) RootMutation
 update_post_tag fillInOptionals requiredArgs object_ =
     let
         filledInOptionals =
@@ -530,7 +627,11 @@ type alias UpdatePostTagByPkRequiredArguments =
   - set\_ - sets the columns of the filtered rows to the given values
 
 -}
-update_post_tag_by_pk : (UpdatePostTagByPkOptionalArguments -> UpdatePostTagByPkOptionalArguments) -> UpdatePostTagByPkRequiredArguments -> SelectionSet decodesTo Api.Object.Post_tag -> SelectionSet (Maybe decodesTo) RootMutation
+update_post_tag_by_pk :
+    (UpdatePostTagByPkOptionalArguments -> UpdatePostTagByPkOptionalArguments)
+    -> UpdatePostTagByPkRequiredArguments
+    -> SelectionSet decodesTo Api.Object.Post_tag
+    -> SelectionSet (Maybe decodesTo) RootMutation
 update_post_tag_by_pk fillInOptionals requiredArgs object_ =
     let
         filledInOptionals =
@@ -557,7 +658,11 @@ type alias UpdatePurchaseRequiredArguments =
   - where\_ - filter the rows which have to be updated
 
 -}
-update_purchase : (UpdatePurchaseOptionalArguments -> UpdatePurchaseOptionalArguments) -> UpdatePurchaseRequiredArguments -> SelectionSet decodesTo Api.Object.Purchase_mutation_response -> SelectionSet (Maybe decodesTo) RootMutation
+update_purchase :
+    (UpdatePurchaseOptionalArguments -> UpdatePurchaseOptionalArguments)
+    -> UpdatePurchaseRequiredArguments
+    -> SelectionSet decodesTo Api.Object.Purchase_mutation_response
+    -> SelectionSet (Maybe decodesTo) RootMutation
 update_purchase fillInOptionals requiredArgs object_ =
     let
         filledInOptionals =
@@ -583,7 +688,11 @@ type alias UpdatePurchaseByPkRequiredArguments =
   - set\_ - sets the columns of the filtered rows to the given values
 
 -}
-update_purchase_by_pk : (UpdatePurchaseByPkOptionalArguments -> UpdatePurchaseByPkOptionalArguments) -> UpdatePurchaseByPkRequiredArguments -> SelectionSet decodesTo Api.Object.Purchase -> SelectionSet (Maybe decodesTo) RootMutation
+update_purchase_by_pk :
+    (UpdatePurchaseByPkOptionalArguments -> UpdatePurchaseByPkOptionalArguments)
+    -> UpdatePurchaseByPkRequiredArguments
+    -> SelectionSet decodesTo Api.Object.Purchase
+    -> SelectionSet (Maybe decodesTo) RootMutation
 update_purchase_by_pk fillInOptionals requiredArgs object_ =
     let
         filledInOptionals =
@@ -610,7 +719,11 @@ type alias UpdateTagRequiredArguments =
   - where\_ - filter the rows which have to be updated
 
 -}
-update_tag : (UpdateTagOptionalArguments -> UpdateTagOptionalArguments) -> UpdateTagRequiredArguments -> SelectionSet decodesTo Api.Object.Tag_mutation_response -> SelectionSet (Maybe decodesTo) RootMutation
+update_tag :
+    (UpdateTagOptionalArguments -> UpdateTagOptionalArguments)
+    -> UpdateTagRequiredArguments
+    -> SelectionSet decodesTo Api.Object.Tag_mutation_response
+    -> SelectionSet (Maybe decodesTo) RootMutation
 update_tag fillInOptionals requiredArgs object_ =
     let
         filledInOptionals =
@@ -636,7 +749,11 @@ type alias UpdateTagByPkRequiredArguments =
   - set\_ - sets the columns of the filtered rows to the given values
 
 -}
-update_tag_by_pk : (UpdateTagByPkOptionalArguments -> UpdateTagByPkOptionalArguments) -> UpdateTagByPkRequiredArguments -> SelectionSet decodesTo Api.Object.Tag -> SelectionSet (Maybe decodesTo) RootMutation
+update_tag_by_pk :
+    (UpdateTagByPkOptionalArguments -> UpdateTagByPkOptionalArguments)
+    -> UpdateTagByPkRequiredArguments
+    -> SelectionSet decodesTo Api.Object.Tag
+    -> SelectionSet (Maybe decodesTo) RootMutation
 update_tag_by_pk fillInOptionals requiredArgs object_ =
     let
         filledInOptionals =
@@ -663,7 +780,11 @@ type alias UpdateUserRequiredArguments =
   - where\_ - filter the rows which have to be updated
 
 -}
-update_user : (UpdateUserOptionalArguments -> UpdateUserOptionalArguments) -> UpdateUserRequiredArguments -> SelectionSet decodesTo Api.Object.User_mutation_response -> SelectionSet (Maybe decodesTo) RootMutation
+update_user :
+    (UpdateUserOptionalArguments -> UpdateUserOptionalArguments)
+    -> UpdateUserRequiredArguments
+    -> SelectionSet decodesTo Api.Object.User_mutation_response
+    -> SelectionSet (Maybe decodesTo) RootMutation
 update_user fillInOptionals requiredArgs object_ =
     let
         filledInOptionals =
@@ -689,7 +810,11 @@ type alias UpdateUserByPkRequiredArguments =
   - set\_ - sets the columns of the filtered rows to the given values
 
 -}
-update_user_by_pk : (UpdateUserByPkOptionalArguments -> UpdateUserByPkOptionalArguments) -> UpdateUserByPkRequiredArguments -> SelectionSet decodesTo Api.Object.User -> SelectionSet (Maybe decodesTo) RootMutation
+update_user_by_pk :
+    (UpdateUserByPkOptionalArguments -> UpdateUserByPkOptionalArguments)
+    -> UpdateUserByPkRequiredArguments
+    -> SelectionSet decodesTo Api.Object.User
+    -> SelectionSet (Maybe decodesTo) RootMutation
 update_user_by_pk fillInOptionals requiredArgs object_ =
     let
         filledInOptionals =

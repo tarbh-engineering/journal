@@ -2,21 +2,23 @@ module Main exposing (main)
 
 import Browser
 import Browser.Events
-import Data exposing (fetchTags, range)
+import Data
 import Date
 import Day
 import Derberos.Date.Utils exposing (numberToMonth)
 import Graphql.OptionalArgument exposing (OptionalArgument(..))
 import Helpers.UuidDict as UD
+import Json.Decode as JD
 import Maybe.Extra exposing (orElse, unwrap)
 import Ports
 import Routing
 import Task
 import Time exposing (Month(..))
-import Types exposing (Flags, Model, Msg(..), PostView(..), Route(..), Screen, Sort(..), Status(..), View(..))
+import Types exposing (Flags, Model, Msg(..), Route(..), Screen, Sort(..), Status(..), View(..))
 import Update exposing (update)
 import Url
 import Url.Parser exposing ((</>), parse, s)
+import Uuid
 import View exposing (view)
 
 
@@ -33,8 +35,7 @@ main =
                     , Ports.online SetOnline
                     , Ports.onUrlChange
                         (Url.fromString
-                            >> unwrap Types.NotFound
-                                Routing.router
+                            >> Maybe.andThen Routing.router
                             >> Types.UrlChange
                         )
                     , Browser.Events.onResize Screen
@@ -46,84 +47,106 @@ main =
 init : Flags -> ( Model, Cmd Msg )
 init flags =
     let
-        now =
-            Task.map2
-                Date.fromPosix
-                Time.here
-                Time.now
+        url =
+            flags.href
+                |> Url.fromString
 
-        startModel =
+        route =
+            url
+                |> Maybe.andThen Routing.router
+
+        model =
             { emptyModel
                 | screen = flags.screen
+                , current =
+                    route
+                        |> Maybe.andThen
+                            (\r ->
+                                case r of
+                                    RouteDay d ->
+                                        Just d
+
+                                    _ ->
+                                        Nothing
+                            )
+                , view =
+                    if flags.auth == Nothing then
+                        emptyModel.view
+
+                    else
+                        route
+                            |> unwrap emptyModel.view
+                                (\r ->
+                                    case r of
+                                        RouteToday ->
+                                            ViewCalendar
+
+                                        RouteHome ->
+                                            ViewCalendar
+
+                                        RouteTags ->
+                                            ViewTags
+
+                                        RouteSettings ->
+                                            ViewSettings
+
+                                        RouteCalendar ->
+                                            ViewCalendar
+
+                                        RouteDay _ ->
+                                            ViewCalendar
+                                )
                 , month = numberToMonth flags.month |> Maybe.withDefault Time.Jan
                 , year = flags.year
             }
     in
     flags.auth
+        |> Maybe.andThen
+            (JD.decodeString JD.value
+                >> Result.toMaybe
+            )
         |> unwrap
-            (flags.href
-                |> Url.fromString
+            (url
                 |> Maybe.andThen
-                    (\url ->
-                        url
-                            |> Url.Parser.parse (s "magic" </> Url.Parser.string)
+                    (\url_ ->
+                        url_
+                            |> Url.Parser.parse (s "signup" </> Url.Parser.string </> Url.Parser.string |> Url.Parser.map Tuple.pair)
                             |> Maybe.map
-                                (\val ->
-                                    ( { startModel
+                                (\( iv, ciph ) ->
+                                    ( { model
                                         | view = ViewMagic
-                                        , mg = val
+                                        , mg = ( iv, ciph )
                                       }
-                                    , Data.check val
+                                    , Data.check iv ciph
                                         |> Task.attempt CheckCb
                                     )
                                 )
                             |> orElse
-                                (url
+                                (url_
                                     |> Url.Parser.parse (s "payment-success")
                                     |> Maybe.map
                                         (\_ ->
-                                            ( { startModel | view = ViewSuccess }
+                                            ( { model | view = ViewSuccess }
                                             , Cmd.none
                                             )
                                         )
                                 )
                     )
                 |> Maybe.withDefault
-                    ( startModel
+                    ( model
                     , Cmd.none
                     )
             )
-            (\auth ->
-                ( { startModel
-                    | auth = Just auth
-                    , view = ViewHome
-                    , online = flags.online
-                  }
-                , Cmd.batch
-                    [ now
-                        |> Task.andThen
-                            (\t ->
-                                let
-                                    start =
-                                        Date.floor Date.Month t
-                                in
-                                range
-                                    start
-                                    (start
-                                        |> Date.add Date.Months 1
-                                    )
-                                    auth
+            (\key ->
+                ( model
+                , Data.refresh
+                    |> Task.map
+                        (Maybe.map
+                            (\token ->
+                                { token = token, key = key }
                             )
-                        |> Task.attempt PostsCb
-                    , fetchTags auth
-                        |> Task.attempt TagsCb
-
-                    --, flags.href
-                    --|> Url.fromString
-                    --|> unwrap Types.NotFound Routing.router
-                    --|> Task.succeed
-                    --|> Task.perform UrlChange
-                    ]
+                        )
+                    |> Task.attempt (InitCb route)
                 )
             )
 
@@ -138,7 +161,7 @@ emptyModel =
     , postSaveInProgress = False
     , postEditorBody = ""
     , postBeingEdited = False
-    , postView = PostView
+    , postView = False
     , auth = Nothing
     , tagCreateName = ""
     , tagUpdate = ""
@@ -161,5 +184,8 @@ emptyModel =
     , tag = Nothing
     , def = Nothing
     , magic = Nothing
-    , mg = ""
+    , mg = ( "", "" )
+    , inProgress =
+        { logout = False
+        }
     }

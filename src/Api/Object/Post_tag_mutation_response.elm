@@ -28,6 +28,8 @@ affected_rows =
 
 {-| data of the affected rows by the mutation
 -}
-returning : SelectionSet decodesTo Api.Object.Post_tag -> SelectionSet (List decodesTo) Api.Object.Post_tag_mutation_response
+returning :
+    SelectionSet decodesTo Api.Object.Post_tag
+    -> SelectionSet (List decodesTo) Api.Object.Post_tag_mutation_response
 returning object_ =
     Object.selectionForCompositeField "returning" [] object_ (identity >> Decode.list)

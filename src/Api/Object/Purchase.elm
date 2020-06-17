@@ -46,6 +46,8 @@ updated_at =
 
 {-| An object relationship
 -}
-user : SelectionSet decodesTo Api.Object.User -> SelectionSet (Maybe decodesTo) Api.Object.Purchase
+user :
+    SelectionSet decodesTo Api.Object.User
+    -> SelectionSet (Maybe decodesTo) Api.Object.Purchase
 user object_ =
     Object.selectionForCompositeField "user" [] object_ (identity >> Decode.nullable)

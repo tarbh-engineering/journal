@@ -3,7 +3,6 @@ module Routing exposing (goTo, router)
 import Api.Scalar exposing (Id(..), Uuid(..))
 import Date exposing (Date)
 import Day
-import Maybe.Extra exposing (unwrap)
 import Ports
 import Types exposing (Route(..))
 import Url exposing (Url)
@@ -14,9 +13,6 @@ import Url.Parser exposing ((</>), Parser, map, oneOf, parse, s, string, top)
 goTo : Route -> Cmd msg
 goTo route =
     (case route of
-        NotFound ->
-            absolute [] []
-
         RouteCalendar ->
             absolute [ "calendar" ] []
 
@@ -24,7 +20,7 @@ goTo route =
             absolute [ "today" ] []
 
         RouteDay day ->
-            absolute [ "day", Day.toString day ] []
+            absolute [ "calendar", Day.toString day ] []
 
         RouteTags ->
             absolute [ "tags" ] []
@@ -38,25 +34,25 @@ goTo route =
         |> Ports.pushUrl
 
 
-routes : List (Parser (Route -> a) a)
+routes : List (Parser (Maybe Route -> a) a)
 routes =
-    [ map RouteHome top
-    , map RouteToday (s "today")
-    , map RouteCalendar (s "calendar")
-    , map RouteSettings (s "settings")
-    , map RouteTags (s "tags")
-    , map (parseDay RouteDay) (s "day" </> string)
+    [ map (Just RouteHome) top
+    , map (Just RouteToday) (s "today")
+    , map (Just RouteCalendar) (s "calendar")
+    , map (Just RouteSettings) (s "settings")
+    , map (Just RouteTags) (s "tags")
+    , map (parseDay RouteDay) (s "calendar" </> string)
     ]
 
 
-parseDay : (Date -> Route) -> String -> Route
+parseDay : (Date -> Route) -> String -> Maybe Route
 parseDay r =
     Date.fromIsoString
         >> Result.toMaybe
-        >> unwrap NotFound r
+        >> Maybe.map r
 
 
-router : Url -> Route
+router : Url -> Maybe Route
 router =
     parse (oneOf routes)
-        >> Maybe.withDefault NotFound
+        >> Maybe.andThen identity

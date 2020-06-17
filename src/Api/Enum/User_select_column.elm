@@ -9,22 +9,28 @@ import Json.Decode as Decode exposing (Decoder)
 
 {-| select columns of table "user"
 
+  - Created\_at - column name
   - Id - column name
   - Nonce - column name
   - Password - column name
   - Purchase\_id - column name
+  - Token - column name
+  - Updated\_at - column name
 
 -}
 type User_select_column
-    = Id
+    = Created_at
+    | Id
     | Nonce
     | Password
     | Purchase_id
+    | Token
+    | Updated_at
 
 
 list : List User_select_column
 list =
-    [ Id, Nonce, Password, Purchase_id ]
+    [ Created_at, Id, Nonce, Password, Purchase_id, Token, Updated_at ]
 
 
 decoder : Decoder User_select_column
@@ -33,6 +39,9 @@ decoder =
         |> Decode.andThen
             (\string ->
                 case string of
+                    "created_at" ->
+                        Decode.succeed Created_at
+
                     "id" ->
                         Decode.succeed Id
 
@@ -45,16 +54,25 @@ decoder =
                     "purchase_id" ->
                         Decode.succeed Purchase_id
 
+                    "token" ->
+                        Decode.succeed Token
+
+                    "updated_at" ->
+                        Decode.succeed Updated_at
+
                     _ ->
                         Decode.fail ("Invalid User_select_column type, " ++ string ++ " try re-running the @dillonkearns/elm-graphql CLI ")
             )
 
 
-{-| Convert from the union type representating the Enum to a string that the GraphQL server will recognize.
+{-| Convert from the union type representing the Enum to a string that the GraphQL server will recognize.
 -}
 toString : User_select_column -> String
 toString enum =
     case enum of
+        Created_at ->
+            "created_at"
+
         Id ->
             "id"
 
@@ -66,6 +84,12 @@ toString enum =
 
         Purchase_id ->
             "purchase_id"
+
+        Token ->
+            "token"
+
+        Updated_at ->
+            "updated_at"
 
 
 {-| Convert from a String representation to an elm representation enum.
@@ -82,6 +106,9 @@ This can be useful for generating Strings to use for <select> menus to check whi
 fromString : String -> Maybe User_select_column
 fromString enumString =
     case enumString of
+        "created_at" ->
+            Just Created_at
+
         "id" ->
             Just Id
 
@@ -93,6 +120,12 @@ fromString enumString =
 
         "purchase_id" ->
             Just Purchase_id
+
+        "token" ->
+            Just Token
+
+        "updated_at" ->
+            Just Updated_at
 
         _ ->
             Nothing

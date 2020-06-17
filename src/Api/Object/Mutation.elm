@@ -25,18 +25,33 @@ type alias LoginRequiredArguments =
     }
 
 
-login : LoginRequiredArguments -> SelectionSet String Api.Object.Mutation
+login :
+    LoginRequiredArguments
+    -> SelectionSet CustomScalars.Jwt Api.Object.Mutation
 login requiredArgs =
-    Object.selectionForField "String" "login" [ Argument.required "email" requiredArgs.email Encode.string, Argument.required "password" requiredArgs.password Encode.string ] Decode.string
+    Object.selectionForField "CustomScalars.Jwt" "login" [ Argument.required "email" requiredArgs.email Encode.string, Argument.required "password" requiredArgs.password Encode.string ] (CustomScalars.codecs |> Api.Scalar.unwrapCodecs |> .codecJwt |> .decoder)
+
+
+logout : SelectionSet Bool Api.Object.Mutation
+logout =
+    Object.selectionForField "Bool" "logout" [] Decode.bool
+
+
+logoutAll : SelectionSet Bool Api.Object.Mutation
+logoutAll =
+    Object.selectionForField "Bool" "logoutAll" [] Decode.bool
 
 
 type alias SignupRequiredArguments =
-    { nonce : String
+    { ciph : String
+    , iv : String
+    , nonce : String
     , password : String
-    , txt : String
     }
 
 
-signup : SignupRequiredArguments -> SelectionSet String Api.Object.Mutation
+signup :
+    SignupRequiredArguments
+    -> SelectionSet CustomScalars.Jwt Api.Object.Mutation
 signup requiredArgs =
-    Object.selectionForField "String" "signup" [ Argument.required "nonce" requiredArgs.nonce Encode.string, Argument.required "password" requiredArgs.password Encode.string, Argument.required "txt" requiredArgs.txt Encode.string ] Decode.string
+    Object.selectionForField "CustomScalars.Jwt" "signup" [ Argument.required "ciph" requiredArgs.ciph Encode.string, Argument.required "iv" requiredArgs.iv Encode.string, Argument.required "nonce" requiredArgs.nonce Encode.string, Argument.required "password" requiredArgs.password Encode.string ] (CustomScalars.codecs |> Api.Scalar.unwrapCodecs |> .codecJwt |> .decoder)

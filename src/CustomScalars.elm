@@ -1,9 +1,10 @@
-module CustomScalars exposing (Date, Id, Timestamptz, Uuid, codecs)
+module CustomScalars exposing (Date, Id, Jwt, Timestamptz, Uuid, codecs)
 
 import Api.Scalar exposing (defaultCodecs)
 import Date
 import Json.Decode as JD
 import Json.Encode as JE
+import JwtScalar
 import Uuid
 
 
@@ -23,7 +24,11 @@ type alias Timestamptz =
     Api.Scalar.Timestamptz
 
 
-codecs : Api.Scalar.Codecs Date Id Timestamptz Uuid
+type alias Jwt =
+    JwtScalar.Jwt
+
+
+codecs : Api.Scalar.Codecs Date Id Jwt Timestamptz Uuid
 codecs =
     Api.Scalar.defineCodecs
         { codecDate =
@@ -38,6 +43,10 @@ codecs =
             }
         , codecId = defaultCodecs.codecId
         , codecTimestamptz = defaultCodecs.codecTimestamptz
+        , codecJwt =
+            { encoder = JwtScalar.encode
+            , decoder = JwtScalar.decoder
+            }
         , codecUuid =
             { encoder = Uuid.encode
             , decoder = Uuid.decoder

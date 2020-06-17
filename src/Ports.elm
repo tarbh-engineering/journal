@@ -1,6 +1,6 @@
 port module Ports exposing (buy, clearAuth, log, onUrlChange, online, pushUrl, saveAuth)
 
-import Types exposing (Auth)
+import Json.Decode exposing (Value)
 
 
 port buy : { annual : Bool, email : String } -> Cmd msg
@@ -9,7 +9,7 @@ port buy : { annual : Bool, email : String } -> Cmd msg
 port clearAuth : () -> Cmd msg
 
 
-port saveAuth : Auth -> Cmd msg
+port saveAuth : Value -> Cmd msg
 
 
 port log : String -> Cmd msg

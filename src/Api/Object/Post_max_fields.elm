@@ -24,6 +24,11 @@ body =
     Object.selectionForField "(Maybe String)" "body" [] (Decode.string |> Decode.nullable)
 
 
+created_at : SelectionSet (Maybe CustomScalars.Timestamptz) Api.Object.Post_max_fields
+created_at =
+    Object.selectionForField "(Maybe CustomScalars.Timestamptz)" "created_at" [] (CustomScalars.codecs |> Api.Scalar.unwrapCodecs |> .codecTimestamptz |> .decoder |> Decode.nullable)
+
+
 date : SelectionSet (Maybe CustomScalars.Date) Api.Object.Post_max_fields
 date =
     Object.selectionForField "(Maybe CustomScalars.Date)" "date" [] (CustomScalars.codecs |> Api.Scalar.unwrapCodecs |> .codecDate |> .decoder |> Decode.nullable)
@@ -37,6 +42,11 @@ id =
 iv : SelectionSet (Maybe String) Api.Object.Post_max_fields
 iv =
     Object.selectionForField "(Maybe String)" "iv" [] (Decode.string |> Decode.nullable)
+
+
+updated_at : SelectionSet (Maybe CustomScalars.Timestamptz) Api.Object.Post_max_fields
+updated_at =
+    Object.selectionForField "(Maybe CustomScalars.Timestamptz)" "updated_at" [] (CustomScalars.codecs |> Api.Scalar.unwrapCodecs |> .codecTimestamptz |> .decoder |> Decode.nullable)
 
 
 user_id : SelectionSet (Maybe CustomScalars.Uuid) Api.Object.Post_max_fields

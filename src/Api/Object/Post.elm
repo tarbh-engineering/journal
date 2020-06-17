@@ -25,6 +25,11 @@ body =
     Object.selectionForField "String" "body" [] Decode.string
 
 
+created_at : SelectionSet CustomScalars.Timestamptz Api.Object.Post
+created_at =
+    Object.selectionForField "CustomScalars.Timestamptz" "created_at" [] (CustomScalars.codecs |> Api.Scalar.unwrapCodecs |> .codecTimestamptz |> .decoder)
+
+
 date : SelectionSet CustomScalars.Date Api.Object.Post
 date =
     Object.selectionForField "CustomScalars.Date" "date" [] (CustomScalars.codecs |> Api.Scalar.unwrapCodecs |> .codecDate |> .decoder)
@@ -58,7 +63,10 @@ type alias PostTagsBypostIdOptionalArguments =
   - where\_ - filter the rows returned
 
 -}
-postTagsBypostId : (PostTagsBypostIdOptionalArguments -> PostTagsBypostIdOptionalArguments) -> SelectionSet decodesTo Api.Object.Post_tag -> SelectionSet (List decodesTo) Api.Object.Post
+postTagsBypostId :
+    (PostTagsBypostIdOptionalArguments -> PostTagsBypostIdOptionalArguments)
+    -> SelectionSet decodesTo Api.Object.Post_tag
+    -> SelectionSet (List decodesTo) Api.Object.Post
 postTagsBypostId fillInOptionals object_ =
     let
         filledInOptionals =
@@ -89,7 +97,10 @@ type alias PostTagsBypostIdAggregateOptionalArguments =
   - where\_ - filter the rows returned
 
 -}
-postTagsBypostId_aggregate : (PostTagsBypostIdAggregateOptionalArguments -> PostTagsBypostIdAggregateOptionalArguments) -> SelectionSet decodesTo Api.Object.Post_tag_aggregate -> SelectionSet decodesTo Api.Object.Post
+postTagsBypostId_aggregate :
+    (PostTagsBypostIdAggregateOptionalArguments -> PostTagsBypostIdAggregateOptionalArguments)
+    -> SelectionSet decodesTo Api.Object.Post_tag_aggregate
+    -> SelectionSet decodesTo Api.Object.Post
 postTagsBypostId_aggregate fillInOptionals object_ =
     let
         filledInOptionals =
@@ -102,9 +113,16 @@ postTagsBypostId_aggregate fillInOptionals object_ =
     Object.selectionForCompositeField "postTagsBypostId_aggregate" optionalArgs object_ identity
 
 
+updated_at : SelectionSet CustomScalars.Timestamptz Api.Object.Post
+updated_at =
+    Object.selectionForField "CustomScalars.Timestamptz" "updated_at" [] (CustomScalars.codecs |> Api.Scalar.unwrapCodecs |> .codecTimestamptz |> .decoder)
+
+
 {-| An object relationship
 -}
-userByuserId : SelectionSet decodesTo Api.Object.User -> SelectionSet decodesTo Api.Object.Post
+userByuserId :
+    SelectionSet decodesTo Api.Object.User
+    -> SelectionSet decodesTo Api.Object.Post
 userByuserId object_ =
     Object.selectionForCompositeField "userByuserId" [] object_ identity
 
