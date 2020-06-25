@@ -76,6 +76,7 @@ module.exports = {
     }),
     new webpack.NoEmitOnErrorsPlugin(),
     new HtmlWebpackPlugin({
+      cache: false,
       inject: true,
       template: "./src/index.html",
     }),
