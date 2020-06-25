@@ -744,8 +744,8 @@ viewEmail model =
     , [ Input.email
             [ Border.rounded 0
             , Border.width 0
+            , height <| px 50
             , width <| px 275
-            , paddingXY 20 15
             , style "cursor" "wait"
                 |> whenAttr model.inProgress.login
             , Html.Attributes.disabled model.inProgress.login
