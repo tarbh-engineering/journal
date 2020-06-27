@@ -12,7 +12,6 @@ import Derberos.Date.Utils exposing (getNextMonth, getPrevMonth)
 import Dict
 import File.Download
 import Graphql.Http exposing (HttpError(..), RawError(..))
-import Graphql.Http.GraphqlError
 import Graphql.OptionalArgument exposing (OptionalArgument(..))
 import Helpers
 import Helpers.Parse

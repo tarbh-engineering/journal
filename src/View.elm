@@ -1,29 +1,30 @@
-module View exposing (purple, textShadow, view, white, yellow)
+module View exposing (view)
 
 import Calendar exposing (Day)
-import Date exposing (Date)
+import Date
 import Day
-import Element exposing (Attribute, Color, Element, centerX, centerY, column, el, fill, height, html, none, padding, paddingXY, paragraph, px, rgb255, row, spaceEvenly, spacing, text, width, wrappedRow)
+import Element exposing (Attribute, Element, centerX, centerY, column, el, fill, height, html, none, padding, paddingXY, paragraph, px, rgb255, row, spaceEvenly, spacing, text, width, wrappedRow)
 import Element.Background as Background
 import Element.Border as Border
 import Element.Font as Font
 import Element.Input as Input exposing (button)
 import Helpers
 import Helpers.UuidDict as UD
-import Helpers.View exposing (cappedWidth, style, whenAttr)
+import Helpers.View exposing (cappedWidth, style, when, whenAttr, whenJust)
 import Html exposing (Html)
 import Html.Attributes
 import Html.Events
 import Icon
 import Json.Decode as Decode exposing (Decoder)
 import Material.Icons as Icons
-import Material.Icons.Types exposing (Coloring(..), Icon)
+import Material.Icons.Types exposing (Coloring(..))
 import Maybe.Extra exposing (unwrap)
-import Ordinal
 import Time exposing (Month(..))
 import Time.Format.I18n.I_en_us exposing (monthName)
 import Types exposing (Def(..), Funnel(..), Model, Msg(..), Route(..), Sort(..), Status(..), View(..))
 import Validate exposing (isValidEmail)
+import View.Misc exposing (btn, cool, ebg, formatDay, varela)
+import View.Style exposing (black, blue, grey, white, yellow)
 
 
 onCtrlEnter : msg -> Decoder msg
@@ -77,11 +78,6 @@ onKeydown decoders =
             )
         |> Html.Events.on "keydown"
         |> Element.htmlAttribute
-
-
-textShadow : Attribute msg
-textShadow =
-    Font.shadow { offset = ( 5, 5 ), blur = 0, color = black }
 
 
 shadow : Attribute msg
@@ -274,49 +270,6 @@ weekday =
     text >> el [ Font.bold ]
 
 
-press : Attribute msg
-press =
-    Element.mouseDown
-        [ Element.moveDown 5
-        , Element.moveRight 5
-        , Font.shadow
-            { offset = ( 0, 0 )
-            , blur = 0
-            , color = black
-            }
-        ]
-
-
-blue : Color
-blue =
-    rgb255 112 237 204
-
-
-purple : Color
-purple =
-    rgb255 145 130 254
-
-
-white : Color
-white =
-    rgb255 255 255 255
-
-
-yellow : Color
-yellow =
-    rgb255 255 238 147
-
-
-black : Color
-black =
-    rgb255 0 0 0
-
-
-grey : Color
-grey =
-    rgb255 255 245 235
-
-
 view : Model -> Html Msg
 view model =
     let
@@ -331,7 +284,11 @@ view model =
             ]
     , case model.view of
         ViewHome ->
-            viewHome model
+            if isMobile then
+                viewHomeMobile model
+
+            else
+                viewHome model
 
         ViewMagic ->
             model.magic
@@ -536,32 +493,240 @@ view model =
                 |> column [ centerX, spacing 20, padding 40 ]
     ]
         |> column [ spacing 20, height fill, width fill ]
-        |> Element.layoutWith
-            { options =
-                [ Element.focusStyle
-                    { borderColor = Just <| Element.rgb255 255 0 0
-                    , backgroundColor = Nothing
-                    , shadow = Nothing
+        |> render isMobile
+
+
+render : Bool -> Element msg -> Html msg
+render isMobile =
+    let
+        disableUserSelect =
+            [ "", "-ms-", "-moz-", "-webkit-" ]
+                |> List.map
+                    (\prefix ->
+                        style (prefix ++ "user-select") "none"
+                    )
+
+        removeTapColor =
+            style "-webkit-tap-highlight-color" "transparent"
+    in
+    Element.layoutWith
+        { options =
+            [ Element.focusStyle
+                { borderColor = Just <| Element.rgb255 255 0 0
+                , backgroundColor = Nothing
+                , shadow = Nothing
+                }
+            ]
+                |> (if isMobile then
+                        (::) Element.noHover
+
+                    else
+                        identity
+                   )
+        }
+        ([ height fill
+         , width fill
+         ]
+            |> (++)
+                (if isMobile then
+                    removeTapColor :: disableUserSelect
+
+                 else
+                    []
+                )
+        )
+
+
+viewHomeMobile : Model -> Element Msg
+viewHomeMobile model =
+    [ [ text "BOLSTER"
+            |> el
+                [ Font.size 60
+                , Font.semiBold
+                , Font.family
+                    [ Font.typeface "Abel"
+                    ]
+                ]
+      , Element.image
+            [ height <| px 60
+            , width <| px 60
+            ]
+            { src = "/icons/192.png", description = "" }
+      ]
+        |> row
+            [ spacing 20
+            , style "animation-name" "fadeIn"
+            , style "animation-duration" "1s"
+            , centerX
+            , padding 10
+            ]
+    , [ [ text "The"
+            |> el
+                [ Element.paddingEach
+                    { top = 0
+                    , bottom = 9
+                    , left = 0
+                    , right = 0
                     }
                 ]
-                    |> (if isMobile then
-                            (::) Element.noHover
 
-                        else
-                            identity
-                       )
-            }
-            ([ height fill
-             , width fill
-             ]
-                |> (++)
-                    (if isMobile then
-                        removeTapColor :: disableUserSelect
+        --|> viewDef model.def Types.Alts
+        , [ "secure"
+                |> viewDef model.def Types.Secure
+          , text ","
+          ]
+            |> row []
+        , "private"
+            |> viewDef model.def Types.Private
+        , [ "journal"
+                |> viewDef model.def Types.Journal
+          , text "."
+          ]
+            |> row []
+        ]
+            |> row
+                [ spacing 5
+                , Font.italic
+                , Font.size 25
+                , centerX
+                , varela
+                ]
+      , model.def
+            |> whenJust
+                (\d ->
+                    (case d of
+                        Alts ->
+                            [ text "Information about alternative products can be found here." ]
 
-                     else
-                        []
+                        Secure ->
+                            [ text "Built for performance and security, using the leading technologies available. The code can be viewed"
+                            , el [ width <| px 6 ] none
+                            , Element.newTabLink [ Font.underline ]
+                                { url = "https://github.com/tarbh-engineering/journal"
+                                , label = text "here"
+                                }
+                            , text "."
+                            ]
+
+                        Private ->
+                            [ text "Everything you write is protected by your password before it is saved, ensuring only you can ever read it." ]
+
+                        Journal ->
+                            [ text "For everyday use, on every device." ]
                     )
-            )
+                        |> Element.paragraph
+                            [ padding 20
+                            , Background.color grey
+                            , width fill
+                            , Element.alignRight
+                            , ebg
+                            , Font.size 25
+                            ]
+                )
+      ]
+        |> column
+            [ width fill
+            , paddingXY 20 0
+            ]
+    , if model.thanks then
+        "Thank you!"
+            |> text
+            |> el
+                [ style "animation-name" "fadeIn"
+                , style "animation-duration" "1s"
+                , centerX
+                , centerY
+                , Font.size 30
+                , varela
+                ]
+            |> el [ width fill ]
+
+      else
+        let
+            valid =
+                isValidEmail model.loginForm.email
+        in
+        [ paragraph [ ebg, Font.size 25, width Element.shrink, centerX ] [ text "Coming soon. Sign up to be notified." ]
+        , [ Input.email
+                [ Border.rounded 0
+                , Border.width 0
+                , height <| px 50
+                , width fill
+                , centerX
+                , style "cursor" "wait"
+                    |> whenAttr model.inProgress.login
+                , Html.Attributes.disabled model.inProgress.login
+                    |> Element.htmlAttribute
+                , (if model.funnel /= Types.Hello then
+                    grey
+
+                   else
+                    white
+                  )
+                    |> Background.color
+                , onKeydown [ onEnter EmailSubmit ]
+                    |> whenAttr valid
+                , Border.width 1
+                , Border.color black
+                ]
+                { onChange = LoginFormEmailUpdate
+                , label = Input.labelHidden ""
+                , placeholder =
+                    text "Your email address"
+                        |> Input.placeholder [ varela ]
+                        |> Just
+                , text = model.loginForm.email
+                }
+          , cool model.inProgress.login Icons.send "Submit" EmailSubmit
+                |> el [ Element.alignRight ]
+          ]
+            |> column
+                [ width fill
+                , paddingXY 20 0
+                , spacing 5
+                ]
+        ]
+            |> column
+                [ spacing 20
+                , width fill
+                , Element.alignBottom
+                ]
+    , Input.button
+        [ centerX
+        , centerY
+        , Font.size 25
+        , varela
+        , Border.rounded 50
+        , padding 20
+
+        --, shadow
+        , Border.shadow
+            { offset = ( 4, 4 )
+            , blur = 4
+            , size = 0
+            , color = Element.rgb255 150 150 150
+            }
+
+        --, Background.gradient
+        --{ angle = 0
+        --, steps =
+        --[ Element.rgb255 150 208 255
+        --, Element.rgb255 13 50 77
+        --]
+        --}
+        , Font.color black
+        , Background.color grey
+        ]
+        { onPress = Just <| NavigateTo RouteCalendar
+        , label = text "Try the demo"
+        }
+        |> el [ padding 20, Element.alignRight, Element.alignBottom ]
+    ]
+        |> column
+            [ spacing 30
+            , height fill
+            , width fill
+            ]
 
 
 viewHome : Model -> Element Msg
@@ -1202,177 +1367,3 @@ viewPost model =
                 ]
                     |> column [ height fill, width fill, spacing 10 ]
             )
-
-
-disableUserSelect : List (Attribute msg)
-disableUserSelect =
-    [ "", "-ms-", "-moz-", "-webkit-" ]
-        |> List.map
-            (\prefix ->
-                style (prefix ++ "user-select") "none"
-            )
-
-
-removeTapColor : Attribute msg
-removeTapColor =
-    style "-webkit-tap-highlight-color" "transparent"
-
-
-formatDay : Date -> String
-formatDay d =
-    [ d |> Date.day |> Ordinal.ordinal
-    , d
-        |> Date.month
-        |> monthToString
-    , d |> Date.year |> String.fromInt
-    ]
-        |> String.join " "
-
-
-whenJust : (a -> Element msg) -> Maybe a -> Element msg
-whenJust =
-    unwrap none
-
-
-when : Bool -> Element msg -> Element msg
-when b elem =
-    if b then
-        elem
-
-    else
-        none
-
-
-monthToString : Month -> String
-monthToString month =
-    case month of
-        Jan ->
-            "January"
-
-        Feb ->
-            "February"
-
-        Mar ->
-            "March"
-
-        Apr ->
-            "April"
-
-        May ->
-            "May"
-
-        Jun ->
-            "June"
-
-        Jul ->
-            "July"
-
-        Aug ->
-            "August"
-
-        Sep ->
-            "September"
-
-        Oct ->
-            "October"
-
-        Nov ->
-            "November"
-
-        Dec ->
-            "December"
-
-
-cool : Bool -> Icon msg -> String -> msg -> Element msg
-cool inProg icon str msg =
-    Input.button
-        [ padding 10
-        , style "transition" "all 0.2s"
-        , Element.mouseOver
-            [ Font.color white
-            , Background.color black
-            ]
-        , Border.color black
-        , Border.width 1
-        , style "cursor" "wait"
-            |> whenAttr inProg
-        , Font.color black
-        , height <| px 50
-        ]
-        { onPress =
-            if inProg then
-                Nothing
-
-            else
-                Just msg
-        , label =
-            [ if inProg then
-                spinner
-
-              else
-                icon 25 Inherit
-                    |> Element.html
-                    |> el []
-            , text str
-            ]
-                |> row [ spacing 10 ]
-        }
-
-
-btn : String -> msg -> Element msg
-btn str msg =
-    Input.button
-        [ padding 15
-        , style "transition" "all 0.2s"
-        , Element.mouseOver
-            [ Font.color white
-            , Background.color black
-            ]
-        , Border.color black
-        , Border.width 1
-        ]
-        { onPress = Just msg
-        , label = text str
-        }
-
-
-ebg : Attribute msg
-ebg =
-    Font.family
-        [ Font.typeface "EB Garamond"
-        ]
-
-
-varela : Attribute msg
-varela =
-    Font.family
-        [ Font.typeface "Varela"
-        ]
-
-
-rotate : Attribute msg
-rotate =
-    style
-        "animation"
-        "rotation 0.7s infinite linear"
-
-
-spinner =
-    let
-        n =
-            25
-    in
-    [ none
-        |> el [ width fill, height fill, Background.color white ]
-    , none
-        |> el [ width fill, height fill, Background.color black ]
-    ]
-        |> row
-            [ width <| px n
-            , height <| px n
-            , Border.rounded <| n // 2
-            , Border.width 1
-            , rotate
-            , Element.clip
-            , Border.color black
-            ]

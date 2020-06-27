@@ -3,7 +3,6 @@ module Main exposing (main)
 import Browser
 import Browser.Events
 import Data
-import Date
 import Day
 import Derberos.Date.Utils exposing (numberToMonth)
 import Graphql.OptionalArgument exposing (OptionalArgument(..))
@@ -18,7 +17,6 @@ import Types exposing (Flags, Model, Msg(..), Route(..), Screen, Sort(..), Statu
 import Update exposing (update)
 import Url
 import Url.Parser exposing ((</>), parse, s)
-import Uuid
 import View exposing (view)
 
 

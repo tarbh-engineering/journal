@@ -9,7 +9,6 @@ import Date exposing (Date)
 import Day exposing (DayDict)
 import Graphql.Http
 import Helpers.UuidDict exposing (UuidDict)
-import Http
 import Json.Decode exposing (Value)
 import Task exposing (Task)
 import Time exposing (Month(..))
