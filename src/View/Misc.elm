@@ -1,7 +1,7 @@
-module View.Misc exposing (btn, cool, ebg, formatDay, monthToString, rotate, spinner, varela)
+module View.Misc exposing (btn, btn2, ebg, formatDay, monthToString, rotate, spinner, varela)
 
 import Date exposing (Date)
-import Element exposing (Attribute, Element, el, fill, height, html, none, padding, px, row, spacing, text, width)
+import Element exposing (Attribute, Element, el, fill, height, html, none, padding, px, row, spaceEvenly, text, width)
 import Element.Background as Background
 import Element.Border as Border
 import Element.Font as Font
@@ -64,8 +64,8 @@ monthToString month =
             "December"
 
 
-cool : Bool -> Icon msg -> String -> msg -> Element msg
-cool inProg icon str msg =
+btn2 : Bool -> Icon msg -> String -> msg -> Element msg
+btn2 inProg icon str msg =
     Input.button
         [ padding 10
         , style "transition" "all 0.2s"
@@ -79,6 +79,7 @@ cool inProg icon str msg =
             |> whenAttr inProg
         , Font.color black
         , height <| px 50
+        , width <| px 120
         ]
         { onPress =
             if inProg then
@@ -96,7 +97,7 @@ cool inProg icon str msg =
                     |> el []
             , text str
             ]
-                |> row [ spacing 10 ]
+                |> row [ spaceEvenly, width fill ]
         }
 
 

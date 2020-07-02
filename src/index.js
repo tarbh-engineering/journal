@@ -1,5 +1,13 @@
 const { Elm } = require("./Main.elm");
-const { loadStripe } = require("@stripe/stripe-js");
+
+const { loadStripe } = require("@stripe/stripe-js/pure");
+loadStripe.setLoadParameters({ advancedFraudSignals: false });
+
+const MobileDetect = require("mobile-detect");
+
+const md = new MobileDetect(window.navigator.userAgent);
+
+const isMobile = Boolean(md.mobile());
 
 require("./index.css");
 
@@ -33,6 +41,7 @@ window.navigator.serviceWorker.register("/sw.js").then(() => {
       width: window.innerWidth,
       height: window.innerHeight,
     },
+    isMobile,
   };
 
   const app = Elm.Main.init({
@@ -53,20 +62,20 @@ window.navigator.serviceWorker.register("/sw.js").then(() => {
 
   app.ports.clearAuth.subscribe(() => localStorage.removeItem("authed"));
 
-  app.ports.buy.subscribe(async ({ email, annual }) => {
-    const stripe = await loadStripe(stripeProjectId);
+  app.ports.buy.subscribe(({ email, annual }) => {
+    loadStripe(stripeProjectId).then((stripe) => {
+      const plan = annual ? stripeAnnual : stripeMonthly;
 
-    const plan = annual ? stripeAnnual : stripeMonthly;
-
-    stripe
-      .redirectToCheckout({
-        items: [{ plan, quantity: 1 }],
-        customerEmail: email,
-        successUrl: location.origin + "/payment-success",
-        cancelUrl: location.origin,
-      })
-      .then(console.log)
-      .catch(console.error);
+      stripe
+        .redirectToCheckout({
+          items: [{ plan, quantity: 1 }],
+          customerEmail: email,
+          successUrl: location.origin + "/payment-success",
+          cancelUrl: location.origin,
+        })
+        .then(console.log)
+        .catch(console.error);
+    });
   });
 
   app.ports.saveAuth.subscribe((key) =>

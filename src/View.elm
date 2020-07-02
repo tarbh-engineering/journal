@@ -1,9 +1,9 @@
 module View exposing (view)
 
 import Calendar exposing (Day)
-import Date
+import Date exposing (Date)
 import Day
-import Element exposing (Attribute, Element, centerX, centerY, column, el, fill, height, html, none, padding, paddingXY, paragraph, px, rgb255, row, spaceEvenly, spacing, text, width, wrappedRow)
+import Element exposing (Attribute, Color, Element, alignBottom, centerX, centerY, column, el, fill, height, html, none, padding, paddingXY, paragraph, px, rgb255, row, spaceEvenly, spacing, text, width, wrappedRow)
 import Element.Background as Background
 import Element.Border as Border
 import Element.Font as Font
@@ -23,7 +23,7 @@ import Time exposing (Month(..))
 import Time.Format.I18n.I_en_us exposing (monthName)
 import Types exposing (Def(..), Funnel(..), Model, Msg(..), Route(..), Sort(..), Status(..), View(..))
 import Validate exposing (isValidEmail)
-import View.Misc exposing (btn, cool, ebg, formatDay, varela)
+import View.Misc exposing (btn, btn2, ebg, formatDay, varela)
 import View.Style exposing (black, blue, grey, white, yellow)
 
 
@@ -94,7 +94,11 @@ viewCalendar : Model -> Element Msg
 viewCalendar model =
     let
         wd =
-            px 75
+            if model.screen.width <= 1024 then
+                55
+
+            else
+                75
     in
     [ [ Input.button [ Font.color white, Element.alignLeft ]
             { onPress = Just PrevMonth
@@ -126,32 +130,32 @@ viewCalendar model =
         { data = Calendar.weeks Time.Mon model.month model.year
         , columns =
             [ { header = weekday "Mon"
-              , width = wd
-              , view = .mon >> cell model
+              , width = px wd
+              , view = .mon >> cell model wd
               }
             , { header = weekday "Tue"
-              , width = wd
-              , view = .tue >> cell model
+              , width = px wd
+              , view = .tue >> cell model wd
               }
             , { header = weekday "Wed"
-              , width = wd
-              , view = .wed >> cell model
+              , width = px wd
+              , view = .wed >> cell model wd
               }
             , { header = weekday "Thu"
-              , width = wd
-              , view = .thu >> cell model
+              , width = px wd
+              , view = .thu >> cell model wd
               }
             , { header = weekday "Fri"
-              , width = wd
-              , view = .fri >> cell model
+              , width = px wd
+              , view = .fri >> cell model wd
               }
             , { header = weekday "Sat"
-              , width = wd
-              , view = .sat >> cell model
+              , width = px wd
+              , view = .sat >> cell model wd
               }
             , { header = weekday "Sun"
-              , width = wd
-              , view = .sun >> cell model
+              , width = px wd
+              , view = .sun >> cell model wd
               }
             ]
         }
@@ -177,6 +181,8 @@ viewCalendar model =
                                         }
                                     ]
                                 , attr
+                                , padding 20
+                                , Border.width 2
                                 ]
                                 { onPress =
                                     Just <|
@@ -190,51 +196,37 @@ viewCalendar model =
                                         |> text
                                 }
                         )
-                    |> row [ width fill ]
+                    |> row [ width fill, Element.alignBottom, paddingXY 0 50 ]
             )
     ]
-        |> column [ spacing 10, Element.alignTop ]
+        |> column [ spacing 10, height fill ]
 
 
-cell : Model -> Day -> Element Msg
-cell model day =
+cell2 : Model -> Day -> Element Msg
+cell2 model day =
     let
         hv =
             model.posts
                 |> Day.get day.date
                 |> Maybe.andThen Helpers.extract
                 |> unwrap False (always True)
+
+        curr =
+            Just day.date == model.current && day.month == EQ
     in
     Input.button
         [ Background.color grey
         , width fill
-        , height <| px 75
+        , height <| px 50
         , style "transition" "all 0.4s"
-        , Html.Attributes.class "mylad"
-            |> Element.htmlAttribute
-        , Html.Attributes.class "on"
-            |> Element.htmlAttribute
-            |> whenAttr (Just day.date == model.current)
+        , shiftShadow
+            |> whenAttr curr
         , Element.moveUp 5
-            |> whenAttr (Just day.date == model.current)
+            |> whenAttr curr
         , Element.moveRight 5
-            |> whenAttr (Just day.date == model.current)
-        , Element.mouseOver
-            [ Element.moveUp 5
-            , Element.moveRight 5
-
-            --[ Background.color black
-            --, Font.color blue
-            --, Border.shadow
-            --{ offset = ( -5, 5 )
-            --, blur = 0
-            --, size = 0
-            --, color = blue
-            --}
-            --, Border.color black
-            ]
+            |> whenAttr curr
         , (if day.month == EQ then
-            if Just day.date == model.current then
+            if curr then
                 blue
 
             else if hv then
@@ -249,9 +241,6 @@ cell model day =
             |> Background.color
         , padding 5
         , Font.bold
-
-        --, Border.color white
-        --, Border.width 5
         ]
         { onPress =
             Just <|
@@ -265,6 +254,87 @@ cell model day =
         }
 
 
+cell : Model -> Int -> Day -> Element Msg
+cell model n day =
+    let
+        hv =
+            model.posts
+                |> Day.get day.date
+                |> Maybe.andThen Helpers.extract
+                |> unwrap False (always True)
+
+        curr =
+            Just day.date == model.current
+    in
+    Input.button
+        [ height <| px n
+
+        --, style "transition" "all 0.8s"
+        , Html.Attributes.class "shift"
+            |> Element.htmlAttribute
+            |> whenAttr (not model.isMobile)
+
+        --, shiftShadow
+        --|> whenAttr (Just day.date == model.current)
+        --, Element.moveUp 5
+        --|> whenAttr (Just day.date == model.current)
+        --, Element.moveRight 5
+        --|> whenAttr (Just day.date == model.current)
+        , Element.mouseOver
+            [ Border.color black
+
+            --, Element.moveUp 5
+            --, Element.moveRight 5
+            --[ Background.color black
+            --, Font.color blue
+            --, Border.shadow
+            --{ offset = ( -5, 5 )
+            --, blur = 0
+            --, size = 0
+            --, color = blue
+            --}
+            --, Border.color black
+            ]
+            |> whenAttr (not model.isMobile)
+        , (if day.month == EQ then
+            if hv then
+                yellow
+
+            else
+                grey
+
+           else
+            Element.rgb255 190 165 140
+          )
+            |> Background.color
+        , none
+            |> el
+                [ width fill
+                , height fill
+                , Background.color blue
+                , style "transform-origin" "center"
+                , style "animation" "enter 0.3s"
+                ]
+            |> Element.inFront
+            |> whenAttr curr
+        , Date.day day.date
+            |> String.fromInt
+            |> text
+            |> el [ Element.alignTop, Element.alignLeft, padding 5, Font.bold ]
+            |> Element.inFront
+        ]
+        { onPress =
+            if curr then
+                Nothing
+
+            else
+                RouteDay day.date
+                    |> NavigateTo
+                    |> Just
+        , label = none
+        }
+
+
 weekday : String -> Element msg
 weekday =
     text >> el [ Font.bold ]
@@ -274,7 +344,21 @@ view : Model -> Html Msg
 view model =
     let
         isMobile =
-            model.screen.width < 450
+            model.screen.width <= 1024
+
+        frame =
+            if isMobile then
+                viewFrameMobile model
+
+            else
+                viewFrame model
+
+        wd =
+            if model.screen.height <= 768 then
+                10
+
+            else
+                20
     in
     [ none
         |> el
@@ -351,7 +435,13 @@ view model =
                     )
 
         ViewCalendar ->
-            viewPage model
+            (if isMobile then
+                viewPageMobile model
+
+             else
+                viewPage model
+            )
+                |> frame
 
         ViewSettings ->
             model.auth
@@ -360,13 +450,12 @@ view model =
                         |> el [ varela ]
                      , btn "Sign up now" (NavigateTo RouteHome)
                         |> el [ centerX ]
-                        |> when False
                      ]
                         |> column [ spacing 50, centerX ]
                     )
                     (\_ ->
-                        [ cool False Icons.save "Export posts" ExportPosts
-                        , cool model.inProgress.logout Icons.power_off "Logout" Logout
+                        [ btn2 False Icons.save "Export posts" ExportPosts
+                        , btn2 model.inProgress.logout Icons.power_off "Logout" Logout
                             |> el [ centerX ]
                         ]
                             |> column [ spacing 20 ]
@@ -374,13 +463,13 @@ view model =
                 |> el
                     [ centerX
                     ]
-                |> viewFrame model
+                |> frame
 
         ViewStats ->
             "Coming soon"
                 |> text
                 |> el [ ebg, Font.size 30, centerX ]
-                |> viewFrame model
+                |> frame
 
         ViewTags ->
             [ [ [ Input.text
@@ -472,7 +561,7 @@ view model =
                     )
             ]
                 |> row [ centerX, spacing 50, height fill ]
-                |> viewFrame model
+                |> frame
 
         ViewSuccess ->
             [ text "BOLSTER"
@@ -492,8 +581,8 @@ view model =
             ]
                 |> column [ centerX, spacing 20, padding 40 ]
     ]
-        |> column [ spacing 20, height fill, width fill ]
-        |> render isMobile
+        |> column [ spacing wd, height fill, width fill ]
+        |> render model.isMobile
 
 
 render : Bool -> Element msg -> Html msg
@@ -512,7 +601,12 @@ render isMobile =
     Element.layoutWith
         { options =
             [ Element.focusStyle
-                { borderColor = Just <| Element.rgb255 255 0 0
+                { borderColor =
+                    if isMobile then
+                        Nothing
+
+                    else
+                        Just <| Element.rgb255 255 0 0
                 , backgroundColor = Nothing
                 , shadow = Nothing
                 }
@@ -541,7 +635,7 @@ viewHomeMobile : Model -> Element Msg
 viewHomeMobile model =
     [ [ text "BOLSTER"
             |> el
-                [ Font.size 60
+                [ Font.size 40
                 , Font.semiBold
                 , Font.family
                     [ Font.typeface "Abel"
@@ -587,7 +681,7 @@ viewHomeMobile model =
             |> row
                 [ spacing 5
                 , Font.italic
-                , Font.size 25
+                , Font.size 20
                 , centerX
                 , varela
                 ]
@@ -599,13 +693,14 @@ viewHomeMobile model =
                             [ text "Information about alternative products can be found here." ]
 
                         Secure ->
-                            [ text "Built for performance and security, using the leading technologies available. The code can be viewed"
-                            , el [ width <| px 6 ] none
-                            , Element.newTabLink [ Font.underline ]
-                                { url = "https://github.com/tarbh-engineering/journal"
-                                , label = text "here"
-                                }
-                            , text "."
+                            [ text "Built for performance and security, using the leading technologies available."
+
+                            --, el [ width <| px 6 ] none
+                            --, Element.newTabLink [ Font.underline ]
+                            --{ url = "https://github.com/tarbh-engineering/journal"
+                            --, label = text "here"
+                            --}
+                            --, text "."
                             ]
 
                         Private ->
@@ -646,7 +741,7 @@ viewHomeMobile model =
             valid =
                 isValidEmail model.loginForm.email
         in
-        [ paragraph [ ebg, Font.size 25, width Element.shrink, centerX ] [ text "Coming soon. Sign up to be notified." ]
+        [ paragraph [ ebg, Font.size 20, width Element.shrink, centerX ] [ text "Coming soon. Sign up to be notified." ]
         , [ Input.email
                 [ Border.rounded 0
                 , Border.width 0
@@ -677,7 +772,7 @@ viewHomeMobile model =
                         |> Just
                 , text = model.loginForm.email
                 }
-          , cool model.inProgress.login Icons.send "Submit" EmailSubmit
+          , btn2 model.inProgress.login Icons.send "Submit" EmailSubmit
                 |> el [ Element.alignRight ]
           ]
             |> column
@@ -721,6 +816,7 @@ viewHomeMobile model =
         , label = text "Try the demo"
         }
         |> el [ padding 20, Element.alignRight, Element.alignBottom ]
+        |> when False
     ]
         |> column
             [ spacing 30
@@ -753,7 +849,7 @@ viewHome model =
             , padding 40
             ]
     , [ [ Element.image
-            [ width <| px 220
+            [ width <| px 200
             , centerX
             , style "animation-name" "fadeIn"
             , style "animation-duration" "1s"
@@ -774,6 +870,7 @@ viewHome model =
             { onPress = Just <| NavigateTo RouteCalendar
             , label = text "Try the demo"
             }
+            |> when False
         ]
             |> column [ spacing 10, width <| px 350 ]
       , [ [ [ [ text "The"
@@ -816,13 +913,15 @@ viewHome model =
                                 [ text "Information about alternative products can be found here." ]
 
                             Secure ->
-                                [ text "Built for performance and security, using the leading technologies available. The code can be viewed"
-                                , el [ width <| px 6 ] none
-                                , Element.newTabLink [ Font.underline ]
-                                    { url = "https://github.com/tarbh-engineering/journal"
-                                    , label = text "here"
-                                    }
-                                , text "."
+                                [ text "Built for performance and security, using the leading technologies available."
+
+                                --[ text "Built for performance and security, using the leading technologies available. The code can be viewed"
+                                --, el [ width <| px 6 ] none
+                                --, Element.newTabLink [ Font.underline ]
+                                --{ url = "https://github.com/tarbh-engineering/journal"
+                                --, label = text "here"
+                                --}
+                                --, text "."
                                 ]
 
                             Private ->
@@ -935,7 +1034,7 @@ viewEmail model =
                     |> Just
             , text = model.loginForm.email
             }
-      , cool model.inProgress.login Icons.send "Submit" EmailSubmit
+      , btn2 model.inProgress.login Icons.send "Submit" EmailSubmit
       ]
         |> row
             [ centerX
@@ -1124,6 +1223,61 @@ viewWelcome model nonce =
 
 viewFrame : Model -> Element Msg -> Element Msg
 viewFrame model elem =
+    let
+        wd =
+            if model.screen.height <= 768 then
+                10
+
+            else
+                20
+    in
+    [ [ Input.button
+            [ varela
+            , Font.semiBold
+            , Font.size 25
+            ]
+            { onPress = Just <| NavigateTo RouteHome
+            , label =
+                [ text "BOLSTER"
+                , text "DEMO"
+                    |> el [ Font.light ]
+                    |> when (model.auth == Nothing)
+                ]
+                    |> row [ spacing 10 ]
+            }
+      , [ ( "Calendar", RouteCalendar, ViewCalendar )
+        , ( "Tags", RouteTags, ViewTags )
+
+        --, ( "Stats", RouteStats, ViewStats )
+        , ( "Settings", RouteSettings, ViewSettings )
+        ]
+            |> List.map
+                (\( n, r, v ) ->
+                    Input.button
+                        [ Font.underline |> whenAttr (v == model.view)
+                        , Element.mouseOver
+                            [ Font.color blue
+                            ]
+                        ]
+                        { onPress =
+                            if v == model.view then
+                                Nothing
+
+                            else
+                                Just <| NavigateTo r
+                        , label = text n
+                        }
+                )
+            |> row [ spacing 40 ]
+      ]
+        |> row [ width fill, spaceEvenly, paddingXY 20 wd ]
+    , elem
+    ]
+        |> column [ spacing wd, height fill, cappedWidth 1450, centerX ]
+
+
+viewFrameMobile : Model -> Element Msg -> Element Msg
+viewFrameMobile model elem =
     [ [ Input.button
             [ Font.family
                 [ Font.typeface "Varela"
@@ -1164,26 +1318,217 @@ viewFrame model elem =
                 )
             |> row [ spacing 40 ]
       ]
-        |> row [ width fill, spaceEvenly, padding 20 ]
+        |> column [ width fill, spacing 20, paddingXY 20 0 ]
     , elem
     ]
-        |> column [ spacing 20, height fill, cappedWidth 1450, centerX ]
+        |> column [ spacing 10, height fill, width fill ]
 
 
 viewPage : Model -> Element Msg
 viewPage model =
+    let
+        wd =
+            if model.screen.height <= 768 then
+                10
+
+            else
+                20
+    in
     [ viewCalendar model
     , viewPost model
     ]
-        |> row [ width fill, height fill, spacing 20, padding 20 ]
-        |> viewFrame model
+        |> row [ width fill, height fill, spacing wd, paddingXY 20 wd ]
+
+
+viewPageMobile : Model -> Element Msg
+viewPageMobile model =
+    let
+        wd =
+            fill
+
+        cal =
+            [ [ Input.button [ Font.color white, Element.alignLeft ]
+                    { onPress = Just PrevMonth
+                    , label =
+                        Icons.chevron_left 50 Inherit
+                            |> Element.html
+                            |> el [ Element.moveUp 5, Font.color black ]
+                    }
+              , [ model.month |> monthName |> text
+                , model.year |> String.fromInt |> text
+                ]
+                    |> row
+                        [ centerX
+                        , spacing 10
+                        , Background.color white
+                        , padding 10
+                        ]
+              , Input.button [ Font.color white, Element.alignRight ]
+                    { onPress = Just NextMonth
+                    , label =
+                        Icons.chevron_right 50 Inherit
+                            |> Element.html
+                            |> el [ Element.moveUp 5, Font.color black ]
+                    }
+              ]
+                |> row [ width fill ]
+            , Element.table
+                [ spacing 5 ]
+                { data = Calendar.weeks Time.Mon model.month model.year
+                , columns =
+                    [ { header = weekday "Mon"
+                      , width = wd
+                      , view = .mon >> cell2 model
+                      }
+                    , { header = weekday "Tue"
+                      , width = wd
+                      , view = .tue >> cell2 model
+                      }
+                    , { header = weekday "Wed"
+                      , width = wd
+                      , view = .wed >> cell2 model
+                      }
+                    , { header = weekday "Thu"
+                      , width = wd
+                      , view = .thu >> cell2 model
+                      }
+                    , { header = weekday "Fri"
+                      , width = wd
+                      , view = .fri >> cell2 model
+                      }
+                    , { header = weekday "Sat"
+                      , width = wd
+                      , view = .sat >> cell2 model
+                      }
+                    , { header = weekday "Sun"
+                      , width = wd
+                      , view = .sun >> cell2 model
+                      }
+                    ]
+                }
+            , model.current
+                |> whenJust
+                    (\day ->
+                        [ ( '◀', Element.alignLeft, -1 )
+                        , ( '▶', Element.alignRight, 1 )
+                        ]
+                            |> List.map
+                                (\( char, attr, n ) ->
+                                    Input.button
+                                        [ Font.color blue
+                                        , Font.size 40
+                                        , Element.mouseOver [ Font.color black ]
+                                        , Element.mouseDown
+                                            [ Element.moveDown 4
+                                            , Element.moveRight 4
+                                            , Font.shadow
+                                                { offset = ( 0, 0 )
+                                                , blur = 0
+                                                , color = black
+                                                }
+                                            ]
+                                        , attr
+                                        ]
+                                        { onPress =
+                                            day
+                                                |> Day.shift n
+                                                |> RouteDay
+                                                |> NavigateTo
+                                                |> Just
+                                        , label =
+                                            char
+                                                |> String.fromChar
+                                                |> text
+                                        }
+                                )
+                            |> row [ width fill, Element.alignBottom ]
+                    )
+            ]
+                |> column
+                    [ spacing 10
+                    , Element.alignTop
+                    , width fill
+                    , style "animation" "shrink 1s"
+                        |> whenAttr model.postBeingEdited
+                    , style "display" "hidden"
+                        |> whenAttr model.postBeingEdited
+                    , style "animation-fill-mode" "forwards"
+                    , style "transform-origin" "bottom center"
+                    ]
+    in
+    [ cal
+        |> when (not model.postBeingEdited)
+    , [ viewPostMobile model
+            |> when model.postBeingEdited
+      , model.current
+            |> whenJust (viewBar model)
+      ]
+        |> column [ width fill, height fill ]
+    ]
+        |> column
+            [ width fill
+            , height fill
+            , padding 20
+            , cal
+                |> when model.postBeingEdited
+                |> el [ padding 20, width fill, height fill ]
+                |> Element.behindContent
+            ]
+
+
+viewBar : Model -> Date -> Element Msg
+viewBar model day =
+    model.posts
+        |> Day.get day
+        |> Maybe.andThen Helpers.extract
+        |> unwrap
+            (if model.postBeingEdited then
+                [ btn2 model.inProgress.post Icons.save "Submit" (PostCreateSubmit day)
+                , btn2 False Icons.close "Cancel" PostUpdateCancel
+                    |> el [ Element.alignRight ]
+                ]
+
+             else
+                [ btn2 False Icons.edit "New" (PostUpdateStart "")
+                    |> el [ Element.alignRight ]
+                ]
+            )
+            (\post ->
+                if model.postBeingEdited then
+                    [ btn2
+                        model.inProgress.post
+                        Icons.save
+                        "Submit"
+                        (PostUpdateSubmit post.id)
+                        |> when (model.postEditorBody /= post.body && model.postEditorBody /= "")
+                    , [ btn2 False Icons.delete "Delete" (PostDelete post.id post.date)
+                      , btn2 False Icons.close "Cancel" PostUpdateCancel
+                      ]
+                        |> row [ spacing 10, Element.alignRight ]
+                    ]
+
+                else
+                    [ post.body |> String.left 8 |> text
+                    , [ btn2 False
+                            Icons.visibility
+                            "View"
+                            (PostUpdateStart post.body)
+                      , btn2 False
+                            Icons.edit
+                            "Edit"
+                            (PostUpdateStart post.body)
+                      ]
+                        |> row [ spacing 10 ]
+                    ]
+            )
+        |> row [ width fill, spaceEvenly, alignBottom ]
 
 
 viewReady : Element Msg
 viewReady =
     Input.button
         [ width fill
-        , height <| px 700
+        , Helpers.View.cappedHeight 700
         , Background.color grey
         , style "cursor" Icon.pencil
         ]
@@ -1195,8 +1540,8 @@ viewReady =
         }
 
 
-viewPost : Model -> Element Msg
-viewPost model =
+viewPostMobile : Model -> Element Msg
+viewPostMobile model =
     model.current
         |> unwrap
             viewReady
@@ -1219,7 +1564,7 @@ viewPost model =
                                 [ width fill
                                 , style "cursor" "text"
                                 , Element.alignTop
-                                , height <| px 700
+                                , height fill
                                 , Background.color grey
                                 , Font.size 35
                                 , padding 20
@@ -1277,6 +1622,148 @@ viewPost model =
                 [ [ [ formatDay d
                         |> text
                     , text "|"
+                    , pst
+                        |> unwrap
+                            ("Creating a new entry" |> text |> el [ Font.italic ])
+                            (always
+                                (("Updating entry" |> text |> el [ Font.italic ])
+                                    |> when model.postBeingEdited
+                                )
+                            )
+                    ]
+                        |> row [ spaceEvenly, Font.size 17, width fill ]
+                  , if model.postView then
+                        pst
+                            |> whenJust
+                                (\p ->
+                                    model.tags
+                                        |> UD.values
+                                        |> List.map
+                                            (\t ->
+                                                Input.button
+                                                    [ padding 10
+                                                    , Border.width 1
+                                                    , (if List.member t.id p.tags then
+                                                        blue
+
+                                                       else
+                                                        white
+                                                      )
+                                                        |> Background.color
+                                                    ]
+                                                    { onPress = Just <| PostTagToggle p t
+                                                    , label = text t.name
+                                                    }
+                                            )
+                                        |> Element.wrappedRow [ spacing 20 ]
+                                )
+
+                    else
+                        case data of
+                            Missing ->
+                                create
+
+                            Loading ma ->
+                                ma
+                                    |> unwrap create make
+
+                            Found a ->
+                                make a
+                  ]
+                    |> column [ width fill, spacing 10, height fill ]
+                ]
+                    |> column
+                        [ height fill
+                        , width fill
+                        , spacing 10
+                        , style "animation" "enter 1s"
+                        , style "transform-origin" "bottom center"
+                        ]
+            )
+
+
+viewPost : Model -> Element Msg
+viewPost model =
+    model.current
+        |> unwrap
+            viewReady
+            (\d ->
+                let
+                    fn fn1 =
+                        Html.textarea
+                            [ Html.Attributes.id "editor"
+                            , Html.Attributes.value model.postEditorBody
+                            , Html.Attributes.style "font-size" "inherit"
+                            , Html.Attributes.style "font-family" "inherit"
+                            , Html.Attributes.style "cursor" "inherit"
+                            , Html.Attributes.style "line-height" "40px"
+                            , Html.Attributes.style "padding" "0px"
+                            , Html.Events.onInput BodyUpdate
+                            ]
+                            []
+                            |> Element.html
+                            |> el
+                                [ width fill
+                                , style "cursor" "text"
+                                , Element.alignTop
+                                , Helpers.View.cappedHeight 700
+                                , Background.color grey
+                                , Font.size 35
+                                , padding 20
+                                , onKeydown [ onCtrlEnter fn1 ]
+                                , ebg
+                                ]
+
+                    data =
+                        model.posts
+                            |> Helpers.getStatus d
+
+                    create =
+                        fn (PostCreateSubmit d)
+
+                    make post =
+                        if model.postBeingEdited then
+                            fn (PostUpdateSubmit post.id)
+
+                        else
+                            Input.button
+                                [ width fill
+                                , Helpers.View.cappedHeight 700
+
+                                --, Element.mouseOver [ Background.color grey ]
+                                , Background.color grey
+                                , padding 20
+                                , Font.size 35
+                                , Element.alignTop
+                                , ebg
+                                , style "cursor" Icon.pencil
+                                ]
+                                { onPress = Just <| PostUpdateStart post.body
+                                , label =
+                                    post.body
+                                        -- HACK: Need to pass through Html in order
+                                        -- to preserve formatting.
+                                        |> Html.text
+                                        |> List.singleton
+                                        |> Html.div
+                                            [ Html.Attributes.style "white-space" "pre-wrap"
+                                            , Html.Attributes.style "line-height" "40px"
+                                            , Html.Attributes.style "height" "100%"
+                                            , Html.Attributes.style "width" "100%"
+                                            , Html.Attributes.style "overflow-y" "auto"
+                                            , Html.Attributes.style "word-break" "break-word"
+                                            ]
+                                        |> Element.html
+                                }
+
+                    pst =
+                        model.posts
+                            |> Day.get d
+                            |> Maybe.andThen Helpers.extract
+                in
+                [ [ [ formatDay d
+                        |> text
+                    , text "|"
                         |> when (model.postBeingEdited || pst == Nothing)
                     , pst
                         |> unwrap
@@ -1288,43 +1775,6 @@ viewPost model =
                             )
                     ]
                         |> row [ spacing 10 ]
-                  , pst
-                        |> unwrap
-                            ([ cool model.inProgress.post Icons.save "Submit" (PostCreateSubmit d)
-                                |> when (model.postEditorBody /= "")
-                             , cool False Icons.close "Cancel" PostCancel
-                             ]
-                                |> row [ spacing 10 ]
-                            )
-                            (\p ->
-                                if model.inProgress.post then
-                                    [ cool
-                                        model.inProgress.post
-                                        Icons.save
-                                        "Submit"
-                                        (PostUpdateSubmit p.id)
-                                        |> when (model.postEditorBody /= p.body && model.postEditorBody /= "")
-                                    , cool False Icons.delete "Delete" (PostDelete p.id p.date)
-                                    , cool False Icons.close "Cancel" PostUpdateCancel
-                                    ]
-                                        |> row [ spacing 10 ]
-
-                                else
-                                    cool False
-                                        (if model.postView then
-                                            Icons.edit
-
-                                         else
-                                            Icons.label
-                                        )
-                                        (if model.postView then
-                                            "Pad"
-
-                                         else
-                                            "Tags"
-                                        )
-                                        PostViewToggle
-                            )
                   ]
                     |> row [ width fill, spaceEvenly, height <| px 55 ]
                 , if model.postView then
@@ -1364,6 +1814,77 @@ viewPost model =
 
                         Found a ->
                             make a
+                , pst
+                    |> unwrap
+                        ([ btn2 model.inProgress.post Icons.save "Submit" (PostCreateSubmit d)
+                            |> when (model.postEditorBody /= "")
+                         , btn2 False Icons.close "Cancel" PostCancel
+                         ]
+                            |> row [ spacing 10 ]
+                        )
+                        (\p ->
+                            if model.postBeingEdited then
+                                [ btn2
+                                    model.inProgress.post
+                                    Icons.save
+                                    "Submit"
+                                    (PostUpdateSubmit p.id)
+                                    |> when (model.postEditorBody /= p.body && model.postEditorBody /= "")
+                                , btn2 model.inProgress.postDelete Icons.delete "Delete" (PostDelete p.id p.date)
+                                , btn2 False Icons.close "Cancel" PostUpdateCancel
+                                ]
+                                    |> row [ spacing 10 ]
+
+                            else
+                                btn2 False
+                                    (if model.postView then
+                                        Icons.edit
+
+                                     else
+                                        Icons.label
+                                    )
+                                    (if model.postView then
+                                        "Pad"
+
+                                     else
+                                        "Tags"
+                                    )
+                                    PostViewToggle
+                        )
+                    |> el [ Element.alignRight, Element.alignBottom ]
                 ]
                     |> column [ height fill, width fill, spacing 10 ]
             )
+
+
+shiftShadow : Attribute msg
+shiftShadow =
+    let
+        color =
+            rgb255 153 153 153
+                |> colString
+    in
+    List.range 1 5
+        |> List.map
+            (String.fromInt
+                >> (\n -> n ++ "px")
+                >> (\n ->
+                        "-" ++ n ++ " " ++ n ++ " 0px " ++ color
+                   )
+            )
+        |> String.join ", "
+        |> style "box-shadow"
+
+
+colString : Color -> String
+colString =
+    Element.toRgb
+        >> (\{ red, green, blue } ->
+                [ red * 255, green * 255, blue * 255 ]
+           )
+        >> List.map
+            (round
+                >> String.fromInt
+            )
+        >> String.join ", "
+        >> (\str -> "rgb(" ++ str ++ ")")

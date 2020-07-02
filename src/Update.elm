@@ -6,7 +6,7 @@ import Browser.Events exposing (Visibility(..))
 import Browser.Navigation as Navigation
 import Crypto
 import Data
-import Date
+import Date exposing (Date)
 import Day exposing (DayDict)
 import Derberos.Date.Utils exposing (getNextMonth, getPrevMonth)
 import Dict
@@ -263,7 +263,11 @@ update msg model =
                 )
 
         PostDelete id date ->
-            ( { model | inProgress = model.inProgress |> (\p -> { p | post = True }) }
+            ( { model
+                | inProgress =
+                    model.inProgress
+                        |> (\p -> { p | postDelete = True })
+              }
             , if model.auth == Nothing then
                 wait
                     |> Task.map (always <| Ok date)
@@ -399,7 +403,7 @@ update msg model =
                     (\err ->
                         ( { model
                             | online = not <| isNetworkError err
-                            , inProgress = model.inProgress |> (\p -> { p | post = False })
+                            , inProgress = model.inProgress |> (\p -> { p | postDelete = False })
                           }
                         , logGqlError "PostDeleteCb" err
                         )
@@ -411,7 +415,7 @@ update msg model =
                                     date
                                     model.posts
                             , postEditorBody = ""
-                            , inProgress = model.inProgress |> (\p -> { p | post = False })
+                            , inProgress = model.inProgress |> (\p -> { p | postDelete = False })
                             , current = Nothing
                           }
                         , Cmd.none
@@ -1163,70 +1167,75 @@ routeLive model auth route =
             )
 
         RouteDay d ->
-            model.posts
-                |> Helpers.getStatus d
-                |> (\data ->
-                        let
-                            newPost =
-                                case data of
-                                    Missing ->
-                                        Loading Nothing
+            routeLiveDay model d auth
 
-                                    Loading ma ->
-                                        Loading ma
 
-                                    Found a ->
-                                        Loading (Just a)
+routeLiveDay : Model -> Date -> Auth -> ( Model, Cmd Msg )
+routeLiveDay model d auth =
+    model.posts
+        |> Helpers.getStatus d
+        |> (\data ->
+                let
+                    newPost =
+                        case data of
+                            Missing ->
+                                Loading Nothing
 
-                            shouldFocusOnEditor =
-                                case data of
-                                    Missing ->
-                                        True
+                            Loading ma ->
+                                Loading ma
 
-                                    Loading _ ->
-                                        False
+                            Found a ->
+                                Loading (Just a)
 
-                                    Found _ ->
-                                        model.postBeingEdited
+                    shouldFocusOnEditor =
+                        case data of
+                            Missing ->
+                                True
 
-                            editorText =
-                                case data of
-                                    Missing ->
-                                        ""
+                            Loading _ ->
+                                False
 
-                                    Loading ma ->
-                                        ma
-                                            |> unwrap "" .body
+                            Found _ ->
+                                model.postBeingEdited
 
-                                    Found a ->
-                                        a.body
-                        in
-                        ( { model
-                            | posts =
-                                model.posts
-                                    |> Day.insert d newPost
-                            , postEditorBody = editorText
-                            , postCreateTags = []
-                            , postBeingEdited = False
-                            , inProgress = model.inProgress |> (\p -> { p | post = False })
-                            , current = Just d
-                            , month = Date.month d
-                            , year = Date.year d
-                            , postView = False
-                          }
-                        , Cmd.batch
-                            [ trip
-                                (Data.fetchDay d)
-                                (PostCb d)
-                                auth
-                            , if shouldFocusOnEditor then
-                                focusOnEditor
+                    editorText =
+                        case data of
+                            Missing ->
+                                ""
 
-                              else
-                                Cmd.none
-                            ]
-                        )
-                   )
+                            Loading ma ->
+                                ma
+                                    |> unwrap "" .body
+
+                            Found a ->
+                                a.body
+                in
+                ( { model
+                    | posts =
+                        model.posts
+                            |> Day.insert d newPost
+                    , postEditorBody = editorText
+                    , postCreateTags = []
+                    , postBeingEdited = False
+                    , inProgress = model.inProgress |> (\p -> { p | post = False })
+                    , current = Just d
+                    , month = Date.month d
+                    , year = Date.year d
+                    , postView = False
+                  }
+                , Cmd.batch
+                    [ trip
+                        (Data.fetchDay d)
+                        (PostCb d)
+                        auth
+                    , if shouldFocusOnEditor then
+                        focusOnEditor
+
+                      else
+                        Cmd.none
+                    ]
+                )
+           )
 
 
 isNetworkError : Graphql.Http.Error () -> Bool

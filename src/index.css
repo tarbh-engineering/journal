@@ -7,6 +7,32 @@
   }
 }
 
+@keyframes shrink {
+  from {
+    /*transform: scaleY(1);*/
+    opacity: 1;
+    /*filter: blur(0px);*/
+  }
+  to {
+    /*transform: scaleY(0);*/
+    opacity: 0;
+    /*filter: blur(50px);*/
+  }
+}
+
+@keyframes enter {
+  from {
+    transform: scaleY(0) scaleX(0);
+    /*opacity: 0;*/
+    /*filter: blur(50px);*/
+  }
+  to {
+    transform: scaleY(1) scaleX(1);
+    /*opacity: 1;*/
+    /*filter: blur(0px);*/
+  }
+}
+
 @keyframes fadeIn {
   from {
     opacity: 0;
@@ -18,12 +44,16 @@
   }
 }
 
-.on {
-  box-shadow: -1px 1px 0px #999, -2px 2px 0px #999, -3px 3px 0px #999,
-    -4px 4px 0px #999, -5px 5px 0px #999;
+@keyframes fadeOut {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
 }
 
-.mylad:hover {
+.shift:hover {
   box-shadow: -1px 1px 0px #999, -2px 2px 0px #999, -3px 3px 0px #999,
     -4px 4px 0px #999, -5px 5px 0px #999;
 }

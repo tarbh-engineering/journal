@@ -27,6 +27,7 @@ type alias Flags =
     , href : String
     , screen : Screen
     , auth : Maybe String
+    , isMobile : Bool
     }
 
 
@@ -51,6 +52,7 @@ type alias Model =
         { logout : Bool
         , login : Bool
         , post : Bool
+        , postDelete : Bool
         }
     , postEditorBody : String
     , postBeingEdited : Bool
@@ -67,6 +69,7 @@ type alias Model =
     , searchString : String
     , selectedResult : Maybe Uuid
     , screen : Screen
+    , isMobile : Bool
     , month : Month
     , year : Int
     , current : Maybe Date

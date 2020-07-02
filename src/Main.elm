@@ -59,6 +59,7 @@ init flags =
         model =
             { emptyModel
                 | screen = flags.screen
+                , isMobile = flags.isMobile
                 , current =
                     if anon then
                         Nothing
@@ -167,6 +168,7 @@ init flags =
 emptyModel : Model
 emptyModel =
     { errors = []
+    , isMobile = False
     , posts = Day.newDayDict
     , tags = UD.empty
     , view = ViewHome
@@ -201,6 +203,7 @@ emptyModel =
         { logout = False
         , login = False
         , post = False
+        , postDelete = False
         }
     , thanks = False
     }
