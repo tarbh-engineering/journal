@@ -1,7 +1,7 @@
-module View.Misc exposing (btn, btn2, ebg, formatDay, monthToString, rotate, spinner, varela)
+module View.Misc exposing (btn, btn2, formatDay, icon, monthToString, spinner)
 
 import Date exposing (Date)
-import Element exposing (Attribute, Element, el, fill, height, html, none, padding, px, row, spaceEvenly, text, width)
+import Element exposing (Element, el, fill, height, html, none, padding, px, row, spaceEvenly, text, width)
 import Element.Background as Background
 import Element.Border as Border
 import Element.Font as Font
@@ -10,7 +10,7 @@ import Helpers.View exposing (style, whenAttr)
 import Material.Icons.Types exposing (Coloring(..), Icon)
 import Ordinal
 import Time exposing (Month(..))
-import View.Style exposing (black, white)
+import View.Style exposing (black, rotate, white)
 
 
 formatDay : Date -> String
@@ -64,8 +64,15 @@ monthToString month =
             "December"
 
 
+icon : Icon msg -> Int -> Element msg
+icon ic n =
+    ic n Inherit
+        |> Element.html
+        |> el []
+
+
 btn2 : Bool -> Icon msg -> String -> msg -> Element msg
-btn2 inProg icon str msg =
+btn2 inProg ic str msg =
     Input.button
         [ padding 10
         , style "transition" "all 0.2s"
@@ -92,7 +99,7 @@ btn2 inProg icon str msg =
                 spinner
 
               else
-                icon 26 Inherit
+                ic 26 Inherit
                     |> Element.html
                     |> el []
             , text str
@@ -116,27 +123,6 @@ btn str msg =
         { onPress = Just msg
         , label = text str
         }
-
-
-ebg : Attribute msg
-ebg =
-    Font.family
-        [ Font.typeface "EB Garamond"
-        ]
-
-
-varela : Attribute msg
-varela =
-    Font.family
-        [ Font.typeface "Varela"
-        ]
-
-
-rotate : Attribute msg
-rotate =
-    style
-        "animation"
-        "rotation 0.7s infinite linear"
 
 
 spinner : Element msg

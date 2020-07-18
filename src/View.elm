@@ -17,14 +17,13 @@ import Html.Events
 import Icon
 import Json.Decode as Decode exposing (Decoder)
 import Material.Icons as Icons
-import Material.Icons.Types exposing (Coloring(..))
 import Maybe.Extra exposing (unwrap)
 import Time exposing (Month(..))
 import Time.Format.I18n.I_en_us exposing (monthName)
 import Types exposing (Def(..), Funnel(..), Model, Msg(..), Route(..), Sort(..), Status(..), View(..))
 import Validate exposing (isValidEmail)
-import View.Misc exposing (btn, btn2, ebg, formatDay, varela)
-import View.Style exposing (black, blue, grey, white, yellow)
+import View.Misc exposing (btn, btn2, formatDay, icon)
+import View.Style exposing (abel, black, blue, ebg, fadeIn, grey, rotate, varela, white, yellow)
 
 
 onCtrlEnter : msg -> Decoder msg
@@ -103,8 +102,7 @@ viewCalendar model =
     [ [ Input.button [ Font.color white, Element.alignLeft ]
             { onPress = Just PrevMonth
             , label =
-                Icons.chevron_left 50 Inherit
-                    |> Element.html
+                icon Icons.chevron_left 50
                     |> el [ Element.moveUp 5, Font.color black ]
             }
       , [ model.month |> monthName |> text
@@ -119,8 +117,7 @@ viewCalendar model =
       , Input.button [ Font.color white, Element.alignRight ]
             { onPress = Just NextMonth
             , label =
-                Icons.chevron_right 50 Inherit
-                    |> Element.html
+                icon Icons.chevron_right 50
                     |> el [ Element.moveUp 5, Font.color black ]
             }
       ]
@@ -635,11 +632,9 @@ viewHomeMobile : Model -> Element Msg
 viewHomeMobile model =
     [ [ text "BOLSTER"
             |> el
-                [ Font.size 40
+                [ Font.size 55
                 , Font.semiBold
-                , Font.family
-                    [ Font.typeface "Abel"
-                    ]
+                , abel
                 ]
       , Element.image
             [ height <| px 60
@@ -693,14 +688,13 @@ viewHomeMobile model =
                             [ text "Information about alternative products can be found here." ]
 
                         Secure ->
-                            [ text "Built for performance and security, using the leading technologies available."
-
-                            --, el [ width <| px 6 ] none
-                            --, Element.newTabLink [ Font.underline ]
-                            --{ url = "https://github.com/tarbh-engineering/journal"
-                            --, label = text "here"
-                            --}
-                            --, text "."
+                            [ text "Built for performance and security, using the leading technologies available. The code can be viewed"
+                            , el [ width <| px 6 ] none
+                            , Element.newTabLink [ Font.underline ]
+                                { url = "https://github.com/tarbh-engineering/journal"
+                                , label = text "here"
+                                }
+                            , text "."
                             ]
 
                         Private ->
@@ -718,11 +712,146 @@ viewHomeMobile model =
                             , Font.size 25
                             ]
                 )
+            |> when (model.funnel == Types.Hello)
       ]
         |> column
             [ width fill
             , paddingXY 20 0
             ]
+    , case model.funnel of
+        Hello ->
+            none
+
+        WelcomeBack nonce ->
+            viewWelcome model nonce
+
+        CheckEmail ->
+            [ text "Please check your email for signup instructions."
+            , btn "Re-send email" (NavigateTo RouteHome)
+                |> el [ centerX ]
+            ]
+                |> column
+                    [ centerX
+                    , spacing 20
+                    ]
+
+        JoinUs ->
+            let
+                waiting =
+                    not model.inProgress.monthlyPlan && not model.inProgress.annualPlan
+            in
+            [ text "Sign up"
+                |> el [ Font.italic, Font.size 25, Font.bold ]
+            , [ text "Monthly plan"
+              , Input.button
+                    [ Background.gradient
+                        { angle = degrees 0
+                        , steps =
+                            [ Element.rgb255 225 95 137
+                            , Element.rgb255 13 50 77
+                            ]
+                        }
+                    , width <| px 150
+                    , height <| px 40
+                    , Font.center
+                    , Font.color white
+                    , Border.rounded 10
+                    , Border.shadow
+                        { offset = ( 4, 4 )
+                        , blur = 4
+                        , size = 0
+                        , color = Element.rgb255 150 150 150
+                        }
+                    , Element.mouseDown
+                        [ Element.moveRight 5
+                        , Element.moveDown 5
+                        , Border.shadow
+                            { offset = ( 0, 0 )
+                            , blur = 0
+                            , size = 0
+                            , color = Element.rgb255 150 150 150
+                            }
+                        ]
+                        |> whenAttr waiting
+                    ]
+                    { onPress =
+                        if waiting then
+                            Just <| Buy False
+
+                        else
+                            Nothing
+                    , label =
+                        if model.inProgress.monthlyPlan then
+                            icon Icons.refresh 25
+                                |> el [ rotate, centerX ]
+
+                        else
+                            text "$5 Buy"
+                    }
+              ]
+                |> row [ spaceEvenly, width fill ]
+            , [ text "Annual plan"
+              , Input.button
+                    [ Background.gradient
+                        { angle = degrees 0
+                        , steps =
+                            [ Element.rgb255 225 95 137
+                            , Element.rgb255 13 50 77
+                            ]
+                        }
+                    , width <| px 150
+                    , height <| px 40
+                    , Font.center
+                    , Font.color white
+                    , Border.rounded 10
+                    , Border.shadow
+                        { offset = ( 4, 4 )
+                        , blur = 4
+                        , size = 0
+                        , color = Element.rgb255 150 150 150
+                        }
+                    , Element.mouseDown
+                        [ Element.moveRight 5
+                        , Element.moveDown 5
+                        , Border.shadow
+                            { offset = ( 0, 0 )
+                            , blur = 0
+                            , size = 0
+                            , color = Element.rgb255 150 150 150
+                            }
+                        ]
+                        |> whenAttr waiting
+                    ]
+                    { onPress =
+                        if waiting then
+                            Just <| Buy True
+
+                        else
+                            Nothing
+                    , label =
+                        if model.inProgress.annualPlan then
+                            icon Icons.refresh 25
+                                |> el [ rotate, centerX ]
+
+                        else
+                            text "$40 Buy"
+                    }
+              ]
+                |> row [ spaceEvenly, width fill ]
+            , Element.image [ height <| px 35, centerX, fadeIn ]
+                { src = "/stripe1.png", description = "" }
+            ]
+                |> column
+                    [ centerX
+                    , spacing 20
+                    , width fill
+                    , padding 20
+                    , Element.alignBottom
+                    , Background.color grey
+                    , style "animation" "enter 1s"
+                    , style "transform-origin" "center"
+                    ]
+                |> el [ width fill, paddingXY 20 0, Element.alignBottom ]
     , if model.thanks then
         "Thank you!"
             |> text
@@ -737,55 +866,7 @@ viewHomeMobile model =
             |> el [ width fill ]
 
       else
-        let
-            valid =
-                isValidEmail model.loginForm.email
-        in
-        [ paragraph [ ebg, Font.size 20, width Element.shrink, centerX ] [ text "Coming soon. Sign up to be notified." ]
-        , [ Input.email
-                [ Border.rounded 0
-                , Border.width 0
-                , height <| px 50
-                , width fill
-                , centerX
-                , style "cursor" "wait"
-                    |> whenAttr model.inProgress.login
-                , Html.Attributes.disabled model.inProgress.login
-                    |> Element.htmlAttribute
-                , (if model.funnel /= Types.Hello then
-                    grey
-
-                   else
-                    white
-                  )
-                    |> Background.color
-                , onKeydown [ onEnter EmailSubmit ]
-                    |> whenAttr valid
-                , Border.width 1
-                , Border.color black
-                ]
-                { onChange = LoginFormEmailUpdate
-                , label = Input.labelHidden ""
-                , placeholder =
-                    text "Your email address"
-                        |> Input.placeholder [ varela ]
-                        |> Just
-                , text = model.loginForm.email
-                }
-          , btn2 model.inProgress.login Icons.send "Submit" EmailSubmit
-                |> el [ Element.alignRight ]
-          ]
-            |> column
-                [ width fill
-                , paddingXY 20 0
-                , spacing 5
-                ]
-        ]
-            |> column
-                [ spacing 20
-                , width fill
-                , Element.alignBottom
-                ]
+        viewFx model
     , Input.button
         [ centerX
         , centerY
@@ -816,11 +897,9 @@ viewHomeMobile model =
         , label = text "Try the demo"
         }
         |> el [ padding 20, Element.alignRight, Element.alignBottom ]
-        |> when False
     ]
         |> column
-            [ spacing 30
-            , height fill
+            [ height fill
             , width fill
             ]
 
@@ -831,9 +910,7 @@ viewHome model =
             |> el
                 [ Font.size 150
                 , Font.semiBold
-                , Font.family
-                    [ Font.typeface "Abel"
-                    ]
+                , abel
                 ]
       , Element.image
             [ height <| px 150
@@ -870,7 +947,6 @@ viewHome model =
             { onPress = Just <| NavigateTo RouteCalendar
             , label = text "Try the demo"
             }
-            |> when False
         ]
             |> column [ spacing 10, width <| px 350 ]
       , [ [ [ [ text "The"
@@ -913,15 +989,13 @@ viewHome model =
                                 [ text "Information about alternative products can be found here." ]
 
                             Secure ->
-                                [ text "Built for performance and security, using the leading technologies available."
-
-                                --[ text "Built for performance and security, using the leading technologies available. The code can be viewed"
-                                --, el [ width <| px 6 ] none
-                                --, Element.newTabLink [ Font.underline ]
-                                --{ url = "https://github.com/tarbh-engineering/journal"
-                                --, label = text "here"
-                                --}
-                                --, text "."
+                                [ text "Built for performance and security, using the leading technologies available. The code can be viewed"
+                                , el [ width <| px 6 ] none
+                                , Element.newTabLink [ Font.underline ]
+                                    { url = "https://github.com/tarbh-engineering/journal"
+                                    , label = text "here"
+                                    }
+                                , text "."
                                 ]
 
                             Private ->
@@ -1048,6 +1122,74 @@ viewEmail model =
             ]
 
 
+viewFx : Model -> Element Msg
+viewFx model =
+    let
+        ent =
+            if model.funnel == Hello then
+                EmailSubmit
+
+            else
+                Change
+
+        valid =
+            isValidEmail model.loginForm.email
+    in
+    [ Input.email
+        [ Border.rounded 0
+
+        --, Border.width 1
+        , cappedWidth 500
+        , Border.widthEach { top = 0, bottom = 1, left = 0, right = 0 }
+
+        --, height <| px 50
+        , paddingXY 0 15
+
+        --, style "cursor" "wait"
+        --|> whenAttr model.inProgress
+        , Html.Attributes.disabled (model.funnel /= Types.Hello)
+            |> Element.htmlAttribute
+        , (if model.funnel /= Types.Hello then
+            grey
+
+           else
+            white
+          )
+            |> Background.color
+        , onKeydown [ onEnter ent ]
+
+        --|> whenAttr valid
+        , Input.button
+            [ Element.alignRight
+            , centerY
+            , Element.moveLeft 10
+            , fadeIn
+            ]
+            { onPress = Just <| LoginFormEmailUpdate ""
+            , label = text "X"
+            }
+            |> Element.inFront
+            |> whenAttr (model.loginForm.email /= "" && not model.inProgress.login && model.funnel == Types.Hello)
+        ]
+        { onChange = LoginFormEmailUpdate
+        , label = Input.labelHidden ""
+        , placeholder =
+            text "Your email address"
+                |> Input.placeholder []
+                |> Just
+        , text = model.loginForm.email
+        }
+    , (if model.funnel == Types.Hello then
+        btn2 model.inProgress.login Icons.send "Submit" ent
+
+       else
+        btn2 False Icons.keyboard_return "Back" Change
+      )
+        |> el [ Element.alignRight ]
+    ]
+        |> column [ spacing 10, alignBottom, padding 20, width fill ]
+
+
 viewFunnel : Model -> Element Msg
 viewFunnel model =
     let
@@ -1064,7 +1206,7 @@ viewFunnel model =
     [ [ Input.email
             [ Border.rounded 0
             , Border.width 0
-            , width <| px 350
+            , cappedWidth 350
 
             --, height <| px 50
             , paddingXY 20 15
@@ -1178,7 +1320,7 @@ viewFunnel model =
                     , width <| px 200
                     ]
     ]
-        |> column [ spacing 20 ]
+        |> column [ spacing 20, alignBottom, padding 30 ]
 
 
 viewWelcome : Model -> String -> Element Msg
@@ -1279,9 +1421,7 @@ viewFrame model elem =
 viewFrameMobile : Model -> Element Msg -> Element Msg
 viewFrameMobile model elem =
     [ [ Input.button
-            [ Font.family
-                [ Font.typeface "Varela"
-                ]
+            [ varela
             , Font.semiBold
             , Font.size 25
             ]
@@ -1296,7 +1436,8 @@ viewFrameMobile model elem =
             }
       , [ ( "Calendar", RouteCalendar, ViewCalendar )
         , ( "Tags", RouteTags, ViewTags )
-        , ( "Stats", RouteStats, ViewStats )
+
+        --, ( "Stats", RouteStats, ViewStats )
         , ( "Settings", RouteSettings, ViewSettings )
         ]
             |> List.map
@@ -1350,8 +1491,7 @@ viewPageMobile model =
             [ [ Input.button [ Font.color white, Element.alignLeft ]
                     { onPress = Just PrevMonth
                     , label =
-                        Icons.chevron_left 50 Inherit
-                            |> Element.html
+                        icon Icons.chevron_left 50
                             |> el [ Element.moveUp 5, Font.color black ]
                     }
               , [ model.month |> monthName |> text
@@ -1366,8 +1506,7 @@ viewPageMobile model =
               , Input.button [ Font.color white, Element.alignRight ]
                     { onPress = Just NextMonth
                     , label =
-                        Icons.chevron_right 50 Inherit
-                            |> Element.html
+                        icon Icons.chevron_right 50
                             |> el [ Element.moveUp 5, Font.color black ]
                     }
               ]

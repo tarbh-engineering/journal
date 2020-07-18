@@ -1,4 +1,4 @@
-module Types exposing (Auth, Cipher, Def(..), Flags, Funnel(..), GqlResult, GqlTask, Keys, Model, Msg(..), Post, PostRaw, Route(..), Screen, Sort(..), Status(..), Tag, TagRaw, View(..))
+module Types exposing (App(..), Auth, Cipher, Def(..), Flags, Funnel(..), GqlResult, GqlTask, Keys, Model, Msg(..), Post, PostRaw, Route(..), Screen, Sort(..), Status(..), Tag, TagRaw, View(..))
 
 import Array exposing (Array)
 import Browser exposing (UrlRequest)
@@ -24,10 +24,9 @@ type alias Flags =
     { month : Int
     , year : Int
     , online : Bool
-    , href : String
     , screen : Screen
-    , auth : Maybe String
     , isMobile : Bool
+    , swEnabled : Bool
     }
 
 
@@ -53,6 +52,8 @@ type alias Model =
         , login : Bool
         , post : Bool
         , postDelete : Bool
+        , monthlyPlan : Bool
+        , annualPlan : Bool
         }
     , postEditorBody : String
     , postBeingEdited : Bool
@@ -79,7 +80,15 @@ type alias Model =
     , magic : Maybe Bool
     , mg : ( String, String )
     , thanks : Bool
+    , status : App
+    , swEnabled : Bool
     }
+
+
+type App
+    = Waiting
+    | SwUnavailable
+    | Ready
 
 
 type Funnel
@@ -170,6 +179,7 @@ type Msg
     | Bad (Auth -> Cmd Msg)
     | ExportPosts
     | EmailCb
+    | Boot { key : Maybe String, href : String }
 
 
 type Route

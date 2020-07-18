@@ -16,7 +16,6 @@ import Graphql.OptionalArgument exposing (OptionalArgument(..))
 import Helpers
 import Helpers.Parse
 import Helpers.UuidDict as UD
-import Http
 import Json.Decode as JD
 import Json.Encode as JE
 import Maybe.Extra exposing (unwrap)
@@ -30,6 +29,7 @@ import Time exposing (Month(..))
 import Types exposing (Auth, GqlResult, GqlTask, Model, Msg(..), Post, Route(..), Sort(..), Status(..), View(..))
 import Url
 import Uuid
+import Validate exposing (isValidEmail)
 
 
 wait : Task Never ()
@@ -638,29 +638,28 @@ update msg model =
                 email =
                     String.trim model.loginForm.email
             in
-            --if isValidEmail model.email then
             if String.isEmpty email then
                 ( { model | errors = [ "empty field(s)" ] }
                 , Cmd.none
                 )
 
-            else
-                --, Data.nonce email
-                --|> Task.attempt NonceCb
+            else if isValidEmail email then
                 ( { model
                     | errors = []
                     , inProgress =
                         model.inProgress
                             |> (\p -> { p | login = True })
                   }
-                , Http.post
-                    { url = "/call-me-maybe"
-                    , body =
-                        [ ( "email", JE.string email ) ]
-                            |> JE.object
-                            |> Http.jsonBody
-                    , expect = Http.expectWhatever (always EmailCb)
-                    }
+                  --, Data.nonce email
+                  --|> Task.attempt NonceCb
+                , wait
+                    |> Task.map (always <| Ok "")
+                    |> Task.perform NonceCb
+                )
+
+            else
+                ( { model | errors = [ "Invalid data" ] }
+                , Cmd.none
                 )
 
         EmailCb ->
@@ -697,6 +696,7 @@ update msg model =
                         if check "no-user" err then
                             ( { model
                                 | funnel = Types.CheckEmail
+                                , inProgress = model.inProgress |> (\p -> { p | login = False })
                               }
                             , Cmd.none
                             )
@@ -704,6 +704,7 @@ update msg model =
                         else if check "no-purchase" err then
                             ( { model
                                 | funnel = Types.JoinUs
+                                , inProgress = model.inProgress |> (\p -> { p | login = False })
                               }
                             , Cmd.none
                             )
@@ -712,13 +713,16 @@ update msg model =
                             ( { model
                                 | errors = parseErrors err
                                 , online = not <| isNetworkError err
+                                , inProgress = model.inProgress |> (\p -> { p | login = False })
                               }
                             , logGqlError "NonceCb" err
                             )
                     )
                     (\nonce ->
                         ( { model
-                            | funnel = Types.WelcomeBack nonce
+                            --| funnel = Types.WelcomeBack nonce
+                            | funnel = Types.JoinUs
+                            , inProgress = model.inProgress |> (\p -> { p | login = False })
                           }
                         , Cmd.none
                         )
@@ -765,7 +769,99 @@ update msg model =
             )
 
         Buy annual ->
-            ( model, Ports.buy { email = model.loginForm.email, annual = annual } )
+            ( { model
+                | inProgress =
+                    model.inProgress
+                        |> (\p ->
+                                { p
+                                    | monthlyPlan = not annual
+                                    , annualPlan = annual
+                                }
+                           )
+              }
+            , Ports.buy
+                { email = model.loginForm.email
+                , annual = annual
+                }
+            )
+
+        Boot { key, href } ->
+            let
+                url =
+                    Url.fromString href
+
+                route =
+                    url
+                        |> Maybe.andThen Routing.router
+
+                anon =
+                    key == Nothing
+            in
+            ( { model
+                | status = Types.Ready
+                , current =
+                    if anon then
+                        model.current
+
+                    else
+                        route
+                            |> Maybe.andThen
+                                (\r ->
+                                    case r of
+                                        RouteDay d ->
+                                            Just d
+
+                                        _ ->
+                                            Nothing
+                                )
+                , view =
+                    if anon then
+                        model.view
+
+                    else
+                        route
+                            |> unwrap model.view
+                                (\r ->
+                                    case r of
+                                        RouteToday ->
+                                            ViewCalendar
+
+                                        RouteHome ->
+                                            ViewCalendar
+
+                                        RouteTags ->
+                                            ViewTags
+
+                                        RouteStats ->
+                                            ViewStats
+
+                                        RouteSettings ->
+                                            ViewSettings
+
+                                        RouteCalendar ->
+                                            ViewCalendar
+
+                                        RouteDay _ ->
+                                            ViewCalendar
+                                )
+              }
+            , key
+                |> Maybe.andThen
+                    (JD.decodeString JD.value
+                        >> Result.toMaybe
+                    )
+                |> unwrap Cmd.none
+                    (\key_ ->
+                        Data.refresh
+                            |> Task.map
+                                (Maybe.map
+                                    (\token ->
+                                        { token = token, key = key_ }
+                                    )
+                                )
+                            |> Task.attempt (InitCb route)
+                    )
+            )
 
         SignupSubmit ->
             let

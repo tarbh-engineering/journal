@@ -2,21 +2,16 @@ module Main exposing (main)
 
 import Browser
 import Browser.Events
-import Data
 import Day
 import Derberos.Date.Utils exposing (numberToMonth)
 import Graphql.OptionalArgument exposing (OptionalArgument(..))
 import Helpers.UuidDict as UD
-import Json.Decode as JD
-import Maybe.Extra exposing (orElse, unwrap)
 import Ports
 import Routing
-import Task
 import Time exposing (Month(..))
 import Types exposing (Flags, Model, Msg(..), Route(..), Screen, Sort(..), Status(..), View(..))
 import Update exposing (update)
 import Url
-import Url.Parser exposing ((</>), parse, s)
 import View exposing (view)
 
 
@@ -31,6 +26,7 @@ main =
                 Sub.batch
                     [ Browser.Events.onVisibilityChange VisibilityChange
                     , Ports.online SetOnline
+                    , Ports.boot Boot
                     , Ports.onUrlChange
                         (Url.fromString
                             >> Maybe.andThen Routing.router
@@ -44,125 +40,15 @@ main =
 
 init : Flags -> ( Model, Cmd Msg )
 init flags =
-    let
-        url =
-            flags.href
-                |> Url.fromString
-
-        route =
-            url
-                |> Maybe.andThen Routing.router
-
-        anon =
-            flags.auth == Nothing
-
-        model =
-            { emptyModel
-                | screen = flags.screen
-                , isMobile = flags.isMobile
-                , current =
-                    if anon then
-                        Nothing
-
-                    else
-                        route
-                            |> Maybe.andThen
-                                (\r ->
-                                    case r of
-                                        RouteDay d ->
-                                            Just d
-
-                                        _ ->
-                                            Nothing
-                                )
-                , view =
-                    if anon then
-                        emptyModel.view
-
-                    else
-                        route
-                            |> unwrap emptyModel.view
-                                (\r ->
-                                    case r of
-                                        RouteToday ->
-                                            ViewCalendar
-
-                                        RouteHome ->
-                                            ViewCalendar
-
-                                        RouteTags ->
-                                            ViewTags
-
-                                        RouteStats ->
-                                            ViewStats
-
-                                        RouteSettings ->
-                                            ViewSettings
-
-                                        RouteCalendar ->
-                                            ViewCalendar
-
-                                        RouteDay _ ->
-                                            ViewCalendar
-                                )
-                , month = numberToMonth flags.month |> Maybe.withDefault Time.Jan
-                , year = flags.year
-            }
-    in
-    flags.auth
-        |> Maybe.andThen
-            (JD.decodeString JD.value
-                >> Result.toMaybe
-            )
-        |> unwrap
-            (url
-                |> Maybe.andThen
-                    (\url_ ->
-                        url_
-                            |> Url.Parser.parse
-                                (s "signup"
-                                    </> Url.Parser.string
-                                    </> Url.Parser.string
-                                    |> Url.Parser.map Tuple.pair
-                                )
-                            |> Maybe.map
-                                (\( iv, ciph ) ->
-                                    ( { model
-                                        | view = ViewMagic
-                                        , mg = ( iv, ciph )
-                                      }
-                                    , Data.check iv ciph
-                                        |> Task.attempt CheckCb
-                                    )
-                                )
-                            |> orElse
-                                (url_
-                                    |> Url.Parser.parse (s "payment-success")
-                                    |> Maybe.map
-                                        (\_ ->
-                                            ( { model | view = ViewSuccess }
-                                            , Cmd.none
-                                            )
-                                        )
-                                )
-                    )
-                |> Maybe.withDefault
-                    ( model
-                    , Cmd.none
-                    )
-            )
-            (\key ->
-                ( model
-                , Data.refresh
-                    |> Task.map
-                        (Maybe.map
-                            (\token ->
-                                { token = token, key = key }
-                            )
-                        )
-                    |> Task.attempt (InitCb route)
-                )
-            )
+    ( { emptyModel
+        | screen = flags.screen
+        , isMobile = flags.isMobile
+        , swEnabled = flags.swEnabled
+        , month = numberToMonth flags.month |> Maybe.withDefault Time.Jan
+        , year = flags.year
+      }
+    , Cmd.none
+    )
 
 
 emptyModel : Model
@@ -204,6 +90,10 @@ emptyModel =
         , login = False
         , post = False
         , postDelete = False
+        , monthlyPlan = False
+        , annualPlan = False
         }
     , thanks = False
+    , status = Types.Waiting
+    , swEnabled = False
     }

@@ -17,71 +17,93 @@ const stripeAnnual = STRIPE_ANNUAL;
 const stripeMonthly = STRIPE_MONTHLY;
 /* eslint-enable no-undef */
 
-window.navigator.serviceWorker.register("/sw.js").then(() => {
-  const updateOnlineStatus = (event) => {
-    switch (event.type) {
-      case "online":
-        return app.ports.online.send(true);
-      case "offline":
-        return app.ports.online.send(false);
-    }
-  };
+const CRYPTO_KEY = "KEY_A";
 
-  const now = new Date();
+const isFn = (x) => typeof x === "function";
 
-  const auth = localStorage.getItem("authed");
+const swEnabled =
+  window.navigator.serviceWorker &&
+  isFn(window.navigator.serviceWorker.register);
 
-  const flags = {
-    auth,
-    month: now.getMonth(),
-    year: now.getFullYear(),
-    online: navigator.onLine,
-    href: location.href,
-    screen: {
-      width: window.innerWidth,
-      height: window.innerHeight,
-    },
-    isMobile,
-  };
+const cryptoEnabled = [
+  window.crypto,
+  isFn(crypto.getRandomValues),
+  crypto.subtle,
+  isFn(crypto.subtle.importKey),
+  isFn(crypto.subtle.exportKey),
+  isFn(crypto.subtle.encrypt),
+  isFn(crypto.subtle.decrypt),
+  isFn(crypto.subtle.deriveBits),
+].every((x) => x);
 
-  const app = Elm.Main.init({
-    node: document.getElementById("app"),
-    flags,
-  });
+const now = new Date();
 
-  window.addEventListener("popstate", () =>
-    app.ports.onUrlChange.send(location.href)
-  );
+const flags = {
+  month: now.getMonth(),
+  year: now.getFullYear(),
+  online: navigator.onLine,
+  screen: {
+    width: window.innerWidth,
+    height: window.innerHeight,
+  },
+  isMobile,
+  swEnabled,
+  cryptoEnabled,
+};
 
-  app.ports.pushUrl.subscribe((url) => {
-    history.pushState({}, "", url);
-    app.ports.onUrlChange.send(location.href);
-  });
-
-  app.ports.log.subscribe(console.log);
-
-  app.ports.clearAuth.subscribe(() => localStorage.removeItem("authed"));
-
-  app.ports.buy.subscribe(({ email, annual }) => {
-    loadStripe(stripeProjectId).then((stripe) => {
-      const plan = annual ? stripeAnnual : stripeMonthly;
-
-      stripe
-        .redirectToCheckout({
-          items: [{ plan, quantity: 1 }],
-          customerEmail: email,
-          successUrl: location.origin + "/payment-success",
-          cancelUrl: location.origin,
-        })
-        .then(console.log)
-        .catch(console.error);
-    });
-  });
-
-  app.ports.saveAuth.subscribe((key) =>
-    localStorage.setItem("authed", JSON.stringify(key))
-  );
-
-  window.addEventListener("online", updateOnlineStatus);
-  window.addEventListener("offline", updateOnlineStatus);
+const app = Elm.Main.init({
+  node: document.getElementById("app"),
+  flags,
 });
+
+window.addEventListener("popstate", () =>
+  app.ports.onUrlChange.send(location.href)
+);
+
+app.ports.pushUrl.subscribe((url) => {
+  history.pushState({}, "", url);
+  app.ports.onUrlChange.send(location.href);
+});
+
+const updateOnlineStatus = (event) => {
+  switch (event.type) {
+    case "online":
+      return app.ports.online.send(true);
+    case "offline":
+      return app.ports.online.send(false);
+  }
+};
+
+app.ports.log.subscribe(console.log);
+
+app.ports.clearAuth.subscribe(() => localStorage.removeItem("authed"));
+
+app.ports.buy.subscribe(({ email, annual }) => {
+  loadStripe(stripeProjectId)
+    .then((stripe) =>
+      stripe.redirectToCheckout({
+        items: [{ plan: annual ? stripeAnnual : stripeMonthly, quantity: 1 }],
+        customerEmail: email,
+        successUrl: location.origin + "/payment-success",
+        cancelUrl: location.origin,
+      })
+    )
+    .then(console.log)
+    .catch(console.error);
+});
+
+app.ports.saveAuth.subscribe((key) =>
+  localStorage.setItem(CRYPTO_KEY, JSON.stringify(key))
+);
+
+window.addEventListener("online", updateOnlineStatus);
+window.addEventListener("offline", updateOnlineStatus);
+
+if (swEnabled) {
+  window.navigator.serviceWorker.register("/sw.js").then(() =>
+    app.ports.boot.send({
+      href: location.href,
+      key: localStorage.getItem(CRYPTO_KEY),
+    })
+  );
+}

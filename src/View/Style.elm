@@ -1,6 +1,41 @@
-module View.Style exposing (black, blue, grey, purple, white, yellow)
+module View.Style exposing (abel, black, blue, ebg, fadeIn, grey, purple, rotate, varela, white, yellow)
 
-import Element exposing (Color, rgb255)
+import Element exposing (Attribute, Color, rgb255)
+import Element.Font as Font
+import Helpers.View exposing (style)
+
+
+fadeIn : Attribute msg
+fadeIn =
+    style "animation" "fadeIn 0.5s"
+
+
+abel : Attribute msg
+abel =
+    Font.family
+        [ Font.typeface "Abel"
+        ]
+
+
+ebg : Attribute msg
+ebg =
+    Font.family
+        [ Font.typeface "EB Garamond"
+        ]
+
+
+varela : Attribute msg
+varela =
+    Font.family
+        [ Font.typeface "Varela"
+        ]
+
+
+rotate : Attribute msg
+rotate =
+    style
+        "animation"
+        "rotation 0.7s infinite linear"
 
 
 blue : Color

@@ -1,4 +1,4 @@
-module Data exposing (check, fetchDay, fetchPostsByTag, graphqlEndpoint, ignoreParsedErrorData, login, logout, mp, mutate, nonce, postCreate, postDelete, postSelection, postUpdateBody, query, range, refresh, signup, tagAttach, tagCreate, tagDelete, tagDetach, tagSelection, tagUpdate, tags, tp)
+module Data exposing (check, fetchDay, fetchPostsByTag, graphqlEndpoint, ignoreParsedErrorData, login, logout, mutate, nonce, postCreate, postDelete, postSelection, postUpdateBody, query, range, refresh, signup, tagAttach, tagCreate, tagDelete, tagDetach, tagSelection, tagUpdate, tags)
 
 import Api.InputObject
 import Api.Mutation
@@ -31,8 +31,8 @@ graphqlEndpoint =
     "/graphql"
 
 
-mp : Value -> PostRaw -> GqlTask Post
-mp key post =
+postDecrypt : Value -> PostRaw -> GqlTask Post
+postDecrypt key post =
     Crypto.decrypt key post.cipher
         |> Task.map
             (\str ->
@@ -44,8 +44,8 @@ mp key post =
             )
 
 
-tp : Value -> TagRaw -> GqlTask Tag
-tp key tag =
+tagDecrypt : Value -> TagRaw -> GqlTask Tag
+tagDecrypt key tag =
     Crypto.decrypt key tag.cipher
         |> Task.map
             (\str ->
@@ -129,7 +129,7 @@ fetchDay day { key, token } =
         |> Task.andThen
             (List.head
                 >> unwrap (Task.succeed Nothing)
-                    (mp key >> Task.map Just)
+                    (postDecrypt key >> Task.map Just)
             )
 
 
@@ -146,7 +146,7 @@ range start end { key, token } =
         postSelection
         |> query token
         |> Task.andThen
-            (List.map (mp key)
+            (List.map (postDecrypt key)
                 >> Task.sequence
             )
 
@@ -223,7 +223,7 @@ tags { key, token } =
         |> query token
         |> Task.andThen
             (List.map
-                (tp key)
+                (tagDecrypt key)
                 >> Task.sequence
             )
 
@@ -290,17 +290,7 @@ fetchPostsByTag id { key, token } =
         |> query token
         |> Task.andThen
             (List.map
-                (\post ->
-                    Crypto.decrypt key post.cipher
-                        |> Task.map
-                            (\str ->
-                                { id = post.id
-                                , body = str
-                                , date = post.date
-                                , tags = post.tags
-                                }
-                            )
-                )
+                (postDecrypt key)
                 >> Task.sequence
             )
 
@@ -331,7 +321,7 @@ tagUpdate { id, name } { token, key } =
         |> Task.andThen
             (unwrap
                 (Task.fail (makeGqlError "post doesn't exist"))
-                (tp key)
+                (tagDecrypt key)
             )
 
 
@@ -391,7 +381,7 @@ tagAttach post tagId { token, key } =
         (Api.Object.Post_tag.post postSelection)
         |> Graphql.SelectionSet.nonNullOrFail
         |> mutate token
-        |> Task.andThen (mp key)
+        |> Task.andThen (postDecrypt key)
 
 
 tagDetach : Uuid -> Auth -> GqlTask Post
@@ -401,7 +391,7 @@ tagDetach tagId { token, key } =
         (Api.Object.Post_tag.post postSelection)
         |> Graphql.SelectionSet.nonNullOrFail
         |> mutate token
-        |> Task.andThen (mp key)
+        |> Task.andThen (postDecrypt key)
 
 
 postUpdateBody : Uuid -> String -> Auth -> GqlTask Post
@@ -434,7 +424,7 @@ postUpdateBody id body { key, token } =
                 (makeGqlError "post doesn't exist"
                     |> Task.fail
                 )
-                (mp key)
+                (postDecrypt key)
             )
 
 
@@ -464,7 +454,7 @@ tagCreate name { key, token } =
                 (makeGqlError "tag doesn't exist"
                     |> Task.fail
                 )
-                (tp key)
+                (tagDecrypt key)
             )
 
 
@@ -516,7 +506,7 @@ postCreate body tags_ d { key, token } =
                 (makeGqlError "post doesn't exist"
                     |> Task.fail
                 )
-                (mp key)
+                (postDecrypt key)
             )
 
 
