@@ -509,7 +509,12 @@ update msg model =
             res
                 |> unpack
                     (\err ->
-                        ( { model | online = not <| isNetworkError err }
+                        ( { model
+                            | online = not <| isNetworkError err
+                            , inProgress =
+                                model.inProgress
+                                    |> (\p -> { p | tag = False })
+                          }
                         , logGqlError "TagCreateCb" err
                         )
                     )
@@ -518,6 +523,9 @@ update msg model =
                             | tags =
                                 UD.insert tag.id tag model.tags
                             , tagCreateName = ""
+                            , inProgress =
+                                model.inProgress
+                                    |> (\p -> { p | tag = False })
                           }
                         , Cmd.none
                         )
@@ -556,13 +564,23 @@ update msg model =
                     )
 
         TagCreateSubmit ->
-            ( model
-            , if String.isEmpty model.tagCreateName then
-                Cmd.none
+            if String.isEmpty model.tagCreateName then
+                ( model
+                , Cmd.none
+                )
 
-              else if model.auth == Nothing then
-                Uuid.uuidGenerator
-                    |> Random.map
+            else if model.auth == Nothing then
+                ( { model
+                    | inProgress =
+                        model.inProgress
+                            |> (\p -> { p | tag = True })
+                  }
+                , wait
+                    |> Task.andThen
+                        (randomTask Uuid.uuidGenerator
+                            |> always
+                        )
+                    |> Task.map
                         (\uuid ->
                             { id = uuid
                             , name = model.tagCreateName
@@ -570,15 +588,21 @@ update msg model =
                             }
                                 |> Ok
                         )
-                    |> Random.generate TagCreateCb
+                    |> Task.perform TagCreateCb
+                )
 
-              else
-                model.auth
+            else
+                ( { model
+                    | inProgress =
+                        model.inProgress
+                            |> (\p -> { p | tag = True })
+                  }
+                , model.auth
                     |> unwrap Cmd.none
                         (trip (Data.tagCreate model.tagCreateName)
                             TagCreateCb
                         )
-            )
+                )
 
         BodyUpdate str ->
             ( { model | postEditorBody = str }, Cmd.none )
@@ -615,7 +639,7 @@ update msg model =
         SetDef d ->
             ( { model
                 | def =
-                    if Just d == model.def then
+                    if Just d == model.def || model.faq then
                         Nothing
 
                     else
@@ -646,6 +670,7 @@ update msg model =
             else if isValidEmail email then
                 ( { model
                     | errors = []
+                    , def = Nothing
                     , inProgress =
                         model.inProgress
                             |> (\p -> { p | login = True })
@@ -1015,6 +1040,14 @@ update msg model =
                     )
             )
 
+        FaqToggle ->
+            ( { model
+                | faq = not model.faq
+                , def = Nothing
+              }
+            , Cmd.none
+            )
+
         Force ->
             ( { model
                 | view =
@@ -1108,6 +1141,17 @@ update msg model =
 
         NavigateTo route ->
             ( model, goTo route )
+
+
+randomTask : Random.Generator b -> Task a b
+randomTask gen =
+    Time.now
+        |> Task.map
+            (Time.posixToMillis
+                >> Random.initialSeed
+                >> Random.step gen
+                >> Tuple.first
+            )
 
 
 routeDemo : Model -> Route -> ( Model, Cmd Msg )

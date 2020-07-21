@@ -51,6 +51,7 @@ type alias Model =
         { logout : Bool
         , login : Bool
         , post : Bool
+        , tag : Bool
         , postDelete : Bool
         , monthlyPlan : Bool
         , annualPlan : Bool
@@ -82,6 +83,7 @@ type alias Model =
     , thanks : Bool
     , status : App
     , swEnabled : Bool
+    , faq : Bool
     }
 
 
@@ -171,6 +173,7 @@ type Msg
     | Resize Screen
     | PrevMonth
     | NextMonth
+    | FaqToggle
     | Force
     | Change
     | TagSelect Uuid

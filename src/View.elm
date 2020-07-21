@@ -3,7 +3,7 @@ module View exposing (view)
 import Calendar exposing (Day)
 import Date exposing (Date)
 import Day
-import Element exposing (Attribute, Color, Element, alignBottom, centerX, centerY, column, el, fill, height, html, none, padding, paddingXY, paragraph, px, rgb255, row, spaceEvenly, spacing, text, width, wrappedRow)
+import Element exposing (Attribute, Color, Element, alignBottom, centerX, centerY, column, el, fill, height, html, none, padding, paddingXY, paragraph, px, rgb255, row, scrollbarY, spaceEvenly, spacing, text, width, wrappedRow)
 import Element.Background as Background
 import Element.Border as Border
 import Element.Font as Font
@@ -363,6 +363,7 @@ view model =
             , height <| px 10
             , Background.color black
             ]
+        |> when (not isMobile)
     , case model.view of
         ViewHome ->
             if isMobile then
@@ -443,12 +444,12 @@ view model =
         ViewSettings ->
             model.auth
                 |> unwrap
-                    ([ text "You're a guest, you don't have settings!"
-                        |> el [ varela ]
+                    ([ [ text "You're a guest, you don't have settings!" ]
+                        |> paragraph [ varela, Font.center ]
                      , btn "Sign up now" (NavigateTo RouteHome)
                         |> el [ centerX ]
                      ]
-                        |> column [ spacing 50, centerX ]
+                        |> column [ spacing 20, padding 20, centerX ]
                     )
                     (\_ ->
                         [ btn2 False Icons.save "Export posts" ExportPosts
@@ -469,95 +470,12 @@ view model =
                 |> frame
 
         ViewTags ->
-            [ [ [ Input.text
-                    [ Border.rounded 0
-                    , Border.width 1
-                    , width fill
-                    , padding 10
-                    , onKeydown [ onEnter TagCreateSubmit ]
-                    ]
-                    { onChange = TagCreateNameUpdate
-                    , label = Input.labelHidden ""
-                    , placeholder =
-                        text "New tag"
-                            |> Input.placeholder []
-                            |> Just
-                    , text = model.tagCreateName
-                    }
-                , btn "Submit" TagCreateSubmit
-                ]
-                    |> row [ spacing 20 ]
-              , model.tags
-                    |> UD.values
-                    |> List.map
-                        (\t ->
-                            if model.tagBeingEdited == Just t.id then
-                                Input.text
-                                    [ Border.rounded 0, shadow ]
-                                    { label =
-                                        Input.labelRight [] <|
-                                            row []
-                                                --[ emoji Tick <| TagUpdateSubmit { t | name = model.tagUpdate }
-                                                --, emoji X <| TagUpdateSet Nothing
-                                                --]
-                                                []
-                                    , onChange = TagUpdate
-                                    , placeholder = Nothing
-                                    , text = model.tagUpdate
-                                    }
+            (if isMobile then
+                viewTagsMobile model
 
-                            else
-                                [ Input.button []
-                                    { onPress = Just <| TagSelect t.id
-                                    , label = text t.name
-                                    }
-
-                                --(t.name ++ " [" ++  ++ "]")
-                                --<|
-                                --NavigateTo <|
-                                --RouteTagPosts t.id
-                                , text <| String.fromInt t.count
-                                , row []
-                                    --[ emoji Edit <| TagUpdateSet <| Just t
-                                    --, emoji Trash <| TagDelete t
-                                    --]
-                                    []
-                                ]
-                                    |> row [ spacing 20, width fill ]
-                        )
-                    |> column []
-              ]
-                |> column [ cappedWidth 450, centerX, Element.alignTop ]
-            , model.tag
-                |> whenJust
-                    (\t ->
-                        model.posts
-                            |> Day.values
-                            |> List.filterMap Helpers.extract
-                            |> List.filter
-                                (\p ->
-                                    List.member t p.tags
-                                )
-                            |> List.map
-                                (\p ->
-                                    [ p.date |> formatDay |> text
-                                    , [ text p.body ]
-                                        |> paragraph []
-                                    ]
-                                        |> column [ spacing 10, Border.width 1, padding 10 ]
-                                )
-                            |> column
-                                [ spacing 10
-                                , cappedWidth 600
-                                , Element.scrollbarY
-                                , Element.alignTop
-
-                                --, height fill
-                                , height <| px 700
-                                ]
-                    )
-            ]
-                |> row [ centerX, spacing 50, height fill ]
+             else
+                viewTags model
+            )
                 |> frame
 
         ViewSuccess ->
@@ -628,8 +546,152 @@ render isMobile =
         )
 
 
+viewTagsMobile : Model -> Element Msg
+viewTagsMobile model =
+    [ [ Input.text
+            [ Border.rounded 0
+            , Border.width 1
+            , width fill
+            , padding 10
+            , onKeydown [ onEnter TagCreateSubmit ]
+            ]
+            { onChange = TagCreateNameUpdate
+            , label = Input.labelHidden ""
+            , placeholder =
+                text "New tag"
+                    |> Input.placeholder []
+                    |> Just
+            , text = model.tagCreateName
+            }
+      , btn2 model.inProgress.tag Icons.send "Submit" TagCreateSubmit
+      ]
+        |> column [ width fill, paddingXY 20 0, spacing 10 ]
+    , model.tags
+        |> UD.values
+        |> List.map
+            (\t ->
+                [ Input.button [ Font.size 25 ]
+                    { onPress = Just <| TagSelect t.id
+                    , label = text t.name
+                    }
+                , text <| String.fromInt t.count
+                ]
+                    |> row [ spaceEvenly, width fill ]
+            )
+        |> column
+            [ spacing 10
+            , paddingXY 20 0
+            , scrollbarY
+            , width fill
+            , height <| px 350
+            ]
+    ]
+        |> column
+            [ spacing 20
+            , width fill
+            , height fill
+            ]
+
+
+viewTags : Model -> Element Msg
+viewTags model =
+    [ [ [ Input.text
+            [ Border.rounded 0
+            , Border.width 1
+            , width fill
+            , padding 10
+            , onKeydown [ onEnter TagCreateSubmit ]
+            ]
+            { onChange = TagCreateNameUpdate
+            , label = Input.labelHidden ""
+            , placeholder =
+                text "New tag"
+                    |> Input.placeholder []
+                    |> Just
+            , text = model.tagCreateName
+            }
+        , btn "Submit" TagCreateSubmit
+        ]
+            |> row [ spacing 20 ]
+      , model.tags
+            |> UD.values
+            |> List.map
+                (\t ->
+                    if model.tagBeingEdited == Just t.id then
+                        Input.text
+                            [ Border.rounded 0, shadow ]
+                            { label =
+                                Input.labelRight [] <|
+                                    row []
+                                        --[ emoji Tick <| TagUpdateSubmit { t | name = model.tagUpdate }
+                                        --, emoji X <| TagUpdateSet Nothing
+                                        --]
+                                        []
+                            , onChange = TagUpdate
+                            , placeholder = Nothing
+                            , text = model.tagUpdate
+                            }
+
+                    else
+                        [ Input.button []
+                            { onPress = Just <| TagSelect t.id
+                            , label = text t.name
+                            }
+
+                        --(t.name ++ " [" ++  ++ "]")
+                        --<|
+                        --NavigateTo <|
+                        --RouteTagPosts t.id
+                        , text <| String.fromInt t.count
+                        , row []
+                            --[ emoji Edit <| TagUpdateSet <| Just t
+                            --, emoji Trash <| TagDelete t
+                            --]
+                            []
+                        ]
+                            |> row [ spacing 20, width fill ]
+                )
+            |> column []
+      ]
+        |> column [ cappedWidth 450, centerX, Element.alignTop ]
+    , model.tag
+        |> whenJust
+            (\t ->
+                model.posts
+                    |> Day.values
+                    |> List.filterMap Helpers.extract
+                    |> List.filter
+                        (\p ->
+                            List.member t p.tags
+                        )
+                    |> List.map
+                        (\p ->
+                            [ p.date |> formatDay |> text
+                            , [ text p.body ]
+                                |> paragraph []
+                            ]
+                                |> column [ spacing 10, Border.width 1, padding 10 ]
+                        )
+                    |> column
+                        [ spacing 10
+                        , cappedWidth 600
+                        , Element.scrollbarY
+                        , Element.alignTop
+
+                        --, height fill
+                        , height <| px 700
+                        ]
+            )
+    ]
+        |> row [ centerX, spacing 50, height fill ]
+
+
 viewHomeMobile : Model -> Element Msg
 viewHomeMobile model =
+    let
+        xs =
+            model.screen.width < 360
+    in
     [ [ text "BOLSTER"
             |> el
                 [ Font.size 55
@@ -718,190 +780,303 @@ viewHomeMobile model =
             [ width fill
             , paddingXY 20 0
             ]
-    , case model.funnel of
-        Hello ->
-            none
+    , [ case model.funnel of
+            Hello ->
+                none
 
-        WelcomeBack nonce ->
-            viewWelcome model nonce
+            WelcomeBack nonce ->
+                viewWelcome model nonce
 
-        CheckEmail ->
-            [ text "Please check your email for signup instructions."
-            , btn "Re-send email" (NavigateTo RouteHome)
-                |> el [ centerX ]
-            ]
-                |> column
-                    [ centerX
-                    , spacing 20
-                    ]
-
-        JoinUs ->
-            let
-                waiting =
-                    not model.inProgress.monthlyPlan && not model.inProgress.annualPlan
-            in
-            [ text "Sign up"
-                |> el [ Font.italic, Font.size 25, Font.bold ]
-            , [ text "Monthly plan"
-              , Input.button
-                    [ Background.gradient
-                        { angle = degrees 0
-                        , steps =
-                            [ Element.rgb255 225 95 137
-                            , Element.rgb255 13 50 77
-                            ]
-                        }
-                    , width <| px 150
-                    , height <| px 40
-                    , Font.center
-                    , Font.color white
-                    , Border.rounded 10
-                    , Border.shadow
-                        { offset = ( 4, 4 )
-                        , blur = 4
-                        , size = 0
-                        , color = Element.rgb255 150 150 150
-                        }
-                    , Element.mouseDown
-                        [ Element.moveRight 5
-                        , Element.moveDown 5
-                        , Border.shadow
-                            { offset = ( 0, 0 )
-                            , blur = 0
-                            , size = 0
-                            , color = Element.rgb255 150 150 150
-                            }
-                        ]
-                        |> whenAttr waiting
-                    ]
-                    { onPress =
-                        if waiting then
-                            Just <| Buy False
-
-                        else
-                            Nothing
-                    , label =
-                        if model.inProgress.monthlyPlan then
-                            icon Icons.refresh 25
-                                |> el [ rotate, centerX ]
-
-                        else
-                            text "$5 Buy"
-                    }
-              ]
-                |> row [ spaceEvenly, width fill ]
-            , [ text "Annual plan"
-              , Input.button
-                    [ Background.gradient
-                        { angle = degrees 0
-                        , steps =
-                            [ Element.rgb255 225 95 137
-                            , Element.rgb255 13 50 77
-                            ]
-                        }
-                    , width <| px 150
-                    , height <| px 40
-                    , Font.center
-                    , Font.color white
-                    , Border.rounded 10
-                    , Border.shadow
-                        { offset = ( 4, 4 )
-                        , blur = 4
-                        , size = 0
-                        , color = Element.rgb255 150 150 150
-                        }
-                    , Element.mouseDown
-                        [ Element.moveRight 5
-                        , Element.moveDown 5
-                        , Border.shadow
-                            { offset = ( 0, 0 )
-                            , blur = 0
-                            , size = 0
-                            , color = Element.rgb255 150 150 150
-                            }
-                        ]
-                        |> whenAttr waiting
-                    ]
-                    { onPress =
-                        if waiting then
-                            Just <| Buy True
-
-                        else
-                            Nothing
-                    , label =
-                        if model.inProgress.annualPlan then
-                            icon Icons.refresh 25
-                                |> el [ rotate, centerX ]
-
-                        else
-                            text "$40 Buy"
-                    }
-              ]
-                |> row [ spaceEvenly, width fill ]
-            , Element.image [ height <| px 35, centerX, fadeIn ]
-                { src = "/stripe1.png", description = "" }
-            ]
-                |> column
-                    [ centerX
-                    , spacing 20
-                    , width fill
-                    , padding 20
-                    , Element.alignBottom
-                    , Background.color grey
-                    , style "animation" "enter 1s"
-                    , style "transform-origin" "center"
-                    ]
-                |> el [ width fill, paddingXY 20 0, Element.alignBottom ]
-    , if model.thanks then
-        "Thank you!"
-            |> text
-            |> el
-                [ style "animation-name" "fadeIn"
-                , style "animation-duration" "1s"
-                , centerX
-                , centerY
-                , Font.size 30
-                , varela
+            CheckEmail ->
+                [ text "Please check your email for signup instructions."
+                , btn "Re-send email" (NavigateTo RouteHome)
+                    |> el [ centerX ]
                 ]
-            |> el [ width fill ]
+                    |> column
+                        [ centerX
+                        , spacing 20
+                        ]
 
-      else
-        viewFx model
-    , Input.button
-        [ centerX
-        , centerY
-        , Font.size 25
-        , varela
-        , Border.rounded 50
-        , padding 20
+            JoinUs ->
+                let
+                    waiting =
+                        not model.inProgress.monthlyPlan && not model.inProgress.annualPlan
+                in
+                [ text "Sign up"
+                    |> el [ Font.italic, Font.size 25, Font.bold ]
+                , [ text "Monthly plan"
+                  , Input.button
+                        [ Background.gradient
+                            { angle = degrees 0
+                            , steps =
+                                [ Element.rgb255 225 95 137
+                                , Element.rgb255 13 50 77
+                                ]
+                            }
+                        , width <| px 150
+                        , height <| px 40
+                        , Font.center
+                        , Font.color white
+                        , Border.rounded 10
+                        , Border.shadow
+                            { offset = ( 4, 4 )
+                            , blur = 4
+                            , size = 0
+                            , color = Element.rgb255 150 150 150
+                            }
+                        , Element.mouseDown
+                            [ Element.moveRight 5
+                            , Element.moveDown 5
+                            , Border.shadow
+                                { offset = ( 0, 0 )
+                                , blur = 0
+                                , size = 0
+                                , color = Element.rgb255 150 150 150
+                                }
+                            ]
+                            |> whenAttr waiting
+                        ]
+                        { onPress =
+                            if waiting then
+                                Just <| Buy False
 
-        --, shadow
-        , Border.shadow
-            { offset = ( 4, 4 )
-            , blur = 4
-            , size = 0
-            , color = Element.rgb255 150 150 150
+                            else
+                                Nothing
+                        , label =
+                            if model.inProgress.monthlyPlan then
+                                icon Icons.refresh 25
+                                    |> el [ rotate, centerX ]
+
+                            else
+                                text "$5 Buy"
+                        }
+                  ]
+                    |> row [ spaceEvenly, width fill ]
+                , [ text "Annual plan"
+                  , Input.button
+                        [ Background.gradient
+                            { angle = degrees 0
+                            , steps =
+                                [ Element.rgb255 225 95 137
+                                , Element.rgb255 13 50 77
+                                ]
+                            }
+                        , width <| px 150
+                        , height <| px 40
+                        , Font.center
+                        , Font.color white
+                        , Border.rounded 10
+                        , Border.shadow
+                            { offset = ( 4, 4 )
+                            , blur = 4
+                            , size = 0
+                            , color = Element.rgb255 150 150 150
+                            }
+                        , Element.mouseDown
+                            [ Element.moveRight 5
+                            , Element.moveDown 5
+                            , Border.shadow
+                                { offset = ( 0, 0 )
+                                , blur = 0
+                                , size = 0
+                                , color = Element.rgb255 150 150 150
+                                }
+                            ]
+                            |> whenAttr waiting
+                        ]
+                        { onPress =
+                            if waiting then
+                                Just <| Buy True
+
+                            else
+                                Nothing
+                        , label =
+                            if model.inProgress.annualPlan then
+                                icon Icons.refresh 25
+                                    |> el [ rotate, centerX ]
+
+                            else
+                                text "$40 Buy"
+                        }
+                  ]
+                    |> row [ spaceEvenly, width fill ]
+                , Element.image [ height <| px 35, centerX, fadeIn ]
+                    { src = "/stripe1.png", description = "" }
+                ]
+                    |> column
+                        [ centerX
+                        , spacing 20
+                        , width fill
+                        , padding 20
+                        , Element.alignBottom
+                        , Background.color grey
+                        , style "animation" "enter 1s"
+                        , style "transform-origin" "center"
+                        ]
+                    |> el [ width fill, paddingXY 20 0, Element.alignBottom ]
+      , if model.thanks then
+            "Thank you!"
+                |> text
+                |> el
+                    [ style "animation-name" "fadeIn"
+                    , style "animation-duration" "1s"
+                    , centerX
+                    , centerY
+                    , Font.size 30
+                    , varela
+                    ]
+                |> el [ width fill ]
+
+        else
+            viewFx model
+      , Input.button
+            [ centerX
+            , centerY
+            , Font.size 25
+            , varela
+            , Border.rounded 50
+            , padding 20
+
+            --, shadow
+            , Border.shadow
+                { offset = ( 4, 4 )
+                , blur = 4
+                , size = 0
+                , color = Element.rgb255 150 150 150
+                }
+
+            --, Background.gradient
+            --{ angle = 0
+            --, steps =
+            --[ Element.rgb255 150 208 255
+            --, Element.rgb255 13 50 77
+            --]
+            --}
+            , Font.color black
+            , Background.color grey
+            ]
+            { onPress = Just <| NavigateTo RouteCalendar
+            , label = text "Try demo"
             }
-
-        --, Background.gradient
-        --{ angle = 0
-        --, steps =
-        --[ Element.rgb255 150 208 255
-        --, Element.rgb255 13 50 77
-        --]
-        --}
-        , Font.color black
-        , Background.color grey
-        ]
-        { onPress = Just <| NavigateTo RouteCalendar
-        , label = text "Try the demo"
-        }
-        |> el [ padding 20, Element.alignRight, Element.alignBottom ]
+            |> el [ padding 20, Element.alignRight, Element.alignBottom ]
+      ]
+        |> column
+            [ width fill
+            , height fill
+            , viewFaq model
+                |> Element.inFront
+            ]
     ]
         |> column
             [ height fill
             , width fill
             ]
+
+
+viewFaq : Model -> Element Msg
+viewFaq model =
+    [ Input.button
+        [ centerX
+        , Font.size 25
+        , varela
+        , padding 20
+        , Font.color black
+        ]
+        { onPress = Just FaqToggle
+        , label = text "FAQ"
+        }
+    , [ [ ( "Can I get an app?"
+          , "Bolster will eventually be released in both stores."
+          )
+        , ( "Can you read my stuff?"
+          , "No, all your words are end-to-end encrypted using your password."
+          )
+        , ( "What is end-to-end encryption?"
+          , "You can read more here."
+          )
+        , ( "Can you read my password?"
+          , "No, your password is also protected. This means that you CANNOT FORGET your password or you will not be able to gain access to your account."
+          )
+        , ( "Is this a money laundering scheme?"
+          , "Yes I think so."
+          )
+        ]
+            |> List.map
+                (\( a, b ) ->
+                    [ [ text a ]
+                        |> paragraph [ Font.bold ]
+                    , [ text b ]
+                        |> paragraph [ Font.italic ]
+                    ]
+                        |> column [ spacing 5, height fill, width fill ]
+                )
+            |> column
+                [ spacing 10
+                , height fill
+                , Element.scrollbarY
+                , width fill
+                ]
+      , [ Element.newTabLink [ Font.size 15, Font.italic ]
+            { url = "https://tarbh.engineering"
+            , label = text "Made by Tarbh"
+            }
+        , Input.button
+            [ Font.size 25
+            , varela
+            , Font.color black
+            ]
+            { onPress = Just FaqToggle
+            , label =
+                [ icon Icons.keyboard_return 25, text "Back" ]
+                    |> row [ spacing 10, height <| px 50 ]
+            }
+        ]
+            |> row [ width fill, spaceEvenly ]
+      ]
+        |> column
+            [ spacing 10
+            , padding 10
+            , height fill
+            , width fill
+            , Element.clip
+            , style "flex-shrink" "1"
+            ]
+        |> when model.faq
+    ]
+        |> column
+            [ Border.shadow
+                { offset = ( 4, 4 )
+                , blur = 4
+                , size = 0
+                , color = Element.rgb255 150 150 150
+                }
+            , Background.color grey
+            , Border.rounded 25
+            , height fill
+            , width fill
+            ]
+        |> List.singleton
+        |> row
+            ([ Element.paddingEach
+                { top = 10
+                , bottom = 20
+                , left = 20
+                , right = 20
+                }
+             , Element.clip
+             , style "flex-shrink" "1"
+             ]
+                ++ (if model.faq then
+                        [ height fill
+                        , width fill
+                        ]
+
+                    else
+                        [ Element.alignLeft
+                        , Element.alignBottom
+                        ]
+                   )
+            )
 
 
 viewHome : Model -> Element Msg
@@ -945,7 +1120,7 @@ viewHome model =
             , varela
             ]
             { onPress = Just <| NavigateTo RouteCalendar
-            , label = text "Try the demo"
+            , label = text "Try demo"
             }
         ]
             |> column [ spacing 10, width <| px 350 ]
@@ -1078,7 +1253,8 @@ viewEmail model =
         valid =
             isValidEmail model.loginForm.email
     in
-    [ paragraph [ ebg, Font.size 25, width Element.shrink, centerX ] [ text "Coming soon. Sign up to be notified." ]
+    [ paragraph [ ebg, Font.size 25, width Element.shrink, centerX ]
+        [ text "Coming soon. Sign up to be notified." ]
     , [ Input.email
             [ Border.rounded 0
             , Border.width 0
@@ -1459,7 +1635,7 @@ viewFrameMobile model elem =
                 )
             |> row [ spacing 40 ]
       ]
-        |> column [ width fill, spacing 20, paddingXY 20 0 ]
+        |> column [ width fill, spacing 10, paddingXY 20 10 ]
     , elem
     ]
         |> column [ spacing 10, height fill, width fill ]

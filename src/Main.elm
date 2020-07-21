@@ -89,6 +89,7 @@ emptyModel =
         { logout = False
         , login = False
         , post = False
+        , tag = False
         , postDelete = False
         , monthlyPlan = False
         , annualPlan = False
@@ -96,4 +97,5 @@ emptyModel =
     , thanks = False
     , status = Types.Waiting
     , swEnabled = False
+    , faq = False
     }

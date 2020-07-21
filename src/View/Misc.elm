@@ -75,7 +75,8 @@ btn2 : Bool -> Icon msg -> String -> msg -> Element msg
 btn2 inProg ic str msg =
     Input.button
         [ padding 10
-        , style "transition" "all 0.2s"
+
+        --, style "transition" "all 0.2s"
         , Element.mouseOver
             [ Font.color white
             , Background.color black
@@ -112,7 +113,8 @@ btn : String -> msg -> Element msg
 btn str msg =
     Input.button
         [ padding 15
-        , style "transition" "all 0.2s"
+
+        --, style "transition" "all 0.2s"
         , Element.mouseOver
             [ Font.color white
             , Background.color black
