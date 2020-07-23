@@ -7,6 +7,15 @@
   }
 }
 
+@keyframes fadeOut {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
 @keyframes shrink {
   from {
     /*transform: scaleY(1);*/
@@ -17,6 +26,15 @@
     /*transform: scaleY(0);*/
     opacity: 0;
     /*filter: blur(50px);*/
+  }
+}
+
+@keyframes rise {
+  from {
+    transform: scaleY(0);
+  }
+  to {
+    transform: scaleY(1);
   }
 }
 

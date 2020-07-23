@@ -639,7 +639,7 @@ update msg model =
         SetDef d ->
             ( { model
                 | def =
-                    if Just d == model.def || model.faq then
+                    if Just d == model.def || model.faq || model.funnel /= Types.Hello then
                         Nothing
 
                     else
@@ -1122,6 +1122,12 @@ update msg model =
             )
 
         UrlChange r_ ->
+            let
+                model_ =
+                    { model
+                        | postBeingEdited = False
+                    }
+            in
             r_
                 |> unwrap
                     ( model
@@ -1129,8 +1135,8 @@ update msg model =
                     )
                     (model.auth
                         |> unwrap
-                            (routeDemo model)
-                            (routeLive model)
+                            (routeDemo model_)
+                            (routeLive model_)
                     )
 
         Bad mm ->
@@ -1222,13 +1228,13 @@ routeDemo model route =
                             shouldFocusOnEditor =
                                 case data of
                                     Missing ->
-                                        True
+                                        not model.isMobile
 
                                     Loading _ ->
                                         False
 
                                     Found _ ->
-                                        model.postBeingEdited
+                                        model.postBeingEdited && not model.isMobile
 
                             editorText =
                                 case data of
@@ -1330,13 +1336,13 @@ routeLiveDay model d auth =
                     shouldFocusOnEditor =
                         case data of
                             Missing ->
-                                True
+                                not model.isMobile
 
                             Loading _ ->
                                 False
 
                             Found _ ->
-                                model.postBeingEdited
+                                not model.isMobile && model.postBeingEdited
 
                     editorText =
                         case data of

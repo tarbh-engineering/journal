@@ -311,6 +311,7 @@ cell model n day =
                 , Background.color blue
                 , style "transform-origin" "center"
                 , style "animation" "enter 0.3s"
+                    |> whenAttr (not model.postBeingEdited)
                 ]
             |> Element.inFront
             |> whenAttr curr
@@ -1693,31 +1694,31 @@ viewPageMobile model =
                 , columns =
                     [ { header = weekday "Mon"
                       , width = wd
-                      , view = .mon >> cell2 model
+                      , view = .mon >> cell model 50
                       }
                     , { header = weekday "Tue"
                       , width = wd
-                      , view = .tue >> cell2 model
+                      , view = .tue >> cell model 50
                       }
                     , { header = weekday "Wed"
                       , width = wd
-                      , view = .wed >> cell2 model
+                      , view = .wed >> cell model 50
                       }
                     , { header = weekday "Thu"
                       , width = wd
-                      , view = .thu >> cell2 model
+                      , view = .thu >> cell model 50
                       }
                     , { header = weekday "Fri"
                       , width = wd
-                      , view = .fri >> cell2 model
+                      , view = .fri >> cell model 50
                       }
                     , { header = weekday "Sat"
                       , width = wd
-                      , view = .sat >> cell2 model
+                      , view = .sat >> cell model 50
                       }
                     , { header = weekday "Sun"
                       , width = wd
-                      , view = .sun >> cell2 model
+                      , view = .sun >> cell model 50
                       }
                     ]
                 }
@@ -1763,7 +1764,7 @@ viewPageMobile model =
                     [ spacing 10
                     , Element.alignTop
                     , width fill
-                    , style "animation" "shrink 1s"
+                    , style "animation" "fadeOut 0.5s"
                         |> whenAttr model.postBeingEdited
                     , style "display" "hidden"
                         |> whenAttr model.postBeingEdited
@@ -1991,8 +1992,8 @@ viewPostMobile model =
                         [ height fill
                         , width fill
                         , spacing 10
-                        , style "animation" "enter 1s"
-                        , style "transform-origin" "bottom center"
+                        , style "animation" "rise 0.5s"
+                        , style "transform-origin" "bottom"
                         ]
             )
 
