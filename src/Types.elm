@@ -59,6 +59,7 @@ type alias Model =
     , postEditorBody : String
     , postBeingEdited : Bool
     , postView : Bool
+    , tagView : Bool
     , postCreateTags : List Uuid
     , auth : Maybe Auth
     , tagCreateName : String

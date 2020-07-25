@@ -411,12 +411,12 @@ update msg model =
                     (\date ->
                         ( { model
                             | posts =
-                                Day.remove
-                                    date
-                                    model.posts
+                                model.posts
+                                    |> Day.remove date
                             , postEditorBody = ""
                             , inProgress = model.inProgress |> (\p -> { p | postDelete = False })
                             , current = Nothing
+                            , postView = False
                           }
                         , Cmd.none
                         )

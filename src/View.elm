@@ -497,7 +497,13 @@ view model =
             ]
                 |> column [ centerX, spacing 20, padding 40 ]
     ]
-        |> column [ spacing wd, height fill, width fill ]
+        |> column
+            [ spacing wd
+            , height fill
+            , width fill
+            , Element.clip
+            , fShrink
+            ]
         |> render model.isMobile
 
 
@@ -1040,7 +1046,7 @@ viewFaq model =
             , height fill
             , width fill
             , Element.clip
-            , style "flex-shrink" "1"
+            , fShrink
             ]
         |> when model.faq
     ]
@@ -1065,7 +1071,7 @@ viewFaq model =
                 , right = 20
                 }
              , Element.clip
-             , style "flex-shrink" "1"
+             , fShrink
              ]
                 ++ (if model.faq then
                         [ height fill
@@ -1639,7 +1645,13 @@ viewFrameMobile model elem =
         |> column [ width fill, spacing 10, paddingXY 20 10 ]
     , elem
     ]
-        |> column [ spacing 10, height fill, width fill ]
+        |> column
+            [ spacing 10
+            , height fill
+            , width fill
+            , Element.clip
+            , fShrink
+            ]
 
 
 viewPage : Model -> Element Msg
@@ -1765,26 +1777,29 @@ viewPageMobile model =
                     , Element.alignTop
                     , width fill
                     , style "animation" "fadeOut 0.5s"
-                        |> whenAttr model.postBeingEdited
+                        |> whenAttr (model.postBeingEdited || model.postView)
                     , style "display" "hidden"
                         |> whenAttr model.postBeingEdited
+                        |> whenAttr (model.postBeingEdited || model.postView)
                     , style "animation-fill-mode" "forwards"
                     , style "transform-origin" "bottom center"
                     ]
     in
     [ cal
-        |> when (not model.postBeingEdited)
+        |> when (not model.postBeingEdited && not model.postView)
     , [ viewPostMobile model
-            |> when model.postBeingEdited
+            |> when (model.postBeingEdited || model.postView)
       , model.current
             |> whenJust (viewBar model)
       ]
-        |> column [ width fill, height fill ]
+        |> column [ width fill, height fill, Element.clip, fShrink ]
     ]
         |> column
             [ width fill
             , height fill
             , padding 20
+            , Element.clip
+            , fShrink
             , cal
                 |> when model.postBeingEdited
                 |> el [ padding 20, width fill, height fill ]
@@ -1810,34 +1825,47 @@ viewBar model day =
                 ]
             )
             (\post ->
-                if model.postBeingEdited then
-                    [ btn2
-                        model.inProgress.post
-                        Icons.save
-                        "Submit"
-                        (PostUpdateSubmit post.id)
-                        |> when (model.postEditorBody /= post.body && model.postEditorBody /= "")
+                if model.postBeingEdited || model.postView then
+                    [ if model.postBeingEdited then
+                        btn2
+                            model.inProgress.post
+                            Icons.save
+                            "Submit"
+                            (PostUpdateSubmit post.id)
+                            |> when (model.postEditorBody /= post.body && model.postEditorBody /= "")
+
+                      else
+                        btn2
+                            model.inProgress.post
+                            Icons.edit
+                            "Edit"
+                            (PostUpdateStart post.body)
                     , [ btn2 False Icons.delete "Delete" (PostDelete post.id post.date)
-                      , btn2 False Icons.close "Cancel" PostUpdateCancel
+                            |> when False
+                      , if model.postBeingEdited then
+                            btn2 False Icons.close "Cancel" PostUpdateCancel
+
+                        else
+                            btn2 False Icons.close "Close" PostViewToggle
                       ]
                         |> row [ spacing 10, Element.alignRight ]
                     ]
 
                 else
-                    [ post.body |> String.left 8 |> text
-                    , [ btn2 False
-                            Icons.visibility
-                            "View"
-                            (PostUpdateStart post.body)
-                      , btn2 False
+                    [ -- ellipsisText 15 post.body
+                      [ btn2 False
                             Icons.edit
                             "Edit"
                             (PostUpdateStart post.body)
+                      , btn2 False
+                            Icons.visibility
+                            "View"
+                            PostViewToggle
                       ]
-                        |> row [ spacing 10 ]
+                        |> row [ spacing 10, Element.alignRight ]
                     ]
             )
-        |> row [ width fill, spaceEvenly, alignBottom ]
+        |> row [ width fill, spaceEvenly, alignBottom, width fill ]
 
 
 viewReady : Element Msg
@@ -1900,45 +1928,42 @@ viewPostMobile model =
                             fn (PostUpdateSubmit post.id)
 
                         else
-                            Input.button
-                                [ width fill
-                                , height <| px 700
-
-                                --, Element.mouseOver [ Background.color grey ]
-                                , Background.color grey
-                                , padding 20
-                                , Font.size 35
-                                , Element.alignTop
-                                , ebg
-                                , style "cursor" Icon.pencil
-                                ]
-                                { onPress = Just <| PostUpdateStart post.body
-                                , label =
-                                    post.body
-                                        -- HACK: Need to pass through Html in order
-                                        -- to preserve formatting.
-                                        |> Html.text
-                                        |> List.singleton
-                                        |> Html.div
-                                            [ Html.Attributes.style "white-space" "pre-wrap"
-                                            , Html.Attributes.style "line-height" "40px"
-                                            , Html.Attributes.style "height" "100%"
-                                            , Html.Attributes.style "width" "100%"
-                                            , Html.Attributes.style "overflow-y" "auto"
-                                            , Html.Attributes.style "word-break" "break-word"
-                                            ]
-                                        |> Element.html
-                                }
+                            post.body
+                                -- HACK: Need to pass through Html in order
+                                -- to preserve formatting.
+                                |> Html.text
+                                |> List.singleton
+                                |> Html.div
+                                    [ Html.Attributes.style "white-space" "pre-wrap"
+                                    , Html.Attributes.style "line-height" "40px"
+                                    , Html.Attributes.style "height" "100%"
+                                    , Html.Attributes.style "width" "100%"
+                                    , Html.Attributes.style "overflow-y" "auto"
+                                    , Html.Attributes.style "word-break" "break-word"
+                                    , Html.Attributes.style "min-height" "min-content"
+                                    ]
+                                |> Element.html
+                                |> el
+                                    [ width fill
+                                    , height fill
+                                    , Background.color grey
+                                    , padding 20
+                                    , Font.size 35
+                                    , ebg
+                                    , Element.clip
+                                    , fShrink
+                                    ]
 
                     pst =
                         model.posts
                             |> Day.get d
                             |> Maybe.andThen Helpers.extract
                 in
-                [ [ [ formatDay d
+                [ [ formatDay d
                         |> text
-                    , text "|"
-                    , pst
+                  , text "|"
+                        |> when model.postBeingEdited
+                  , pst
                         |> unwrap
                             ("Creating a new entry" |> text |> el [ Font.italic ])
                             (always
@@ -1946,47 +1971,45 @@ viewPostMobile model =
                                     |> when model.postBeingEdited
                                 )
                             )
-                    ]
-                        |> row [ spaceEvenly, Font.size 17, width fill ]
-                  , if model.postView then
-                        pst
-                            |> whenJust
-                                (\p ->
-                                    model.tags
-                                        |> UD.values
-                                        |> List.map
-                                            (\t ->
-                                                Input.button
-                                                    [ padding 10
-                                                    , Border.width 1
-                                                    , (if List.member t.id p.tags then
-                                                        blue
-
-                                                       else
-                                                        white
-                                                      )
-                                                        |> Background.color
-                                                    ]
-                                                    { onPress = Just <| PostTagToggle p t
-                                                    , label = text t.name
-                                                    }
-                                            )
-                                        |> Element.wrappedRow [ spacing 20 ]
-                                )
-
-                    else
-                        case data of
-                            Missing ->
-                                create
-
-                            Loading ma ->
-                                ma
-                                    |> unwrap create make
-
-                            Found a ->
-                                make a
                   ]
-                    |> column [ width fill, spacing 10, height fill ]
+                    |> row [ spaceEvenly, Font.size 17, width fill, height <| px 20 ]
+                , if model.tagView then
+                    pst
+                        |> whenJust
+                            (\p ->
+                                model.tags
+                                    |> UD.values
+                                    |> List.map
+                                        (\t ->
+                                            Input.button
+                                                [ padding 10
+                                                , Border.width 1
+                                                , (if List.member t.id p.tags then
+                                                    blue
+
+                                                   else
+                                                    white
+                                                  )
+                                                    |> Background.color
+                                                ]
+                                                { onPress = Just <| PostTagToggle p t
+                                                , label = text t.name
+                                                }
+                                        )
+                                    |> Element.wrappedRow [ spacing 20 ]
+                            )
+
+                  else
+                    case data of
+                        Missing ->
+                            create
+
+                        Loading ma ->
+                            ma
+                                |> unwrap create make
+
+                        Found a ->
+                            make a
                 ]
                     |> column
                         [ height fill
@@ -1994,6 +2017,8 @@ viewPostMobile model =
                         , spacing 10
                         , style "animation" "rise 0.5s"
                         , style "transform-origin" "bottom"
+                        , Element.clip
+                        , fShrink
                         ]
             )
 
@@ -2093,7 +2118,7 @@ viewPost model =
                         |> row [ spacing 10 ]
                   ]
                     |> row [ width fill, spaceEvenly, height <| px 55 ]
-                , if model.postView then
+                , if model.tagView then
                     pst
                         |> whenJust
                             (\p ->
@@ -2153,13 +2178,13 @@ viewPost model =
 
                             else
                                 btn2 False
-                                    (if model.postView then
+                                    (if model.tagView then
                                         Icons.edit
 
                                      else
                                         Icons.label
                                     )
-                                    (if model.postView then
+                                    (if model.tagView then
                                         "Pad"
 
                                      else
@@ -2190,6 +2215,34 @@ shiftShadow =
             )
         |> String.join ", "
         |> style "box-shadow"
+
+
+{-| To handle scrollbarY problems.
+<https://github.com/mdgriffith/elm-ui/issues/149>
+-}
+fShrink : Attribute msg
+fShrink =
+    style "flex-shrink" "1"
+
+
+ellipsisText : Int -> String -> Element msg
+ellipsisText n txt =
+    Html.div
+        [ Html.Attributes.style "overflow" "hidden"
+        , Html.Attributes.style "text-overflow" "ellipsis"
+        , Html.Attributes.style "white-space" "nowrap"
+        , Html.Attributes.style "height" <| String.fromInt n ++ "px"
+        , Html.Attributes.style "display" "table-cell"
+        , Html.Attributes.title txt
+        ]
+        [ Html.text txt
+        ]
+        |> Element.html
+        |> el
+            [ width fill
+            , style "table-layout" "fixed"
+            , style "display" "table"
+            ]
 
 
 colString : Color -> String

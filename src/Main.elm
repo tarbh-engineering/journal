@@ -62,6 +62,7 @@ emptyModel =
     , postEditorBody = ""
     , postBeingEdited = False
     , postView = False
+    , tagView = False
     , auth = Nothing
     , tagCreateName = ""
     , tagUpdate = ""
