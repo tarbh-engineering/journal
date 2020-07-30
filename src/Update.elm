@@ -295,10 +295,19 @@ update msg model =
             , Cmd.none
             )
 
+        TagViewToggle ->
+            ( { model
+                | tagView = not model.tagView
+                , postView = False
+              }
+            , Cmd.none
+            )
+
         PostUpdateStart body ->
             ( { model
                 | postEditorBody = body
                 , postBeingEdited = True
+                , tagView = False
               }
             , focusOnEditor
             )
@@ -463,6 +472,7 @@ update msg model =
                             , postBeingEdited = False
                             , inProgress = model.inProgress |> (\p -> { p | post = False })
                             , online = True
+                            , postView = model.isMobile
                           }
                         , Cmd.none
                         )
@@ -648,13 +658,43 @@ update msg model =
             , Cmd.none
             )
 
-        PostCreateTagToggle tag ->
-            ( { model
-                | postCreateTags =
-                    model.postCreateTags
-                        |> toggle tag.id
-              }
-            , Cmd.none
+        PostCreateTagToggle date tag ->
+            --( { model
+            --| postCreateTags =
+            --model.postCreateTags
+            --|> toggle tag.id
+            --}
+            --, Cmd.none
+            --)
+            ( model
+            , model.auth
+                |> unwrap
+                    (randomTask Uuid.uuidGenerator
+                        |> Task.map
+                            (\id ->
+                                { tags = [ tag.id ]
+                                , date = date
+                                , body = ""
+                                , id = id
+                                }
+                                    |> Just
+                            )
+                        |> Task.attempt (PostCb date)
+                    )
+                    --(if List.member tag.id post.tags then
+                    --trip
+                    --(Data.tagDetach tag.id
+                    -->> Task.map Just
+                    --)
+                    --(PostCb post.date)
+                    --else
+                    --trip
+                    --(Data.tagAttach post tag.id
+                    -->> Task.map Just
+                    --)
+                    --(PostCb post.date)
+                    --)
+                    (always Cmd.none)
             )
 
         EmailSubmit ->
@@ -743,7 +783,7 @@ update msg model =
                             , logGqlError "NonceCb" err
                             )
                     )
-                    (\nonce ->
+                    (\_ ->
                         ( { model
                             --| funnel = Types.WelcomeBack nonce
                             | funnel = Types.JoinUs
@@ -1126,11 +1166,13 @@ update msg model =
                 model_ =
                     { model
                         | postBeingEdited = False
+                        , tagView = False
+                        , postView = False
                     }
             in
             r_
                 |> unwrap
-                    ( model
+                    ( model_
                     , Ports.log "Missing route"
                     )
                     (model.auth

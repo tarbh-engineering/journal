@@ -128,31 +128,31 @@ viewCalendar model =
         , columns =
             [ { header = weekday "Mon"
               , width = px wd
-              , view = .mon >> cell model wd
+              , view = .mon >> viewCell model wd
               }
             , { header = weekday "Tue"
               , width = px wd
-              , view = .tue >> cell model wd
+              , view = .tue >> viewCell model wd
               }
             , { header = weekday "Wed"
               , width = px wd
-              , view = .wed >> cell model wd
+              , view = .wed >> viewCell model wd
               }
             , { header = weekday "Thu"
               , width = px wd
-              , view = .thu >> cell model wd
+              , view = .thu >> viewCell model wd
               }
             , { header = weekday "Fri"
               , width = px wd
-              , view = .fri >> cell model wd
+              , view = .fri >> viewCell model wd
               }
             , { header = weekday "Sat"
               , width = px wd
-              , view = .sat >> cell model wd
+              , view = .sat >> viewCell model wd
               }
             , { header = weekday "Sun"
               , width = px wd
-              , view = .sun >> cell model wd
+              , view = .sun >> viewCell model wd
               }
             ]
         }
@@ -251,13 +251,16 @@ cell2 model day =
         }
 
 
-cell : Model -> Int -> Day -> Element Msg
-cell model n day =
+viewCell : Model -> Int -> Day -> Element Msg
+viewCell model n day =
     let
-        hv =
+        pst =
             model.posts
                 |> Day.get day.date
                 |> Maybe.andThen Helpers.extract
+
+        hv =
+            pst
                 |> unwrap False (always True)
 
         curr =
@@ -315,10 +318,18 @@ cell model n day =
                 ]
             |> Element.inFront
             |> whenAttr curr
-        , Date.day day.date
-            |> String.fromInt
-            |> text
-            |> el [ Element.alignTop, Element.alignLeft, padding 5, Font.bold ]
+        , [ Date.day day.date
+                |> String.fromInt
+                |> text
+                |> el [ Element.alignTop, Element.alignLeft, padding 5, Font.bold ]
+          , [ icon Icons.label 15
+                |> when (pst |> unwrap False (\p -> not <| List.isEmpty p.tags))
+            , icon Icons.edit 15
+                |> when (pst |> unwrap False (\p -> not <| String.isEmpty p.body))
+            ]
+                |> row [ spacing 10 ]
+          ]
+            |> column [ height fill, width fill ]
             |> Element.inFront
         ]
         { onPress =
@@ -1676,6 +1687,9 @@ viewPageMobile model =
         wd =
             fill
 
+        flip =
+            model.postBeingEdited || model.postView || model.tagView
+
         cal =
             [ [ Input.button [ Font.color white, Element.alignLeft ]
                     { onPress = Just PrevMonth
@@ -1706,31 +1720,31 @@ viewPageMobile model =
                 , columns =
                     [ { header = weekday "Mon"
                       , width = wd
-                      , view = .mon >> cell model 50
+                      , view = .mon >> viewCell model 50
                       }
                     , { header = weekday "Tue"
                       , width = wd
-                      , view = .tue >> cell model 50
+                      , view = .tue >> viewCell model 50
                       }
                     , { header = weekday "Wed"
                       , width = wd
-                      , view = .wed >> cell model 50
+                      , view = .wed >> viewCell model 50
                       }
                     , { header = weekday "Thu"
                       , width = wd
-                      , view = .thu >> cell model 50
+                      , view = .thu >> viewCell model 50
                       }
                     , { header = weekday "Fri"
                       , width = wd
-                      , view = .fri >> cell model 50
+                      , view = .fri >> viewCell model 50
                       }
                     , { header = weekday "Sat"
                       , width = wd
-                      , view = .sat >> cell model 50
+                      , view = .sat >> viewCell model 50
                       }
                     , { header = weekday "Sun"
                       , width = wd
-                      , view = .sun >> cell model 50
+                      , view = .sun >> viewCell model 50
                       }
                     ]
                 }
@@ -1776,21 +1790,21 @@ viewPageMobile model =
                     [ spacing 10
                     , Element.alignTop
                     , width fill
-                    , style "animation" "fadeOut 0.5s"
-                        |> whenAttr (model.postBeingEdited || model.postView)
-                    , style "display" "hidden"
-                        |> whenAttr model.postBeingEdited
-                        |> whenAttr (model.postBeingEdited || model.postView)
-                    , style "animation-fill-mode" "forwards"
-                    , style "transform-origin" "bottom center"
+
+                    --, style "transform-origin" "bottom center"
+                    --, style "animation-fill-mode" "forwards"
+                    --, style "animation" "fadeOut 0.5s"
+                    --|> whenAttr flip
+                    , Element.transparent flip
                     ]
     in
     [ cal
-        |> when (not model.postBeingEdited && not model.postView)
-    , [ viewPostMobile model
-            |> when (model.postBeingEdited || model.postView)
+        |> when (not flip)
+    , [ model.current
+            |> whenJust (vp2 model)
+            |> when flip
       , model.current
-            |> whenJust (viewBar model)
+            |> whenJust (viewBarMobile model)
       ]
         |> column [ width fill, height fill, Element.clip, fShrink ]
     ]
@@ -1807,6 +1821,49 @@ viewPageMobile model =
             ]
 
 
+viewBarMobile : Model -> Date -> Element Msg
+viewBarMobile model day =
+    let
+        pst =
+            model.posts
+                |> Day.get day
+                |> Maybe.andThen Helpers.extract
+
+        edit =
+            pst
+                |> unwrap "" .body
+                |> PostUpdateStart
+    in
+    (if model.postBeingEdited then
+        [ btn2 False Icons.close "Cancel" PostUpdateCancel
+        , btn2 model.inProgress.post Icons.save "Submit" (PostCreateSubmit day)
+
+        --|> when (model.postEditorBody /= post.body && model.postEditorBody /= "")
+        ]
+
+     else if model.tagView then
+        [ btn2 False Icons.edit "Write" edit
+        , btn2 False Icons.close "Close" TagViewToggle
+        ]
+
+     else if model.postView then
+        [ btn2 False Icons.label "Tags" TagViewToggle
+        , btn2 False Icons.edit "Edit" edit
+        , btn2 False Icons.close "Close" PostViewToggle
+        ]
+
+     else
+        [ btn2 False Icons.label "Tags" TagViewToggle
+        , if pst |> unwrap True (.body >> (==) "") then
+            btn2 False Icons.edit "Write" edit
+
+          else
+            btn2 False Icons.visibility "View" PostViewToggle
+        ]
+    )
+        |> row [ width fill, spaceEvenly, alignBottom, width fill ]
+
+
 viewBar : Model -> Date -> Element Msg
 viewBar model day =
     model.posts
@@ -1816,16 +1873,15 @@ viewBar model day =
             (if model.postBeingEdited then
                 [ btn2 model.inProgress.post Icons.save "Submit" (PostCreateSubmit day)
                 , btn2 False Icons.close "Cancel" PostUpdateCancel
-                    |> el [ Element.alignRight ]
                 ]
 
              else
-                [ btn2 False Icons.edit "New" (PostUpdateStart "")
-                    |> el [ Element.alignRight ]
+                [ btn2 False Icons.label "Tags" TagViewToggle
+                , btn2 False Icons.edit "Write" (PostUpdateStart "")
                 ]
             )
             (\post ->
-                if model.postBeingEdited || model.postView then
+                if model.postBeingEdited || model.postView || model.tagView then
                     [ if model.postBeingEdited then
                         btn2
                             model.inProgress.post
@@ -1882,6 +1938,171 @@ viewReady =
                 |> Just
         , label = none
         }
+
+
+vp2 : Model -> Date -> Element Msg
+vp2 model d =
+    let
+        pst =
+            model.posts
+                |> Day.get d
+                |> Maybe.andThen Helpers.extract
+
+        xs =
+            UD.values model.tags
+
+        fn fn1 =
+            Html.textarea
+                [ Html.Attributes.id "editor"
+                , Html.Attributes.value model.postEditorBody
+                , Html.Attributes.style "font-size" "inherit"
+                , Html.Attributes.style "font-family" "inherit"
+                , Html.Attributes.style "cursor" "inherit"
+                , Html.Attributes.style "line-height" "40px"
+                , Html.Attributes.style "padding" "0px"
+                , Html.Events.onInput BodyUpdate
+                ]
+                []
+                |> Element.html
+                |> el
+                    [ width fill
+                    , style "cursor" "text"
+                    , Element.alignTop
+                    , height fill
+                    , Background.color grey
+                    , Font.size 35
+                    , padding 20
+                    , onKeydown [ onCtrlEnter fn1 ]
+                    , ebg
+                    ]
+
+        tMsg =
+            pst
+                |> unwrap (PostCreateTagToggle d)
+                    PostTagToggle
+
+        data =
+            model.posts
+                |> Helpers.getStatus d
+
+        create =
+            fn (PostCreateSubmit d)
+
+        make post =
+            if model.postBeingEdited then
+                fn (PostUpdateSubmit post.id)
+
+            else
+                post.body
+                    -- HACK: Need to pass through Html in order
+                    -- to preserve formatting.
+                    |> Html.text
+                    |> List.singleton
+                    |> Html.div
+                        [ Html.Attributes.style "white-space" "pre-wrap"
+                        , Html.Attributes.style "line-height" "40px"
+                        , Html.Attributes.style "height" "100%"
+                        , Html.Attributes.style "width" "100%"
+                        , Html.Attributes.style "overflow-y" "auto"
+                        , Html.Attributes.style "word-break" "break-word"
+                        , Html.Attributes.style "min-height" "min-content"
+                        ]
+                    |> Element.html
+                    |> el
+                        [ width fill
+                        , height fill
+                        , Background.color grey
+                        , padding 20
+                        , Font.size 35
+                        , ebg
+                        , Element.clip
+                        , fShrink
+                        ]
+
+        txt =
+            if model.tagView then
+                Just "Tags"
+
+            else
+                pst
+                    |> unwrap
+                        (Just "Creating a new entry")
+                        (always
+                            (if model.postBeingEdited then
+                                Just "Updating entry"
+
+                             else
+                                Nothing
+                            )
+                        )
+    in
+    [ [ formatDay d
+            |> text
+      , text "|"
+            |> when (txt /= Nothing)
+      , txt |> whenJust (text >> el [ Font.italic ])
+      ]
+        |> row [ spaceEvenly, Font.size 17, width fill, height <| px 20 ]
+    , if model.tagView then
+        if List.isEmpty xs then
+            "Make a tag!"
+                |> text
+                |> el [ centerX, Font.bold ]
+
+        else
+            xs
+                |> List.map
+                    (\t ->
+                        let
+                            flip =
+                                pst |> unwrap False (\p -> List.member t.id p.tags)
+                        in
+                        [ text t.name
+                        , Input.button
+                            [ width <| px 40
+                            , height <| px 40
+                            , Border.width 1
+                            ]
+                            { onPress = Just <| tMsg t
+                            , label =
+                                icon Icons.done 20
+                                    |> el [ centerX, centerY ]
+                                    |> when flip
+                            }
+                        ]
+                            |> row [ width fill, spaceEvenly ]
+                    )
+                |> List.intersperse
+                    (el
+                        [ width fill
+                        , height <| px 1
+                        , Background.color black
+                        ]
+                        none
+                    )
+                |> column [ spacing 10, cappedWidth 250, centerX ]
+
+      else
+        case data of
+            Missing ->
+                create
+
+            Loading ma ->
+                ma
+                    |> unwrap create make
+
+            Found a ->
+                make a
+    ]
+        |> column
+            [ height fill
+            , width fill
+            , spacing 10
+            , style "animation" "rise 0.5s"
+            , style "transform-origin" "bottom"
+            , Element.clip
+            , fShrink
+            ]
 
 
 viewPostMobile : Model -> Element Msg
@@ -1974,17 +2195,25 @@ viewPostMobile model =
                   ]
                     |> row [ spaceEvenly, Font.size 17, width fill, height <| px 20 ]
                 , if model.tagView then
-                    pst
-                        |> whenJust
-                            (\p ->
-                                model.tags
-                                    |> UD.values
+                    let
+                        xs =
+                            UD.values model.tags
+                    in
+                    if List.isEmpty xs then
+                        "Make a tag!"
+                            |> text
+                            |> el [ centerX, Font.bold ]
+
+                    else
+                        pst
+                            |> unwrap
+                                (xs
                                     |> List.map
                                         (\t ->
                                             Input.button
                                                 [ padding 10
                                                 , Border.width 1
-                                                , (if List.member t.id p.tags then
+                                                , (if List.member t.id model.postCreateTags then
                                                     blue
 
                                                    else
@@ -1992,12 +2221,33 @@ viewPostMobile model =
                                                   )
                                                     |> Background.color
                                                 ]
-                                                { onPress = Just <| PostTagToggle p t
+                                                { onPress = Just <| PostCreateTagToggle d t
                                                 , label = text t.name
                                                 }
                                         )
                                     |> Element.wrappedRow [ spacing 20 ]
-                            )
+                                )
+                                (\p ->
+                                    xs
+                                        |> List.map
+                                            (\t ->
+                                                Input.button
+                                                    [ padding 10
+                                                    , Border.width 1
+                                                    , (if List.member t.id p.tags then
+                                                        blue
+
+                                                       else
+                                                        white
+                                                      )
+                                                        |> Background.color
+                                                    ]
+                                                    { onPress = Just <| PostTagToggle p t
+                                                    , label = text t.name
+                                                    }
+                                            )
+                                        |> Element.wrappedRow [ spacing 20 ]
+                                )
 
                   else
                     case data of

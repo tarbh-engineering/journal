@@ -162,7 +162,7 @@ type Msg
     | TagCreateCb (GqlResult Tag)
     | TagSortUpdate Sort
     | PostTagToggle Post Tag
-    | PostCreateTagToggle Tag
+    | PostCreateTagToggle Date Tag
     | FocusCb (Result Browser.Dom.Error ())
     | UrlChange (Maybe Route)
     | UrlRequest UrlRequest
@@ -170,6 +170,7 @@ type Msg
     | SetOnline Bool
     | SetSelectedResult Uuid
     | PostViewToggle
+    | TagViewToggle
     | VisibilityChange Visibility
     | Resize Screen
     | PrevMonth
@@ -214,7 +215,7 @@ type alias Post =
 
 type alias PostRaw =
     { date : Date
-    , cipher : Cipher
+    , cipher : Maybe Cipher
     , id : Uuid
     , tags : List Uuid
     }

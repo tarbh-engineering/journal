@@ -20,9 +20,9 @@ import Graphql.SelectionSet exposing (SelectionSet)
 import Json.Decode as Decode
 
 
-ciphertext : SelectionSet String Api.Object.Post
+ciphertext : SelectionSet (Maybe String) Api.Object.Post
 ciphertext =
-    Object.selectionForField "String" "ciphertext" [] Decode.string
+    Object.selectionForField "(Maybe String)" "ciphertext" [] (Decode.string |> Decode.nullable)
 
 
 date : SelectionSet CustomScalars.Date Api.Object.Post
@@ -35,9 +35,9 @@ id =
     Object.selectionForField "CustomScalars.Uuid" "id" [] (CustomScalars.codecs |> Api.Scalar.unwrapCodecs |> .codecUuid |> .decoder)
 
 
-iv : SelectionSet String Api.Object.Post
+iv : SelectionSet (Maybe String) Api.Object.Post
 iv =
-    Object.selectionForField "String" "iv" [] Decode.string
+    Object.selectionForField "(Maybe String)" "iv" [] (Decode.string |> Decode.nullable)
 
 
 type alias PostTagsOptionalArguments =

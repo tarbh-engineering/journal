@@ -1,4 +1,4 @@
-module Data exposing (check, fetchDay, fetchPostsByTag, graphqlEndpoint, ignoreParsedErrorData, login, logout, mutate, nonce, postCreate, postDelete, postSelection, postUpdateBody, query, range, refresh, signup, tagAttach, tagCreate, tagDelete, tagDetach, tagSelection, tagUpdate, tags)
+module Data exposing (check, fetchDay, fetchPostsByTag, graphqlEndpoint, ignoreParsedErrorData, login, logout, mutate, nonce, postCreate, postCreateWithTag, postDelete, postSelection, postUpdateBody, query, range, refresh, signup, tagAttach, tagCreate, tagDelete, tagDetach, tagSelection, tagUpdate, tags)
 
 import Api.InputObject
 import Api.Mutation
@@ -33,11 +33,17 @@ graphqlEndpoint =
 
 postDecrypt : Value -> PostRaw -> GqlTask Post
 postDecrypt key post =
-    Crypto.decrypt key post.cipher
+    post.cipher
+        |> unwrap
+            (Task.succeed "")
+            --(Task.succeed Nothing)
+            (Crypto.decrypt key
+             -->> Task.map Just
+            )
         |> Task.map
-            (\str ->
+            (\val ->
                 { id = post.id
-                , body = str
+                , body = val
                 , date = post.date
                 , tags = post.tags
                 }
@@ -178,7 +184,8 @@ postSelection : SelectionSet Types.PostRaw Api.Object.Post
 postSelection =
     Graphql.SelectionSet.map4 Types.PostRaw
         Api.Object.Post.date
-        (Graphql.SelectionSet.map2 Cipher
+        (Graphql.SelectionSet.map2
+            (Maybe.map2 Cipher)
             Api.Object.Post.iv
             Api.Object.Post.ciphertext
         )
@@ -501,6 +508,43 @@ postCreate body tags_ d { key, token } =
                     postSelection
                     |> mutate token
             )
+        |> Task.andThen
+            (unwrap
+                (makeGqlError "post doesn't exist"
+                    |> Task.fail
+                )
+                (postDecrypt key)
+            )
+
+
+postCreateWithTag : Uuid -> Date -> Auth -> GqlTask Post
+postCreateWithTag tag d { key, token } =
+    Api.Mutation.insert_post_one
+        identity
+        { object =
+            Api.InputObject.buildPost_insert_input
+                (\r ->
+                    { r
+                        | ciphertext = Null
+                        , iv = Null
+                        , date = Present d
+                        , post_tags =
+                            Api.InputObject.buildPost_tag_arr_rel_insert_input
+                                { data =
+                                    [ Api.InputObject.buildPost_tag_insert_input
+                                        (\r__ ->
+                                            { r__
+                                                | tag_id = Present tag
+                                            }
+                                        )
+                                    ]
+                                }
+                                |> Present
+                    }
+                )
+        }
+        postSelection
+        |> mutate token
         |> Task.andThen
             (unwrap
                 (makeGqlError "post doesn't exist"
