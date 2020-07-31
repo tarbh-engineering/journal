@@ -700,7 +700,8 @@ update msg model =
         EmailSubmit ->
             let
                 email =
-                    String.trim model.loginForm.email
+                    --String.trim model.loginForm.email
+                    ""
             in
             if String.isEmpty email then
                 ( { model | errors = [ "empty field(s)" ] }
@@ -1080,6 +1081,13 @@ update msg model =
                     )
             )
 
+        DropdownToggle ->
+            ( { model
+                | dropdown = not model.dropdown
+              }
+            , Cmd.none
+            )
+
         FaqToggle ->
             ( { model
                 | faq = not model.faq
@@ -1168,6 +1176,7 @@ update msg model =
                         | postBeingEdited = False
                         , tagView = False
                         , postView = False
+                        , dropdown = False
                     }
             in
             r_

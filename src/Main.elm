@@ -99,4 +99,5 @@ emptyModel =
     , status = Types.Waiting
     , swEnabled = False
     , faq = False
+    , dropdown = False
     }

@@ -265,6 +265,11 @@ viewCell model n day =
 
         curr =
             Just day.date == model.current
+
+        edit =
+            pst
+                |> unwrap "" .body
+                |> PostUpdateStart
     in
     Input.button
         [ height <| px n
@@ -333,13 +338,18 @@ viewCell model n day =
             |> Element.inFront
         ]
         { onPress =
-            if curr then
-                Nothing
+            (if curr then
+                if pst |> unwrap True (.body >> (==) "") then
+                    edit
 
-            else
+                else
+                    PostViewToggle
+
+             else
                 RouteDay day.date
                     |> NavigateTo
-                    |> Just
+            )
+                |> Just
         , label = none
         }
 
@@ -1621,9 +1631,13 @@ viewFrameMobile model elem =
             ]
             { onPress = Just <| NavigateTo RouteHome
             , label =
-                [ text "BOLSTER"
+                [ Element.image
+                    [ height <| px 35
+                    , width <| px 35
+                    ]
+                    { src = "/icons/192.png", description = "" }
                 , text "DEMO"
-                    |> el [ Font.light ]
+                    |> el [ abel ]
                     |> when (model.auth == Nothing)
                 ]
                     |> row [ spacing 10 ]
@@ -1652,8 +1666,49 @@ viewFrameMobile model elem =
                         }
                 )
             |> row [ spacing 40 ]
+            |> when False
       ]
-        |> column [ width fill, spacing 10, paddingXY 20 10 ]
+        |> row
+            [ width fill
+            , spaceEvenly
+            , paddingXY 20 10
+            , [ Input.button [ Element.alignRight ]
+                    { onPress = Just DropdownToggle
+                    , label = icon Icons.menu 40
+                    }
+              , [ viewRoute Icons.calendar_today "Calendar" RouteCalendar ViewCalendar model.view
+                , viewRoute Icons.label "Tags" RouteTags ViewTags model.view
+
+                --, ( "Stats", RouteStats, ViewStats )
+                , viewRoute Icons.settings "Settings" RouteSettings ViewSettings model.view
+                ]
+                    |> column [ spacing 10, padding 20 ]
+                    |> when model.dropdown
+              ]
+                |> column
+                    [ Background.color grey
+                        |> whenAttr model.dropdown
+                    , Border.shadow
+                        { offset = ( 3, 3 )
+                        , blur = 4
+                        , size = 2
+                        , color = Element.rgb255 150 150 150
+                        }
+                        |> whenAttr model.dropdown
+                    , padding 10
+                        |> whenAttr (not model.dropdown)
+
+                    --, Border.width 1
+                    --|> whenAttr model.dropdown
+                    ]
+                |> el
+                    [ Element.alignRight
+                    , padding 10
+                        |> whenAttr model.dropdown
+                    , style "z-index" "1"
+                    ]
+                |> Element.inFront
+            ]
     , elem
     ]
         |> column
@@ -1663,6 +1718,30 @@ viewFrameMobile model elem =
             , Element.clip
             , fShrink
             ]
+
+
+viewRoute icn txt r v curr =
+    Input.button
+        [ Border.width 1 |> whenAttr (v == curr)
+        , Element.mouseOver
+            [ Font.color blue
+            ]
+        , Font.size 25
+        , width fill
+        , padding 10
+        ]
+        { onPress =
+            if v == curr then
+                Nothing
+
+            else
+                Just <| NavigateTo r
+        , label =
+            [ icon icn 20
+            , text txt
+            ]
+                |> row [ spacing 10 ]
+        }
 
 
 viewPage : Model -> Element Msg
@@ -1806,12 +1885,18 @@ viewPageMobile model =
       , model.current
             |> whenJust (viewBarMobile model)
       ]
-        |> column [ width fill, height fill, Element.clip, fShrink ]
+        |> column
+            [ width fill
+            , height fill
+            , Element.clip
+            , fShrink
+            , spacing 10
+            ]
     ]
         |> column
             [ width fill
             , height fill
-            , padding 20
+            , paddingXY 20 10
             , Element.clip
             , fShrink
             , cal
@@ -2038,16 +2123,27 @@ vp2 model d =
     in
     [ [ formatDay d
             |> text
+            |> el [ width fill ]
       , text "|"
             |> when (txt /= Nothing)
-      , txt |> whenJust (text >> el [ Font.italic ])
+      , txt
+            |> whenJust
+                (text
+                    >> el [ Element.alignRight ]
+                    >> el [ Font.italic, width fill ]
+                )
       ]
-        |> row [ spaceEvenly, Font.size 17, width fill, height <| px 20 ]
+        |> row [ spaceEvenly, Font.size 17, width fill ]
     , if model.tagView then
         if List.isEmpty xs then
-            "Make a tag!"
-                |> text
-                |> el [ centerX, Font.bold ]
+            [ [ text "You don't have any tags." ]
+                |> paragraph []
+            , btn
+                "Go to tags"
+                (NavigateTo RouteTags)
+                |> el [ centerX ]
+            ]
+                |> column [ spacing 20, padding 20, centerX ]
 
         else
             xs

@@ -85,6 +85,7 @@ type alias Model =
     , status : App
     , swEnabled : Bool
     , faq : Bool
+    , dropdown : Bool
     }
 
 
@@ -185,6 +186,7 @@ type Msg
     | ExportPosts
     | EmailCb
     | Boot { key : Maybe String, href : String }
+    | DropdownToggle
 
 
 type Route
