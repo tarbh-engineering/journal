@@ -2049,6 +2049,7 @@ vp2 model d =
                 , Html.Attributes.style "cursor" "inherit"
                 , Html.Attributes.style "line-height" "40px"
                 , Html.Attributes.style "padding" "0px"
+                , Html.Attributes.style "flex-grow" "inherit"
                 , Html.Events.onInput BodyUpdate
                 ]
                 []

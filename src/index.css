@@ -1,3 +1,8 @@
+html {
+  -webkit-text-size-adjust: none;
+  touch-action: pan-y;
+}
+
 @keyframes rotation {
   from {
     transform: rotate(0deg);
