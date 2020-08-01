@@ -1928,13 +1928,17 @@ viewBarMobile model day =
 
      else if model.tagView then
         [ btn2 False Icons.edit "Write" edit
-        , btn2 False Icons.close "Close" TagViewToggle
+
+        --, btn2 False Icons.close "Close" TagViewToggle
+        , btn "X" TagViewToggle
         ]
 
      else if model.postView then
         [ btn2 False Icons.label "Tags" TagViewToggle
         , btn2 False Icons.edit "Edit" edit
-        , btn2 False Icons.close "Close" PostViewToggle
+
+        --, btn2 False Icons.close "Close" PostViewToggle
+        , btn "X" PostViewToggle
         ]
 
      else
