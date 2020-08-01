@@ -55,6 +55,7 @@ type alias Model =
         , postDelete : Bool
         , monthlyPlan : Bool
         , annualPlan : Bool
+        , tags : List Uuid
         }
     , postEditorBody : String
     , postBeingEdited : Bool
@@ -129,6 +130,7 @@ type alias Keys =
 type Msg
     = PostsCb (GqlResult (List Post))
     | PostCb Date (GqlResult (Maybe Post))
+    | PostTagCb Uuid (GqlResult Post)
     | PostMutateCb (GqlResult Post)
     | PostDeleteCb (GqlResult Date)
     | TagsCb (GqlResult (List Tag))

@@ -22,7 +22,7 @@ import Time exposing (Month(..))
 import Time.Format.I18n.I_en_us exposing (monthName)
 import Types exposing (Def(..), Funnel(..), Model, Msg(..), Route(..), Sort(..), Status(..), View(..))
 import Validate exposing (isValidEmail)
-import View.Misc exposing (btn, btn2, formatDay, icon)
+import View.Misc exposing (btn, btn2, formatDay, icon, spinner)
 import View.Style exposing (abel, black, blue, ebg, fadeIn, grey, rotate, varela, white, yellow)
 
 
@@ -1731,11 +1731,13 @@ viewRoute icn txt r v curr =
         , padding 10
         ]
         { onPress =
-            if v == curr then
-                Nothing
+            (if v == curr then
+                DropdownToggle
 
-            else
-                Just <| NavigateTo r
+             else
+                NavigateTo r
+            )
+                |> Just
         , label =
             [ icon icn 20
             , text txt
@@ -2032,6 +2034,9 @@ viewReady =
 vp2 : Model -> Date -> Element Msg
 vp2 model d =
     let
+        fs =
+            25
+
         pst =
             model.posts
                 |> Day.get d
@@ -2047,7 +2052,7 @@ vp2 model d =
                 , Html.Attributes.style "font-size" "inherit"
                 , Html.Attributes.style "font-family" "inherit"
                 , Html.Attributes.style "cursor" "inherit"
-                , Html.Attributes.style "line-height" "40px"
+                , Html.Attributes.style "line-height" "30px"
                 , Html.Attributes.style "padding" "0px"
                 , Html.Attributes.style "flex-grow" "inherit"
                 , Html.Events.onInput BodyUpdate
@@ -2057,12 +2062,10 @@ vp2 model d =
                 |> el
                     [ width fill
                     , style "cursor" "text"
-                    , Element.alignTop
                     , height fill
                     , Background.color grey
-                    , Font.size 35
+                    , Font.size fs
                     , padding 20
-                    , onKeydown [ onCtrlEnter fn1 ]
                     , ebg
                     ]
 
@@ -2090,7 +2093,7 @@ vp2 model d =
                     |> List.singleton
                     |> Html.div
                         [ Html.Attributes.style "white-space" "pre-wrap"
-                        , Html.Attributes.style "line-height" "40px"
+                        , Html.Attributes.style "line-height" "30px"
                         , Html.Attributes.style "height" "100%"
                         , Html.Attributes.style "width" "100%"
                         , Html.Attributes.style "overflow-y" "auto"
@@ -2103,7 +2106,7 @@ vp2 model d =
                         , height fill
                         , Background.color grey
                         , padding 20
-                        , Font.size 35
+                        , Font.size fs
                         , ebg
                         , Element.clip
                         , fShrink
@@ -2157,21 +2160,43 @@ vp2 model d =
                         let
                             flip =
                                 pst |> unwrap False (\p -> List.member t.id p.tags)
+
+                            prog =
+                                List.member t.id model.inProgress.tags
                         in
-                        [ text t.name
+                        [ ellipsisText 20 t.name
                         , Input.button
                             [ width <| px 40
                             , height <| px 40
                             , Border.width 1
+                            , (if prog then
+                                grey
+
+                               else
+                                white
+                              )
+                                |> Background.color
                             ]
-                            { onPress = Just <| tMsg t
+                            { onPress =
+                                if prog then
+                                    Nothing
+
+                                else
+                                    Just <| tMsg t
                             , label =
                                 icon Icons.done 20
                                     |> el [ centerX, centerY ]
                                     |> when flip
                             }
                         ]
-                            |> row [ width fill, spaceEvenly ]
+                            |> row
+                                [ width fill
+                                , spaceEvenly
+                                , spinner
+                                    |> el [ centerY, paddingXY 10 0 ]
+                                    |> Element.onRight
+                                    |> whenAttr prog
+                                ]
                     )
                 |> List.intersperse
                     (el
@@ -2591,6 +2616,7 @@ ellipsisText n txt =
         |> Element.html
         |> el
             [ width fill
+            , style "width" "100%"
             , style "table-layout" "fixed"
             , style "display" "table"
             ]

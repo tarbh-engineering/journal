@@ -94,6 +94,7 @@ emptyModel =
         , postDelete = False
         , monthlyPlan = False
         , annualPlan = False
+        , tags = []
         }
     , thanks = False
     , status = Types.Waiting

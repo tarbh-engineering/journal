@@ -478,6 +478,41 @@ update msg model =
                         )
                     )
 
+        PostTagCb id res ->
+            let
+                inProgress =
+                    model.inProgress
+                        |> (\p ->
+                                { p
+                                    | tags =
+                                        p.tags
+                                            |> List.filter ((/=) id)
+                                }
+                           )
+            in
+            res
+                |> unpack
+                    (\err ->
+                        ( { model
+                            | online = not <| isNetworkError err
+                            , inProgress = inProgress
+                          }
+                        , logGqlError "PostTagCb" err
+                        )
+                    )
+                    (\post ->
+                        ( { model
+                            | posts =
+                                model.posts
+                                    |> Day.insert
+                                        post.date
+                                        (Found post)
+                            , inProgress = inProgress
+                          }
+                        , Cmd.none
+                        )
+                    )
+
         PostCb day res ->
             res
                 |> unpack
@@ -1053,17 +1088,29 @@ update msg model =
                     )
 
         PostTagToggle post tag ->
-            ( model
+            ( { model
+                | inProgress =
+                    model.inProgress
+                        |> (\p ->
+                                { p
+                                    | tags =
+                                        tag.id :: p.tags
+                                }
+                           )
+              }
             , model.auth
                 |> unwrap
-                    ({ post
-                        | tags =
-                            post.tags
-                                |> toggle tag.id
-                     }
-                        |> Task.succeed
-                        |> Task.map Just
-                        |> Task.attempt (PostCb post.date)
+                    (wait
+                        |> Task.map
+                            ({ post
+                                | tags =
+                                    post.tags
+                                        |> toggle tag.id
+                             }
+                                |> Ok
+                                |> always
+                            )
+                        |> Task.perform (PostTagCb tag.id)
                     )
                     (if List.member tag.id post.tags then
                         trip
