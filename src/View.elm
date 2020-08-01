@@ -2184,18 +2184,18 @@ vp2 model d =
                                 else
                                     Just <| tMsg t
                             , label =
-                                icon Icons.done 20
-                                    |> el [ centerX, centerY ]
-                                    |> when flip
+                                if prog then
+                                    spinner
+
+                                else
+                                    icon Icons.done 20
+                                        |> el [ centerX, centerY ]
+                                        |> when flip
                             }
                         ]
                             |> row
                                 [ width fill
-                                , spaceEvenly
-                                , spinner
-                                    |> el [ centerY, paddingXY 10 0 ]
-                                    |> Element.onRight
-                                    |> whenAttr prog
+                                , spacing 10
                                 ]
                     )
                 |> List.intersperse
@@ -2206,7 +2206,7 @@ vp2 model d =
                         ]
                         none
                     )
-                |> column [ spacing 10, cappedWidth 250, centerX ]
+                |> column [ spacing 10, cappedWidth 300, centerX ]
 
       else
         case data of

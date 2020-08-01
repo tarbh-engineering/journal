@@ -412,7 +412,10 @@ update msg model =
                     (\err ->
                         ( { model
                             | online = not <| isNetworkError err
-                            , inProgress = model.inProgress |> (\p -> { p | postDelete = False })
+                            , inProgress =
+                                model.inProgress
+                                    |> (\p -> { p | postDelete = False })
+                            , postBeingEdited = False
                           }
                         , logGqlError "PostDeleteCb" err
                         )
@@ -426,6 +429,7 @@ update msg model =
                             , inProgress = model.inProgress |> (\p -> { p | postDelete = False })
                             , current = Nothing
                             , postView = False
+                            , postBeingEdited = False
                           }
                         , Cmd.none
                         )
