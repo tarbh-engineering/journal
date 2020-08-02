@@ -224,7 +224,7 @@ update msg model =
 
         PostCreateSubmit d ->
             if String.isEmpty model.postEditorBody then
-                ( model, Cmd.none )
+                ( { model | postView = False, postBeingEdited = False }, Cmd.none )
 
             else if model.auth == Nothing then
                 ( { model

@@ -1013,25 +1013,16 @@ viewFaq model =
         { onPress = Just FaqToggle
         , label = text "FAQ"
         }
-    , [ [ ( "Can I get an app?"
-          , "Bolster will eventually be released in both stores."
-          )
-        , ( "Can you read my stuff?"
-          , "No, all your words are end-to-end encrypted using your password."
-          )
-        , ( "What is end-to-end encryption?"
-          , "You can read more here."
-          )
-        , ( "Can you read my password?"
-          , "No, your password is also protected. This means that you CANNOT FORGET your password or you will not be able to gain access to your account."
-          )
-        , ( "Is this a money laundering scheme?"
-          , "Yes I think so."
-          )
+    , [ [ "Copper mug artisan messenger bag vaporware tumeric try-hard mlkshk quinoa waistcoat salvia taxidermy williamsburg."
+        , "Lomo raclette gentrify shoreditch polaroid venmo."
+        , "Kitsch cornhole bicycle rights, YOLO jean shorts prism direct trade sustainable marfa."
+        , "Taiyaki biodiesel you probably haven't heard of them poke post-ironic chia skateboard squid craft beer tote bag."
+        , "Portland palo santo tacos neutra deep v, kale chips selvage skateboard synth."
+        , "Ramps pour-over hexagon edison bulb, hammock prism chartreuse gastropub iceland freegan."
         ]
             |> List.map
-                (\( a, b ) ->
-                    [ [ text a ]
+                (\b ->
+                    [ [ text "Blah blah blah?" ]
                         |> paragraph [ Font.bold ]
                     , [ text b ]
                         |> paragraph [ Font.italic ]
@@ -1046,7 +1037,7 @@ viewFaq model =
                 ]
       , [ Element.newTabLink [ Font.size 15, Font.italic ]
             { url = "https://tarbh.engineering"
-            , label = text "Made by Tarbh"
+            , label = paragraph [] [ text "Made by Tarbh" ]
             }
         , Input.button
             [ Font.size 25
