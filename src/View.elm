@@ -1832,14 +1832,13 @@ viewPageMobile model =
             , model.current
                 |> whenJust
                     (\day ->
-                        [ ( '◀', Element.alignLeft, -1 )
-                        , ( '▶', Element.alignRight, 1 )
+                        [ ( Icons.arrow_back, Element.alignLeft, -1 )
+                        , ( Icons.arrow_forward, Element.alignRight, 1 )
                         ]
                             |> List.map
-                                (\( char, attr, n ) ->
+                                (\( icn, attr, n ) ->
                                     Input.button
-                                        [ Font.color blue
-                                        , Font.size 40
+                                        [ Font.size 40
                                         , Element.mouseOver [ Font.color black ]
                                         , Element.mouseDown
                                             [ Element.moveDown 4
@@ -1858,10 +1857,7 @@ viewPageMobile model =
                                                 |> RouteDay
                                                 |> NavigateTo
                                                 |> Just
-                                        , label =
-                                            char
-                                                |> String.fromChar
-                                                |> text
+                                        , label = icon icn 30
                                         }
                                 )
                             |> row [ width fill, Element.alignBottom ]
@@ -1923,9 +1919,19 @@ viewBarMobile model day =
     in
     (if model.postBeingEdited then
         [ btn2 False Icons.close "Cancel" PostUpdateCancel
-        , btn2 model.inProgress.post Icons.save "Submit" (PostCreateSubmit day)
+        , btn2 model.inProgress.post
+            Icons.save
+            "Submit"
+            (pst
+                |> unwrap (PostCreateSubmit day)
+                    (\p ->
+                        if model.postEditorBody == "" then
+                            PostClear p
 
-        --|> when (model.postEditorBody /= post.body && model.postEditorBody /= "")
+                        else
+                            PostUpdateSubmit p.id
+                    )
+            )
         ]
 
      else if model.tagView then
@@ -2071,7 +2077,7 @@ vp2 model d =
 
         tMsg =
             pst
-                |> unwrap (PostCreateTagToggle d)
+                |> unwrap (PostCreateWithTag d)
                     PostTagToggle
 
         data =
@@ -2347,7 +2353,7 @@ viewPostMobile model =
                                                   )
                                                     |> Background.color
                                                 ]
-                                                { onPress = Just <| PostCreateTagToggle d t
+                                                { onPress = Just <| PostCreateWithTag d t
                                                 , label = text t.name
                                                 }
                                         )

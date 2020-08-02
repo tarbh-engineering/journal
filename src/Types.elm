@@ -165,13 +165,15 @@ type Msg
     | TagCreateCb (GqlResult Tag)
     | TagSortUpdate Sort
     | PostTagToggle Post Tag
-    | PostCreateTagToggle Date Tag
+    | PostCreateWithTag Date Tag
+    | PostCreateWithTagCb Uuid (GqlResult Post)
     | FocusCb (Result Browser.Dom.Error ())
     | UrlChange (Maybe Route)
     | UrlRequest UrlRequest
     | NavigateTo Route
     | SetOnline Bool
     | SetSelectedResult Uuid
+    | PostClear Post
     | PostViewToggle
     | TagViewToggle
     | VisibilityChange Visibility

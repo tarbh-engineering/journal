@@ -112,7 +112,7 @@ btn2 inProg ic str msg =
 btn : String -> msg -> Element msg
 btn str msg =
     Input.button
-        [ padding 15
+        [ Element.paddingXY 15 0
 
         --, style "transition" "all 0.2s"
         , Element.mouseOver
@@ -121,6 +121,7 @@ btn str msg =
             ]
         , Border.color black
         , Border.width 1
+        , height <| px 50
         ]
         { onPress = Just msg
         , label = text str

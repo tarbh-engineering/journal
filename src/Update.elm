@@ -312,38 +312,46 @@ update msg model =
             , focusOnEditor
             )
 
+        PostClear post ->
+            ( { model
+                | inProgress =
+                    model.inProgress
+                        |> (\p ->
+                                { p | post = True }
+                           )
+              }
+            , wait
+                |> Task.map
+                    ({ post
+                        | body = ""
+                     }
+                        |> Just
+                        |> Ok
+                        |> always
+                    )
+                |> Task.perform (PostCb post.date)
+            )
+
         PostUpdateSubmit id ->
-            if model.auth == Nothing then
-                ( { model | inProgress = model.inProgress |> (\p -> { p | post = True }) }
-                , model.current
-                    |> Maybe.andThen (\d -> Day.get d model.posts)
-                    |> Maybe.andThen Helpers.extract
-                    |> unwrap Cmd.none
-                        (\p ->
-                            if String.isEmpty model.postEditorBody then
+            ( { model | inProgress = model.inProgress |> (\p -> { p | post = True }) }
+            , model.auth
+                |> unwrap
+                    (model.current
+                        |> Maybe.andThen (\d -> Day.get d model.posts)
+                        |> Maybe.andThen Helpers.extract
+                        |> unwrap Cmd.none
+                            (\p ->
                                 wait
-                                    |> Task.map (always <| Ok p.date)
-                                    |> Task.perform PostDeleteCb
-
-                            else
-                                wait
-                                    |> Task.map (always <| Ok { p | body = model.postEditorBody })
+                                    |> Task.map
+                                        (always <|
+                                            Ok
+                                                { p | body = model.postEditorBody }
+                                        )
                                     |> Task.perform PostMutateCb
-                        )
-                )
-
-            else
-                ( { model | inProgress = model.inProgress |> (\p -> { p | post = True }) }
-                , model.auth
-                    |> unwrap Cmd.none
-                        (if String.isEmpty model.postEditorBody then
-                            trip (Data.postDelete id) PostDeleteCb
-
-                         else
-                            trip (Data.postUpdateBody id model.postEditorBody)
-                                PostMutateCb
-                        )
-                )
+                            )
+                    )
+                    (trip (Data.postUpdateBody id model.postEditorBody) PostMutateCb)
+            )
 
         PostsCb res ->
             res
@@ -518,12 +526,16 @@ update msg model =
                     )
 
         PostCb day res ->
+            let
+                inProgress =
+                    model.inProgress |> (\p -> { p | post = False })
+            in
             res
                 |> unpack
                     (\err ->
                         ( { model
                             | online = not <| isNetworkError err
-                            , inProgress = model.inProgress |> (\p -> { p | post = False })
+                            , inProgress = inProgress
                             , postBeingEdited = False
                           }
                         , logGqlError "PostCb" err
@@ -539,6 +551,13 @@ update msg model =
                                                 post.date
                                                 (Found post)
                                     , postBeingEdited = False
+                                    , inProgress = inProgress
+                                    , postView =
+                                        if String.isEmpty post.body then
+                                            False
+
+                                        else
+                                            model.postView
                                   }
                                 , Cmd.none
                                 )
@@ -549,6 +568,7 @@ update msg model =
                                         model.posts
                                             |> Day.remove day
                                     , postBeingEdited = False
+                                    , inProgress = inProgress
                                   }
                                 , Cmd.none
                                 )
@@ -697,18 +717,22 @@ update msg model =
             , Cmd.none
             )
 
-        PostCreateTagToggle date tag ->
-            --( { model
-            --| postCreateTags =
-            --model.postCreateTags
-            --|> toggle tag.id
-            --}
-            --, Cmd.none
-            --)
-            ( model
+        PostCreateWithTag date tag ->
+            ( { model
+                | inProgress =
+                    model.inProgress
+                        |> (\p ->
+                                { p
+                                    | tags =
+                                        tag.id :: p.tags
+                                }
+                           )
+              }
             , model.auth
                 |> unwrap
-                    (randomTask Uuid.uuidGenerator
+                    (wait
+                        |> Task.andThen
+                            (always <| randomTask Uuid.uuidGenerator)
                         |> Task.map
                             (\id ->
                                 { tags = [ tag.id ]
@@ -716,25 +740,47 @@ update msg model =
                                 , body = ""
                                 , id = id
                                 }
-                                    |> Just
+                                    |> Ok
                             )
-                        |> Task.attempt (PostCb date)
+                        |> Task.perform (PostCreateWithTagCb tag.id)
                     )
-                    --(if List.member tag.id post.tags then
-                    --trip
-                    --(Data.tagDetach tag.id
-                    -->> Task.map Just
-                    --)
-                    --(PostCb post.date)
-                    --else
-                    --trip
-                    --(Data.tagAttach post tag.id
-                    -->> Task.map Just
-                    --)
-                    --(PostCb post.date)
-                    --)
                     (always Cmd.none)
             )
+
+        PostCreateWithTagCb id res ->
+            let
+                inProgress =
+                    model.inProgress
+                        |> (\p ->
+                                { p
+                                    | tags =
+                                        p.tags
+                                            |> List.filter ((/=) id)
+                                }
+                           )
+            in
+            res
+                |> unpack
+                    (\err ->
+                        ( { model
+                            | online = not <| isNetworkError err
+                            , inProgress = inProgress
+                          }
+                        , logGqlError "PostCreateTagCb" err
+                        )
+                    )
+                    (\post ->
+                        ( { model
+                            | posts =
+                                model.posts
+                                    |> Day.insert
+                                        post.date
+                                        (Found post)
+                            , inProgress = inProgress
+                          }
+                        , Cmd.none
+                        )
+                    )
 
         EmailSubmit ->
             let
