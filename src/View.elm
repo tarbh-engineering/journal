@@ -593,7 +593,7 @@ viewTagsMobile model =
             }
       , btn2 model.inProgress.tag Icons.send "Submit" TagCreateSubmit
       ]
-        |> column [ width fill, paddingXY 20 0, spacing 10 ]
+        |> column [ width fill, spacing 10 ]
     , model.tags
         |> UD.values
         |> List.map
@@ -608,7 +608,6 @@ viewTagsMobile model =
             )
         |> column
             [ spacing 10
-            , paddingXY 20 0
             , scrollbarY
             , width fill
             , height <| px 350
@@ -799,7 +798,7 @@ viewHomeMobile model =
                             , width fill
                             , Element.alignRight
                             , ebg
-                            , Font.size 25
+                            , Font.size 20
                             ]
                 )
             |> when (model.funnel == Types.Hello)
@@ -1382,7 +1381,7 @@ viewFx model =
       )
         |> el [ Element.alignRight ]
     ]
-        |> column [ spacing 10, alignBottom, padding 20, width fill ]
+        |> column [ spacing 10, alignBottom, paddingXY 20 0, width fill ]
 
 
 viewFunnel : Model -> Element Msg
@@ -1662,7 +1661,8 @@ viewFrameMobile model elem =
         |> row
             [ width fill
             , spaceEvenly
-            , paddingXY 20 10
+
+            --, paddingXY 20 10
             , [ Input.button [ Element.alignRight ]
                     { onPress = Just DropdownToggle
                     , label = icon Icons.menu 40
@@ -1673,7 +1673,7 @@ viewFrameMobile model elem =
                 --, ( "Stats", RouteStats, ViewStats )
                 , viewRoute Icons.settings "Settings" RouteSettings ViewSettings model.view
                 ]
-                    |> column [ spacing 10, padding 20 ]
+                    |> column [ spacing 10, padding 10 ]
                     |> when model.dropdown
               ]
                 |> column
@@ -1686,16 +1686,17 @@ viewFrameMobile model elem =
                         , color = Element.rgb255 150 150 150
                         }
                         |> whenAttr model.dropdown
-                    , padding 10
-                        |> whenAttr (not model.dropdown)
 
+                    --, padding 10
+                    --|> whenAttr (not model.dropdown)
                     --, Border.width 1
                     --|> whenAttr model.dropdown
                     ]
                 |> el
                     [ Element.alignRight
-                    , padding 10
-                        |> whenAttr model.dropdown
+
+                    --, padding 10
+                    --|> whenAttr model.dropdown
                     , style "z-index" "1"
                     ]
                 |> Element.inFront
@@ -1708,6 +1709,7 @@ viewFrameMobile model elem =
             , width fill
             , Element.clip
             , fShrink
+            , padding 10
             ]
 
 
@@ -1759,16 +1761,37 @@ viewPageMobile model =
         wd =
             fill
 
+        ht =
+            if model.screen.width <= 400 then
+                40
+
+            else
+                50
+
         flip =
             model.postBeingEdited || model.postView || model.tagView
 
-        cal =
-            [ [ Input.button [ Font.color white, Element.alignLeft ]
-                    { onPress = Just PrevMonth
-                    , label =
-                        icon Icons.chevron_left 50
-                            |> el [ Element.moveUp 5, Font.color black ]
+        rBtn =
+            Input.button
+                [ Font.color black
+                , Border.shadow
+                    { offset = ( 2, 2 )
+                    , blur = 3
+                    , size = 1
+                    , color = Element.rgb255 150 150 150
                     }
+                , Background.color grey
+                , Border.rounded 25
+                , padding 5
+                ]
+
+        cal =
+            [ [ { onPress = Just PrevMonth
+                , label =
+                    icon Icons.chevron_left 30
+                        |> el [ centerX, centerY ]
+                }
+                    |> rBtn
               , [ model.month |> monthName |> text
                 , model.year |> String.fromInt |> text
                 ]
@@ -1778,45 +1801,45 @@ viewPageMobile model =
                         , Background.color white
                         , padding 10
                         ]
-              , Input.button [ Font.color white, Element.alignRight ]
-                    { onPress = Just NextMonth
-                    , label =
-                        icon Icons.chevron_right 50
-                            |> el [ Element.moveUp 5, Font.color black ]
-                    }
+              , { onPress = Just NextMonth
+                , label =
+                    icon Icons.chevron_right 30
+                        |> el [ centerX, centerY ]
+                }
+                    |> rBtn
               ]
-                |> row [ width fill ]
+                |> row [ width fill, spaceEvenly, padding 5 ]
             , Element.table
                 [ spacing 5 ]
                 { data = Calendar.weeks Time.Mon model.month model.year
                 , columns =
                     [ { header = weekday "Mon"
                       , width = wd
-                      , view = .mon >> viewCell model 50
+                      , view = .mon >> viewCell model ht
                       }
                     , { header = weekday "Tue"
                       , width = wd
-                      , view = .tue >> viewCell model 50
+                      , view = .tue >> viewCell model ht
                       }
                     , { header = weekday "Wed"
                       , width = wd
-                      , view = .wed >> viewCell model 50
+                      , view = .wed >> viewCell model ht
                       }
                     , { header = weekday "Thu"
                       , width = wd
-                      , view = .thu >> viewCell model 50
+                      , view = .thu >> viewCell model ht
                       }
                     , { header = weekday "Fri"
                       , width = wd
-                      , view = .fri >> viewCell model 50
+                      , view = .fri >> viewCell model ht
                       }
                     , { header = weekday "Sat"
                       , width = wd
-                      , view = .sat >> viewCell model 50
+                      , view = .sat >> viewCell model ht
                       }
                     , { header = weekday "Sun"
                       , width = wd
-                      , view = .sun >> viewCell model 50
+                      , view = .sun >> viewCell model ht
                       }
                     ]
                 }
@@ -1853,6 +1876,7 @@ viewPageMobile model =
                                 )
                             |> row [ width fill, Element.alignBottom ]
                     )
+                |> when False
             ]
                 |> column
                     [ spacing 10
@@ -1885,7 +1909,8 @@ viewPageMobile model =
         |> column
             [ width fill
             , height fill
-            , paddingXY 20 10
+
+            --, paddingXY 20 10
             , Element.clip
             , fShrink
             , cal
@@ -1942,11 +1967,43 @@ viewBarMobile model day =
 
      else
         [ btn2 False Icons.label "Tags" TagViewToggle
-        , if pst |> unwrap True (.body >> (==) "") then
-            btn2 False Icons.edit "Write" edit
+        , pst
+            |> unwrap
+                (btn2 False Icons.edit "Write" edit)
+                (\p ->
+                    if p.body == "" then
+                        btn2 False Icons.edit "Write" edit
 
-          else
-            btn2 False Icons.visibility "View" PostViewToggle
+                    else
+                        [ icon Icons.visibility 25
+                            |> el [ Element.alignTop ]
+                        , [ text p.body ]
+                            |> paragraph
+                                [ Font.size 12
+
+                                --, style "overflow-y" "auto"
+                                , height <| px 50
+
+                                --, style "text-overflow" "ellipsis"
+                                , style "overflow" "hidden"
+                                ]
+                        ]
+                            |> row
+                                [ spacing 10
+                                , Background.color grey
+                                , padding 10
+
+                                --, Border.shadow
+                                --{ offset = ( 2, 2 )
+                                --, blur = 0
+                                --, size = 1
+                                --, color = Element.rgb255 150 150 150
+                                --}
+                                , Border.width 1
+                                , Border.rounded 20
+                                ]
+                 --btn2 False Icons.visibility "View" PostViewToggle
+                )
         ]
     )
         |> row [ width fill, spaceEvenly, alignBottom, width fill ]
