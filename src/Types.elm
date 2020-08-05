@@ -137,7 +137,7 @@ type Msg
     | PostCancel
     | PostCreateSubmit Date
     | PostDelete Uuid Date
-    | PostUpdateStart String
+    | PostUpdateStart
     | PostUpdateCancel
     | PostUpdateSubmit Uuid
     | BodyUpdate String
@@ -191,6 +191,7 @@ type Msg
     | EmailCb
     | Boot { key : Maybe String, href : String }
     | DropdownToggle
+    | FakeData
 
 
 type Route
@@ -213,7 +214,7 @@ type alias GqlTask a =
 
 type alias Post =
     { date : Date
-    , body : String
+    , body : Maybe String
     , id : Uuid
     , tags : List Uuid
     }

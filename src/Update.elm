@@ -18,7 +18,7 @@ import Helpers.Parse
 import Helpers.UuidDict as UD
 import Json.Decode as JD
 import Json.Encode as JE
-import Maybe.Extra exposing (unwrap)
+import Maybe.Extra exposing (isNothing, unwrap)
 import Ports
 import Process
 import Random
@@ -78,6 +78,7 @@ update msg model =
                           )
                         , ( "body"
                           , p.body
+                                |> Maybe.withDefault ""
                                 |> JE.string
                           )
                         , ( "id"
@@ -147,6 +148,59 @@ update msg model =
 
         Resize screen ->
             ( { model | screen = screen }, Cmd.none )
+
+        FakeData ->
+            ( { model
+                | tags =
+                    [ "nulla"
+                    , "labore"
+                    , "voluptate"
+                    , "qui"
+                    , "eiusmod"
+                    , "exercitation"
+                    , "veniam"
+                    , "ut"
+                    , "et"
+                    , "consectetur"
+                    , "veniam"
+                    , "aliqua"
+                    , "elit"
+                    , "do"
+                    , "nostrud"
+                    , "aliquip"
+                    , "cupidatat"
+                    , "nostrud"
+                    , "enim"
+                    , "ipsum"
+                    , "aliquip"
+                    , "culpa"
+                    , "ut"
+                    , "eu"
+                    , "aute"
+                    , "eiusmod"
+                    , "elit"
+                    , "irure"
+                    , "fugiat"
+                    , "culpa"
+                    ]
+                        |> List.indexedMap
+                            (\n str ->
+                                let
+                                    id =
+                                        n
+                                            |> Random.initialSeed
+                                            |> Random.step Uuid.uuidGenerator
+                                            |> Tuple.first
+                                in
+                                { id = id
+                                , name = str
+                                , count = 0
+                                }
+                            )
+                        |> UD.fromList
+              }
+            , Cmd.none
+            )
 
         InitCb route res ->
             res
@@ -239,7 +293,7 @@ update msg model =
                             >> Tuple.first
                             >> (\uuid ->
                                     { id = uuid
-                                    , body = model.postEditorBody
+                                    , body = Just model.postEditorBody
                                     , tags = []
                                     , date = d
                                     }
@@ -303,9 +357,14 @@ update msg model =
             , Cmd.none
             )
 
-        PostUpdateStart body ->
+        PostUpdateStart ->
             ( { model
-                | postEditorBody = body
+                | postEditorBody =
+                    model.current
+                        |> Maybe.andThen (\d -> Day.get d model.posts)
+                        |> Maybe.andThen Helpers.extract
+                        |> Maybe.andThen .body
+                        |> Maybe.withDefault ""
                 , postBeingEdited = True
                 , tagView = False
               }
@@ -323,7 +382,7 @@ update msg model =
             , wait
                 |> Task.map
                     ({ post
-                        | body = ""
+                        | body = Nothing
                      }
                         |> Just
                         |> Ok
@@ -345,7 +404,7 @@ update msg model =
                                     |> Task.map
                                         (always <|
                                             Ok
-                                                { p | body = model.postEditorBody }
+                                                { p | body = Just model.postEditorBody }
                                         )
                                     |> Task.perform PostMutateCb
                             )
@@ -553,7 +612,7 @@ update msg model =
                                     , postBeingEdited = False
                                     , inProgress = inProgress
                                     , postView =
-                                        if String.isEmpty post.body then
+                                        if isNothing post.body then
                                             False
 
                                         else
@@ -737,7 +796,7 @@ update msg model =
                             (\id ->
                                 { tags = [ tag.id ]
                                 , date = date
-                                , body = ""
+                                , body = Nothing
                                 , id = id
                                 }
                                     |> Ok
@@ -1391,10 +1450,12 @@ routeDemo model route =
 
                                     Loading ma ->
                                         ma
-                                            |> unwrap "" .body
+                                            |> Maybe.andThen .body
+                                            |> Maybe.withDefault ""
 
                                     Found a ->
                                         a.body
+                                            |> Maybe.withDefault ""
                         in
                         ( { model
                             | postEditorBody = editorText
@@ -1499,10 +1560,12 @@ routeLiveDay model d auth =
 
                             Loading ma ->
                                 ma
-                                    |> unwrap "" .body
+                                    |> Maybe.andThen .body
+                                    |> Maybe.withDefault ""
 
                             Found a ->
                                 a.body
+                                    |> Maybe.withDefault ""
                 in
                 ( { model
                     | posts =

@@ -17,12 +17,12 @@ import Html.Events
 import Icon
 import Json.Decode as Decode exposing (Decoder)
 import Material.Icons as Icons
-import Maybe.Extra exposing (unwrap)
+import Maybe.Extra exposing (isJust, isNothing, unwrap)
 import Time exposing (Month(..))
 import Time.Format.I18n.I_en_us exposing (monthName)
 import Types exposing (Def(..), Funnel(..), Model, Msg(..), Route(..), Sort(..), Status(..), View(..))
 import Validate exposing (isValidEmail)
-import View.Misc exposing (btn, btn2, formatDay, icon, spinner)
+import View.Misc exposing (btn, btn2, btn3, formatDay, icon, spinner)
 import View.Style exposing (abel, black, blue, ebg, fadeIn, grey, rotate, varela, white, yellow)
 
 
@@ -265,11 +265,6 @@ viewCell model n day =
 
         curr =
             Just day.date == model.current
-
-        edit =
-            pst
-                |> unwrap "" .body
-                |> PostUpdateStart
     in
     Input.button
         [ height <| px n
@@ -330,7 +325,7 @@ viewCell model n day =
           , [ icon Icons.label 15
                 |> when (pst |> unwrap False (\p -> not <| List.isEmpty p.tags))
             , icon Icons.edit 15
-                |> when (pst |> unwrap False (\p -> not <| String.isEmpty p.body))
+                |> when (pst |> unwrap False (\p -> isJust p.body))
             ]
                 |> row [ spacing 10 ]
           ]
@@ -339,8 +334,8 @@ viewCell model n day =
         ]
         { onPress =
             (if curr then
-                if pst |> unwrap True (.body >> (==) "") then
-                    edit
+                if pst |> unwrap True (.body >> isNothing) then
+                    PostUpdateStart
 
                 else
                     PostViewToggle
@@ -470,6 +465,9 @@ view model =
                         |> paragraph [ varela, Font.center ]
                      , btn "Sign up now" (NavigateTo RouteHome)
                         |> el [ centerX ]
+                     , hairline
+                     , btn "Load example data" FakeData
+                        |> el [ centerX ]
                      ]
                         |> column [ spacing 20, padding 20, centerX ]
                     )
@@ -591,7 +589,8 @@ viewTagsMobile model =
                     |> Just
             , text = model.tagCreateName
             }
-      , btn2 model.inProgress.tag Icons.send "Submit" TagCreateSubmit
+      , btn3 model.inProgress.tag Icons.send "Submit" TagCreateSubmit
+            |> el [ Element.alignRight, paddingXY 5 0 ]
       ]
         |> column [ width fill, spacing 10 ]
     , model.tags
@@ -611,12 +610,19 @@ viewTagsMobile model =
             , scrollbarY
             , width fill
             , height <| px 350
+            , Background.color grey
+            , padding 10
+
+            --, fShrink
+            --, Element.clip
             ]
     ]
         |> column
             [ spacing 20
             , width fill
             , height fill
+            , fShrink
+            , Element.clip
             ]
 
 
@@ -694,7 +700,10 @@ viewTags model =
                     |> List.map
                         (\p ->
                             [ p.date |> formatDay |> text
-                            , [ text p.body ]
+                            , [ p.body
+                                    |> Maybe.withDefault ""
+                                    |> text
+                              ]
                                 |> paragraph []
                             ]
                                 |> column [ spacing 10, Border.width 1, padding 10 ]
@@ -1927,11 +1936,6 @@ viewBarMobile model day =
             model.posts
                 |> Day.get day
                 |> Maybe.andThen Helpers.extract
-
-        edit =
-            pst
-                |> unwrap "" .body
-                |> PostUpdateStart
     in
     (if model.postBeingEdited then
         [ btn2 False Icons.close "Cancel" PostUpdateCancel
@@ -1951,7 +1955,7 @@ viewBarMobile model day =
         ]
 
      else if model.tagView then
-        [ btn2 False Icons.edit "Write" edit
+        [ btn2 False Icons.edit "Write" PostUpdateStart
 
         --, btn2 False Icons.close "Close" TagViewToggle
         , btn "X" TagViewToggle
@@ -1959,7 +1963,7 @@ viewBarMobile model day =
 
      else if model.postView then
         [ btn2 False Icons.label "Tags" TagViewToggle
-        , btn2 False Icons.edit "Edit" edit
+        , btn2 False Icons.edit "Edit" PostUpdateStart
 
         --, btn2 False Icons.close "Close" PostViewToggle
         , btn "X" PostViewToggle
@@ -1969,39 +1973,40 @@ viewBarMobile model day =
         [ btn2 False Icons.label "Tags" TagViewToggle
         , pst
             |> unwrap
-                (btn2 False Icons.edit "Write" edit)
+                (btn2 False Icons.edit "Write" PostUpdateStart)
                 (\p ->
-                    if p.body == "" then
-                        btn2 False Icons.edit "Write" edit
+                    p.body
+                        |> unwrap
+                            (btn2 False Icons.edit "Write" PostUpdateStart)
+                            (\body ->
+                                [ icon Icons.visibility 25
+                                    |> el [ Element.alignTop ]
+                                , [ text body ]
+                                    |> paragraph
+                                        [ Font.size 12
 
-                    else
-                        [ icon Icons.visibility 25
-                            |> el [ Element.alignTop ]
-                        , [ text p.body ]
-                            |> paragraph
-                                [ Font.size 12
+                                        --, style "overflow-y" "auto"
+                                        , height <| px 50
 
-                                --, style "overflow-y" "auto"
-                                , height <| px 50
-
-                                --, style "text-overflow" "ellipsis"
-                                , style "overflow" "hidden"
+                                        --, style "text-overflow" "ellipsis"
+                                        , style "overflow" "hidden"
+                                        ]
                                 ]
-                        ]
-                            |> row
-                                [ spacing 10
-                                , Background.color grey
-                                , padding 10
+                                    |> row
+                                        [ spacing 10
+                                        , Background.color grey
+                                        , padding 10
 
-                                --, Border.shadow
-                                --{ offset = ( 2, 2 )
-                                --, blur = 0
-                                --, size = 1
-                                --, color = Element.rgb255 150 150 150
-                                --}
-                                , Border.width 1
-                                , Border.rounded 20
-                                ]
+                                        --, Border.shadow
+                                        --{ offset = ( 2, 2 )
+                                        --, blur = 0
+                                        --, size = 1
+                                        --, color = Element.rgb255 150 150 150
+                                        --}
+                                        , Border.width 1
+                                        , Border.rounded 20
+                                        ]
+                            )
                  --btn2 False Icons.visibility "View" PostViewToggle
                 )
         ]
@@ -2022,7 +2027,7 @@ viewBar model day =
 
              else
                 [ btn2 False Icons.label "Tags" TagViewToggle
-                , btn2 False Icons.edit "Write" (PostUpdateStart "")
+                , btn2 False Icons.edit "Write" PostUpdateStart
                 ]
             )
             (\post ->
@@ -2033,14 +2038,14 @@ viewBar model day =
                             Icons.save
                             "Submit"
                             (PostUpdateSubmit post.id)
-                            |> when (model.postEditorBody /= post.body && model.postEditorBody /= "")
+                            |> when (Just model.postEditorBody /= post.body && model.postEditorBody /= "")
 
                       else
                         btn2
                             model.inProgress.post
                             Icons.edit
                             "Edit"
-                            (PostUpdateStart post.body)
+                            PostUpdateStart
                     , [ btn2 False Icons.delete "Delete" (PostDelete post.id post.date)
                             |> when False
                       , if model.postBeingEdited then
@@ -2057,7 +2062,7 @@ viewBar model day =
                       [ btn2 False
                             Icons.edit
                             "Edit"
-                            (PostUpdateStart post.body)
+                            PostUpdateStart
                       , btn2 False
                             Icons.visibility
                             "View"
@@ -2141,6 +2146,7 @@ vp2 model d =
 
             else
                 post.body
+                    |> Maybe.withDefault ""
                     -- HACK: Need to pass through Html in order
                     -- to preserve formatting.
                     |> Html.text
@@ -2173,7 +2179,7 @@ vp2 model d =
             else
                 pst
                     |> unwrap
-                        (Just "Creating a new entry")
+                        (Just "Creating new entry")
                         (always
                             (if model.postBeingEdited then
                                 Just "Updating entry"
@@ -2252,15 +2258,18 @@ vp2 model d =
                                 , spacing 10
                                 ]
                     )
-                |> List.intersperse
-                    (el
-                        [ width fill
-                        , height <| px 1
-                        , Background.color black
-                        ]
-                        none
-                    )
-                |> column [ spacing 10, cappedWidth 300, centerX ]
+                |> List.intersperse hairline
+                |> column
+                    [ spacing 10
+                    , cappedWidth 300
+                    , centerX
+                    , height fill
+                    ]
+                |> el
+                    [ height fill
+                    , width fill
+                    , Element.scrollbarY
+                    ]
 
       else
         case data of
@@ -2330,6 +2339,7 @@ viewPostMobile model =
 
                         else
                             post.body
+                                |> Maybe.withDefault ""
                                 -- HACK: Need to pass through Html in order
                                 -- to preserve formatting.
                                 |> Html.text
@@ -2366,7 +2376,7 @@ viewPostMobile model =
                         |> when model.postBeingEdited
                   , pst
                         |> unwrap
-                            ("Creating a new entry" |> text |> el [ Font.italic ])
+                            ("Creating new entry" |> text |> el [ Font.italic ])
                             (always
                                 (("Updating entry" |> text |> el [ Font.italic ])
                                     |> when model.postBeingEdited
@@ -2509,9 +2519,10 @@ viewPost model =
                                 , ebg
                                 , style "cursor" Icon.pencil
                                 ]
-                                { onPress = Just <| PostUpdateStart post.body
+                                { onPress = Just PostUpdateStart
                                 , label =
                                     post.body
+                                        |> Maybe.withDefault ""
                                         -- HACK: Need to pass through Html in order
                                         -- to preserve formatting.
                                         |> Html.text
@@ -2538,7 +2549,7 @@ viewPost model =
                         |> when (model.postBeingEdited || pst == Nothing)
                     , pst
                         |> unwrap
-                            ("Creating a new entry" |> text |> el [ Font.italic ])
+                            ("Creating new entry" |> text |> el [ Font.italic ])
                             (always
                                 (("Updating entry" |> text |> el [ Font.italic ])
                                     |> when model.postBeingEdited
@@ -2600,7 +2611,7 @@ viewPost model =
                                     Icons.save
                                     "Submit"
                                     (PostUpdateSubmit p.id)
-                                    |> when (model.postEditorBody /= p.body && model.postEditorBody /= "")
+                                    |> when (Just model.postEditorBody /= p.body && model.postEditorBody /= "")
                                 , btn2 model.inProgress.postDelete Icons.delete "Delete" (PostDelete p.id p.date)
                                 , btn2 False Icons.close "Cancel" PostUpdateCancel
                                 ]
@@ -2674,6 +2685,10 @@ ellipsisText n txt =
             , style "table-layout" "fixed"
             , style "display" "table"
             ]
+
+
+hairline =
+    el [ height <| px 1, width fill, Background.color black ] none
 
 
 colString : Color -> String

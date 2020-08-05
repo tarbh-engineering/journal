@@ -35,10 +35,9 @@ postDecrypt : Value -> PostRaw -> GqlTask Post
 postDecrypt key post =
     post.cipher
         |> unwrap
-            (Task.succeed "")
-            --(Task.succeed Nothing)
+            (Task.succeed Nothing)
             (Crypto.decrypt key
-             -->> Task.map Just
+                >> Task.map Just
             )
         |> Task.map
             (\val ->
