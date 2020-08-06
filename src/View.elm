@@ -609,12 +609,9 @@ viewTagsMobile model =
             [ spacing 10
             , scrollbarY
             , width fill
-            , height <| px 350
+            , height fill
             , Background.color grey
             , padding 10
-
-            --, fShrink
-            --, Element.clip
             ]
     ]
         |> column
