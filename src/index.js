@@ -5,9 +5,14 @@ loadStripe.setLoadParameters({ advancedFraudSignals: false });
 
 const MobileDetect = require("mobile-detect");
 
+const isNewIpad =
+  window.navigator.userAgent.match(/Mac/) &&
+  window.navigator.maxTouchPoints &&
+  window.navigator.maxTouchPoints > 2;
+
 const md = new MobileDetect(window.navigator.userAgent);
 
-const isMobile = Boolean(md.mobile());
+const isMobile = Boolean(md.mobile()) || isNewIpad;
 
 require("./index.css");
 
