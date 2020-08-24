@@ -37,7 +37,7 @@ const asyncEnabled = (() => {
 })();
 
 const swEnabled =
-  window.navigator.serviceWorker &&
+  Boolean(window.navigator.serviceWorker) &&
   isFn(window.navigator.serviceWorker.register) &&
   asyncEnabled;
 
