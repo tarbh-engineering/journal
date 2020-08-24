@@ -21,9 +21,20 @@ const CRYPTO_KEY = "KEY_A";
 
 const isFn = (x) => typeof x === "function";
 
+const asyncEnabled = (() => {
+  try {
+    eval("async () => {}");
+  } catch (e) {
+    return false;
+  }
+
+  return true;
+})();
+
 const swEnabled =
   window.navigator.serviceWorker &&
-  isFn(window.navigator.serviceWorker.register);
+  isFn(window.navigator.serviceWorker.register) &&
+  asyncEnabled;
 
 const cryptoEnabled = [
   window.crypto,
