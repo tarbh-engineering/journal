@@ -574,7 +574,13 @@ render isMobile =
 
 viewTagsMobile : Model -> Element Msg
 viewTagsMobile model =
-    [ [ Input.text
+    let
+        tags =
+            model.tags
+                |> UD.values
+    in
+    if List.isEmpty tags then
+        [ Input.text
             [ Border.rounded 0
             , Border.width 1
             , width fill
@@ -589,38 +595,38 @@ viewTagsMobile model =
                     |> Just
             , text = model.tagCreateName
             }
-      , btn3 model.inProgress.tag Icons.send "Submit" TagCreateSubmit
+        , btn3 model.inProgress.tag Icons.send "Submit" TagCreateSubmit
             |> el [ Element.alignRight, paddingXY 5 0 ]
-      ]
-        |> column [ width fill, spacing 10 ]
-    , model.tags
-        |> UD.values
-        |> List.map
-            (\t ->
-                [ Input.button [ Font.size 25 ]
-                    { onPress = Just <| TagSelect t.id
-                    , label = text t.name
-                    }
-                , text <| String.fromInt t.count
+        ]
+            |> column [ width fill, spacing 10 ]
+
+    else
+        [ tags
+            |> List.map
+                (\t ->
+                    [ Input.button [ Font.size 25 ]
+                        { onPress = Just <| TagSelect t.id
+                        , label = text t.name
+                        }
+                    , text <| String.fromInt t.count
+                    ]
+                        |> row [ spaceEvenly, width fill ]
+                )
+            |> column
+                [ spacing 10
+                , scrollbarY
+                , style "min-height" "auto"
+                , width fill
+                , height fill
+                , Background.color grey
+                , padding 10
                 ]
-                    |> row [ spaceEvenly, width fill ]
-            )
-        |> column
-            [ spacing 10
-            , scrollbarY
-            , width fill
-            , height fill
-            , Background.color grey
-            , padding 10
-            ]
-    ]
-        |> column
-            [ spacing 20
-            , width fill
-            , height fill
-            , fShrink
-            , Element.clip
-            ]
+        ]
+            |> column
+                [ spacing 20
+                , width fill
+                , height fill
+                ]
 
 
 viewTags : Model -> Element Msg
@@ -739,8 +745,9 @@ viewHomeMobile model =
       ]
         |> row
             [ spacing 20
-            , style "animation-name" "fadeIn"
-            , style "animation-duration" "1s"
+
+            --, style "animation-name" "fadeIn"
+            --, style "animation-duration" "1s"
             , centerX
             , padding 10
             ]
@@ -1003,6 +1010,8 @@ viewHomeMobile model =
         |> column
             [ height fill
             , width fill
+            , fShrink
+            , Element.clip
             ]
 
 
@@ -1038,6 +1047,7 @@ viewFaq model =
                 [ spacing 10
                 , height fill
                 , Element.scrollbarY
+                , style "min-height" "auto"
                 , width fill
                 ]
       , [ Element.newTabLink [ Font.size 15, Font.italic ]
@@ -2101,16 +2111,19 @@ vp2 model d =
         xs =
             UD.values model.tags
 
-        fn fn1 =
+        fn fn1 bl =
             Html.textarea
                 [ Html.Attributes.id "editor"
                 , Html.Attributes.value model.postEditorBody
                 , Html.Attributes.style "font-size" "inherit"
                 , Html.Attributes.style "font-family" "inherit"
+
+                --, Html.Attributes.style "font-color" "black"
                 , Html.Attributes.style "cursor" "inherit"
                 , Html.Attributes.style "line-height" "30px"
                 , Html.Attributes.style "padding" "0px"
                 , Html.Attributes.style "flex-grow" "inherit"
+                , Html.Attributes.readonly <| not bl
                 , Html.Events.onInput BodyUpdate
                 ]
                 []
@@ -2135,39 +2148,10 @@ vp2 model d =
                 |> Helpers.getStatus d
 
         create =
-            fn (PostCreateSubmit d)
+            fn (PostCreateSubmit d) model.postBeingEdited
 
         make post =
-            if model.postBeingEdited then
-                fn (PostUpdateSubmit post.id)
-
-            else
-                post.body
-                    |> Maybe.withDefault ""
-                    -- HACK: Need to pass through Html in order
-                    -- to preserve formatting.
-                    |> Html.text
-                    |> List.singleton
-                    |> Html.div
-                        [ Html.Attributes.style "white-space" "pre-wrap"
-                        , Html.Attributes.style "line-height" "30px"
-                        , Html.Attributes.style "height" "100%"
-                        , Html.Attributes.style "width" "100%"
-                        , Html.Attributes.style "overflow-y" "auto"
-                        , Html.Attributes.style "word-break" "break-word"
-                        , Html.Attributes.style "min-height" "min-content"
-                        ]
-                    |> Element.html
-                    |> el
-                        [ width fill
-                        , height fill
-                        , Background.color grey
-                        , padding 20
-                        , Font.size fs
-                        , ebg
-                        , Element.clip
-                        , fShrink
-                        ]
+            fn (PostUpdateSubmit post.id) model.postBeingEdited
 
         txt =
             if model.tagView then
@@ -2221,7 +2205,8 @@ vp2 model d =
                             prog =
                                 List.member t.id model.inProgress.tags
                         in
-                        [ ellipsisText 20 t.name
+                        --[ ellipsisText 20 t.name
+                        [ paragraph [] [ text t.name ]
                         , Input.button
                             [ width <| px 40
                             , height <| px 40
@@ -2258,14 +2243,12 @@ vp2 model d =
                 |> List.intersperse hairline
                 |> column
                     [ spacing 10
-                    , cappedWidth 300
+                    , paddingXY 15 0
+                    , width fill
                     , centerX
                     , height fill
-                    ]
-                |> el
-                    [ height fill
-                    , width fill
                     , Element.scrollbarY
+                    , style "min-height" "auto"
                     ]
 
       else
