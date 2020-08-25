@@ -183,7 +183,7 @@ type Msg
     | FaqToggle
     | Force
     | Change
-    | TagSelect Uuid
+    | TagSelect (Maybe Uuid)
     | SetDef Def
     | RefreshCb (Auth -> Cmd Msg) (GqlResult (Maybe Jwt))
     | Bad (Auth -> Cmd Msg)

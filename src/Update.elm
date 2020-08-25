@@ -34,7 +34,7 @@ import Validate exposing (isValidEmail)
 
 wait : Task Never ()
 wait =
-    Process.sleep 500
+    Process.sleep 300
 
 
 focusOnEditor : Cmd Msg
@@ -1316,12 +1316,16 @@ update msg model =
 
         TagSelect id ->
             ( { model
-                | tag = Just id
+                | tag = id
               }
-            , model.auth
+            , id
                 |> unwrap Cmd.none
-                    (trip (Data.fetchPostsByTag id)
-                        PostsCb
+                    (\id_ ->
+                        model.auth
+                            |> unwrap Cmd.none
+                                (trip (Data.fetchPostsByTag id_)
+                                    PostsCb
+                                )
                     )
             )
 
@@ -1464,6 +1468,13 @@ routeDemo model route =
                             , current = Just d
                             , month = Date.month d
                             , year = Date.year d
+                            , view = ViewCalendar
+                            , postView =
+                                if model.view == ViewTags then
+                                    True
+
+                                else
+                                    model.postView
                           }
                         , if shouldFocusOnEditor then
                             focusOnEditor

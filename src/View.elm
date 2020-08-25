@@ -1,6 +1,7 @@
 module View exposing (view)
 
 import Calendar exposing (Day)
+import CustomScalars exposing (Uuid)
 import Date exposing (Date)
 import Day
 import Element exposing (Attribute, Color, Element, alignBottom, centerX, centerY, column, el, fill, height, html, none, padding, paddingXY, paragraph, px, rgb255, row, scrollbarY, spaceEvenly, spacing, text, width, wrappedRow)
@@ -20,7 +21,7 @@ import Material.Icons as Icons
 import Maybe.Extra exposing (isJust, isNothing, unwrap)
 import Time exposing (Month(..))
 import Time.Format.I18n.I_en_us exposing (monthName)
-import Types exposing (Def(..), Funnel(..), Model, Msg(..), Route(..), Sort(..), Status(..), View(..))
+import Types exposing (Def(..), Funnel(..), Model, Msg(..), Route(..), Sort(..), Status(..), Tag, View(..))
 import Validate exposing (isValidEmail)
 import View.Misc exposing (btn, btn2, btn3, formatDay, icon, spinner)
 import View.Style exposing (abel, black, blue, ebg, fadeIn, grey, rotate, varela, white, yellow)
@@ -321,7 +322,13 @@ viewCell model n day =
         , [ Date.day day.date
                 |> String.fromInt
                 |> text
-                |> el [ Element.alignTop, Element.alignLeft, padding 5, Font.bold ]
+                |> el
+                    [ Element.alignTop
+                    , Element.alignLeft
+                    , Font.bold
+                    , Font.size 27
+                    , abel
+                    ]
           , [ icon Icons.label 15
                 |> when (pst |> unwrap False (\p -> not <| List.isEmpty p.tags))
             , icon Icons.edit 15
@@ -579,54 +586,135 @@ viewTagsMobile model =
             model.tags
                 |> UD.values
     in
-    if List.isEmpty tags then
-        [ Input.text
-            [ Border.rounded 0
-            , Border.width 1
-            , width fill
-            , padding 10
-            , onKeydown [ onEnter TagCreateSubmit ]
-            ]
-            { onChange = TagCreateNameUpdate
-            , label = Input.labelHidden ""
-            , placeholder =
-                text "New tag"
-                    |> Input.placeholder []
-                    |> Just
-            , text = model.tagCreateName
-            }
-        , btn3 model.inProgress.tag Icons.send "Submit" TagCreateSubmit
-            |> el [ Element.alignRight, paddingXY 5 0 ]
-        ]
-            |> column [ width fill, spacing 10 ]
-
-    else
-        [ tags
-            |> List.map
-                (\t ->
-                    [ Input.button [ Font.size 25 ]
-                        { onPress = Just <| TagSelect t.id
-                        , label = text t.name
-                        }
-                    , text <| String.fromInt t.count
+    model.tag
+        |> Maybe.andThen
+            (\t ->
+                UD.get t model.tags
+            )
+        |> unwrap
+            (if List.isEmpty tags then
+                [ Input.text
+                    [ Border.rounded 0
+                    , Border.width 1
+                    , width fill
+                    , padding 10
+                    , onKeydown [ onEnter TagCreateSubmit ]
                     ]
-                        |> row [ spaceEvenly, width fill ]
+                    { onChange = TagCreateNameUpdate
+                    , label = Input.labelHidden ""
+                    , placeholder =
+                        text "New tag"
+                            |> Input.placeholder []
+                            |> Just
+                    , text = model.tagCreateName
+                    }
+                , btn3 model.inProgress.tag Icons.send "Submit" TagCreateSubmit
+                    |> el [ Element.alignRight, paddingXY 5 0 ]
+                ]
+                    |> column [ width fill, spacing 10 ]
+
+             else
+                [ tags
+                    |> List.map
+                        (\t ->
+                            Input.button [ Font.size 25, width fill, padding 5 ]
+                                { onPress = Just <| TagSelect <| Just t.id
+                                , label =
+                                    [ text t.name
+                                    , text <| String.fromInt t.count
+                                    ]
+                                        |> row [ spaceEvenly, width fill ]
+                                }
+                        )
+                    |> column
+                        [ spacing 10
+                        , scrollbarY
+                        , style "min-height" "auto"
+                        , width fill
+                        , height fill
+                        , Background.color grey
+                        , padding 10
+                        ]
+                , { onPress = Just <| TagSelect Nothing
+                  , label =
+                        icon Icons.add 30
+                            |> el [ centerX, centerY ]
+                  }
+                    |> rBtn
+                    |> el [ Element.alignBottom, Element.alignRight ]
+                ]
+                    |> column
+                        [ spacing 10
+                        , width fill
+                        , height fill
+                        ]
+            )
+            (viewTag model)
+
+
+viewTag : Model -> Tag -> Element Msg
+viewTag model t =
+    let
+        ts =
+            model.posts
+                |> Day.values
+                |> List.filterMap Helpers.extract
+                |> List.filter
+                    (\p ->
+                        List.member t.id p.tags
+                    )
+    in
+    [ text t.name
+    , if List.isEmpty ts then
+        [ [ text "No posts." ]
+            |> paragraph []
+        , btn
+            "Go to calendar"
+            (NavigateTo RouteCalendar)
+            |> el [ centerX ]
+        ]
+            |> column [ spacing 20, padding 20, centerX ]
+
+      else
+        ts
+            |> List.map
+                (\p ->
+                    Input.button [ Font.size 25 ]
+                        { onPress =
+                            RouteDay p.date
+                                |> NavigateTo
+                                |> Just
+                        , label =
+                            [ p.date |> formatDay |> text
+                            , [ p.body
+                                    |> Maybe.withDefault ""
+                                    |> text
+                              ]
+                                |> paragraph []
+                            ]
+                                |> column
+                                    [ spacing 10
+                                    , Border.width 1
+                                    , padding 10
+                                    , width fill
+                                    ]
+                        }
                 )
             |> column
                 [ spacing 10
-                , scrollbarY
-                , style "min-height" "auto"
                 , width fill
-                , height fill
-                , Background.color grey
-                , padding 10
-                ]
-        ]
-            |> column
-                [ spacing 20
-                , width fill
+                , Element.scrollbarY
                 , height fill
                 ]
+    , { onPress = Just <| TagSelect Nothing
+      , label =
+            icon Icons.undo 30
+                |> el [ centerX, centerY ]
+      }
+        |> rBtn
+        |> el [ Element.alignBottom, Element.alignRight ]
+    ]
+        |> column [ height fill, width fill ]
 
 
 viewTags : Model -> Element Msg
@@ -670,7 +758,7 @@ viewTags model =
 
                     else
                         [ Input.button []
-                            { onPress = Just <| TagSelect t.id
+                            { onPress = Just <| TagSelect <| Just t.id
                             , label = text t.name
                             }
 
@@ -731,27 +819,27 @@ viewHomeMobile model =
         xs =
             model.screen.width < 360
     in
-    [ [ text "BOLSTER"
+    [ [ [ text "BOLSTER"
             |> el
                 [ Font.size 55
                 , Font.semiBold
                 , abel
                 ]
-      , Element.image
+        , Element.image
             [ height <| px 60
             , width <| px 60
             ]
             { src = "/icons/192.png", description = "" }
-      ]
-        |> row
-            [ spacing 20
+        ]
+            |> row
+                [ spacing 20
 
-            --, style "animation-name" "fadeIn"
-            --, style "animation-duration" "1s"
-            , centerX
-            , padding 10
-            ]
-    , [ [ text "The"
+                --, style "animation-name" "fadeIn"
+                --, style "animation-duration" "1s"
+                , centerX
+                , padding 10
+                ]
+      , [ text "The"
             |> el
                 [ Element.paddingEach
                     { top = 0
@@ -1002,14 +1090,14 @@ viewHomeMobile model =
       ]
         |> column
             [ width fill
-            , height fill
-            , viewFaq model
-                |> Element.inFront
             ]
     ]
         |> column
             [ height fill
+            , viewFaq model
+                |> Element.inFront
             , width fill
+            , spaceEvenly
             , fShrink
             , Element.clip
             ]
@@ -1099,15 +1187,15 @@ viewFaq model =
                 }
              , Element.clip
              , fShrink
+             , Element.alignBottom
              ]
                 ++ (if model.faq then
-                        [ height fill
+                        [ height <| px 450
                         , width fill
                         ]
 
                     else
                         [ Element.alignLeft
-                        , Element.alignBottom
                         ]
                    )
             )
@@ -1771,6 +1859,21 @@ viewPage model =
         |> row [ width fill, height fill, spacing wd, paddingXY 20 wd ]
 
 
+rBtn =
+    Input.button
+        [ Font.color black
+        , Border.shadow
+            { offset = ( 2, 2 )
+            , blur = 3
+            , size = 1
+            , color = Element.rgb255 150 150 150
+            }
+        , Background.color grey
+        , Border.rounded 25
+        , padding 5
+        ]
+
+
 viewPageMobile : Model -> Element Msg
 viewPageMobile model =
     let
@@ -1786,20 +1889,6 @@ viewPageMobile model =
 
         flip =
             model.postBeingEdited || model.postView || model.tagView
-
-        rBtn =
-            Input.button
-                [ Font.color black
-                , Border.shadow
-                    { offset = ( 2, 2 )
-                    , blur = 3
-                    , size = 1
-                    , color = Element.rgb255 150 150 150
-                    }
-                , Background.color grey
-                , Border.rounded 25
-                , padding 5
-                ]
 
         cal =
             [ [ { onPress = Just PrevMonth
