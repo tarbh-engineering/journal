@@ -5,12 +5,13 @@ loadStripe.setLoadParameters({ advancedFraudSignals: false });
 
 const MobileDetect = require("mobile-detect");
 
-const isNewIpad =
-  window.navigator.userAgent.match(/Mac/) &&
-  window.navigator.maxTouchPoints &&
-  window.navigator.maxTouchPoints > 2;
-
 const md = new MobileDetect(window.navigator.userAgent);
+
+const isNewIpad = Boolean(
+  window.navigator.userAgent.match(/Mac/) &&
+    window.navigator.maxTouchPoints &&
+    window.navigator.maxTouchPoints > 2
+);
 
 const isMobile = Boolean(md.mobile()) || isNewIpad;
 
@@ -36,10 +37,11 @@ const asyncEnabled = (() => {
   return true;
 })();
 
-const swEnabled =
-  Boolean(window.navigator.serviceWorker) &&
-  isFn(window.navigator.serviceWorker.register) &&
-  asyncEnabled;
+const swEnabled = Boolean(
+  window.navigator.serviceWorker &&
+    isFn(window.navigator.serviceWorker.register) &&
+    asyncEnabled
+);
 
 const cryptoEnabled = [
   window.crypto,
