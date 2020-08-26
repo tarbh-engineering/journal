@@ -632,7 +632,6 @@ viewTagsMobile model =
                         , style "min-height" "auto"
                         , width fill
                         , height fill
-                        , Background.color grey
                         , padding 10
                         ]
                 , if model.tagCreate then
@@ -1781,18 +1780,15 @@ viewFrame model elem =
 viewFrameMobile : Model -> Element Msg -> Element Msg
 viewFrameMobile model elem =
     let
-        tall =
-            model.screen.height >= 660
-
         nd =
-            if tall then
+            if model.tall then
                 20
 
             else
                 10
 
         pic =
-            if tall then
+            if model.tall then
                 50
 
             else
@@ -1857,7 +1853,7 @@ viewFrameMobile model elem =
                     --|> whenAttr model.dropdown
                     , style "z-index" "1"
                     ]
-                |> when (not tall)
+                |> when (not model.tall)
                 |> Element.inFront
             ]
     , elem
@@ -1869,6 +1865,7 @@ viewFrameMobile model elem =
             (\( n, r, v ) ->
                 Input.button
                     [ Font.underline |> whenAttr (v == model.view)
+                    , width fill
                     , (if v == model.view then
                         blue
 
@@ -1883,11 +1880,13 @@ viewFrameMobile model elem =
 
                         else
                             Just <| NavigateTo r
-                    , label = icon n 40
+                    , label =
+                        icon n 40
+                            |> el [ centerX, height fill ]
                     }
             )
-        |> row [ spacing 50, centerX, Element.alignBottom ]
-        |> when tall
+        |> row [ Element.alignBottom, width fill ]
+        |> when model.tall
     ]
         |> column
             [ spacing nd
@@ -1963,7 +1962,7 @@ viewPageMobile model =
             fill
 
         ht =
-            if model.screen.width <= 400 then
+            if model.screen.width <= 360 then
                 40
 
             else

@@ -88,6 +88,7 @@ type alias Model =
     , faq : Bool
     , dropdown : Bool
     , tagCreate : Bool
+    , tall : Bool
     }
 
 

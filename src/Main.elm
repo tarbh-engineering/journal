@@ -46,6 +46,7 @@ init flags =
         , swEnabled = flags.swEnabled
         , month = numberToMonth flags.month |> Maybe.withDefault Time.Jan
         , year = flags.year
+        , tall = flags.screen.height >= 660
       }
     , Cmd.none
     )
@@ -102,4 +103,5 @@ emptyModel =
     , faq = False
     , dropdown = False
     , tagCreate = False
+    , tall = False
     }
