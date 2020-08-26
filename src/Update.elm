@@ -651,6 +651,7 @@ update msg model =
                             | tags =
                                 UD.insert tag.id tag model.tags
                             , tagCreateName = ""
+                            , tagCreate = False
                             , inProgress =
                                 model.inProgress
                                     |> (\p -> { p | tag = False })
@@ -1235,6 +1236,13 @@ update msg model =
                             )
                             (PostCb post.date)
                     )
+            )
+
+        TagCreateToggle ->
+            ( { model
+                | tagCreate = not model.tagCreate
+              }
+            , Cmd.none
             )
 
         DropdownToggle ->

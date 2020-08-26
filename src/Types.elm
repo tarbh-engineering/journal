@@ -87,6 +87,7 @@ type alias Model =
     , swEnabled : Bool
     , faq : Bool
     , dropdown : Bool
+    , tagCreate : Bool
     }
 
 
@@ -192,6 +193,7 @@ type Msg
     | Boot { key : Maybe String, href : String }
     | DropdownToggle
     | FakeData
+    | TagCreateToggle
 
 
 type Route

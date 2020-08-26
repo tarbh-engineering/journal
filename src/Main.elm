@@ -101,4 +101,5 @@ emptyModel =
     , swEnabled = False
     , faq = False
     , dropdown = False
+    , tagCreate = False
     }

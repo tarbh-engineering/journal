@@ -635,13 +635,37 @@ viewTagsMobile model =
                         , Background.color grey
                         , padding 10
                         ]
-                , { onPress = Just <| TagSelect Nothing
-                  , label =
+                , if model.tagCreate then
+                    [ Input.text
+                        [ Border.rounded 0
+                        , Border.width 1
+                        , width fill
+                        , padding 10
+                        , onKeydown [ onEnter TagCreateSubmit ]
+                        ]
+                        { onChange = TagCreateNameUpdate
+                        , label = Input.labelHidden ""
+                        , placeholder =
+                            text "New tag"
+                                |> Input.placeholder []
+                                |> Just
+                        , text = model.tagCreateName
+                        }
+                    , [ btn "Cancel" TagCreateToggle
+                      , btn2 model.inProgress.tag Icons.send "Submit" TagCreateSubmit
+                      ]
+                        |> row [ spacing 10, Element.alignRight ]
+                    ]
+                        |> column [ spacing 10, width fill ]
+
+                  else
+                    { onPress = Just TagCreateToggle
+                    , label =
                         icon Icons.add 30
                             |> el [ centerX, centerY ]
-                  }
-                    |> rBtn
-                    |> el [ Element.alignBottom, Element.alignRight ]
+                    }
+                        |> rBtn
+                        |> el [ Element.alignBottom, Element.alignRight ]
                 ]
                     |> column
                         [ spacing 10
@@ -664,10 +688,46 @@ viewTag model t =
                         List.member t.id p.tags
                     )
     in
-    [ text t.name
+    [ if model.tagBeingEdited == Just t.id then
+        [ Input.text
+            [ Border.rounded 0
+            , Border.color black
+            , width fill
+            , Border.widthEach { bottom = 1, top = 0, left = 0, right = 0 }
+            , onKeydown [ onEnter <| TagUpdateSubmit t ]
+            ]
+            { label = Input.labelHidden ""
+            , onChange = TagUpdate
+            , placeholder = Nothing
+            , text = model.tagUpdate
+            }
+        , { onPress = Just <| TagUpdateSet Nothing
+          , label =
+                icon Icons.close 30
+                    |> el [ centerX, centerY ]
+          }
+            |> rBtn
+        , { onPress = Just <| TagUpdateSubmit t
+          , label =
+                icon Icons.send 30
+                    |> el [ centerX, centerY ]
+          }
+            |> rBtn
+        ]
+            |> row [ width fill, spacing 10 ]
+
+      else
+        Input.button [ width fill, padding 10 ]
+            { onPress = Just <| TagUpdateSet <| Just t
+            , label =
+                [ text t.name
+                , icon Icons.edit 20
+                ]
+                    |> row [ spaceEvenly, width fill ]
+            }
     , if List.isEmpty ts then
-        [ [ text "No posts." ]
-            |> paragraph []
+        [ text "No posts."
+            |> el [ centerX ]
         , btn
             "Go to calendar"
             (NavigateTo RouteCalendar)
@@ -706,15 +766,17 @@ viewTag model t =
                 , Element.scrollbarY
                 , height fill
                 ]
-    , { onPress = Just <| TagSelect Nothing
-      , label =
+    , [ btn "Delete" <| TagDelete t
+      , { onPress = Just <| TagSelect Nothing
+        , label =
             icon Icons.undo 30
                 |> el [ centerX, centerY ]
-      }
-        |> rBtn
-        |> el [ Element.alignBottom, Element.alignRight ]
+        }
+            |> rBtn
+      ]
+        |> row [ spacing 20, Element.alignBottom, Element.alignRight ]
     ]
-        |> column [ height fill, width fill ]
+        |> column [ height fill, width fill, spacing 20 ]
 
 
 viewTags : Model -> Element Msg
