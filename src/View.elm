@@ -611,7 +611,7 @@ viewTagsMobile model =
                 , btn3 model.inProgress.tag Icons.send "Submit" TagCreateSubmit
                     |> el [ Element.alignRight, paddingXY 5 0 ]
                 ]
-                    |> column [ width fill, spacing 10 ]
+                    |> column [ width fill, spacing 10, centerY ]
 
              else
                 [ tags
@@ -883,13 +883,13 @@ viewHomeMobile model =
     in
     [ [ [ text "BOLSTER"
             |> el
-                [ Font.size 55
+                [ Font.size 65
                 , Font.semiBold
                 , abel
                 ]
         , Element.image
-            [ height <| px 60
-            , width <| px 60
+            [ height <| px 85
+            , width <| px 85
             ]
             { src = "/icons/192.png", description = "" }
         ]
@@ -968,7 +968,7 @@ viewHomeMobile model =
       ]
         |> column
             [ width fill
-            , paddingXY 20 0
+            , padding 20
             ]
     , [ case model.funnel of
             Hello ->
@@ -1780,49 +1780,41 @@ viewFrame model elem =
 
 viewFrameMobile : Model -> Element Msg -> Element Msg
 viewFrameMobile model elem =
-    [ [ Input.button
-            [ varela
-            , Font.semiBold
-            , Font.size 25
-            ]
+    let
+        tall =
+            model.screen.height >= 660
+
+        nd =
+            if tall then
+                20
+
+            else
+                10
+
+        pic =
+            if tall then
+                50
+
+            else
+                35
+    in
+    [ [ Input.button []
             { onPress = Just <| NavigateTo RouteHome
             , label =
                 [ Element.image
-                    [ height <| px 35
-                    , width <| px 35
+                    [ height <| px pic
+                    , width <| px pic
                     ]
                     { src = "/icons/192.png", description = "" }
                 , text "DEMO"
-                    |> el [ abel ]
+                    |> el
+                        [ Font.semiBold
+                        , Font.size 25
+                        ]
                     |> when (model.auth == Nothing)
                 ]
                     |> row [ spacing 10 ]
             }
-      , [ ( "Calendar", RouteCalendar, ViewCalendar )
-        , ( "Tags", RouteTags, ViewTags )
-
-        --, ( "Stats", RouteStats, ViewStats )
-        , ( "Settings", RouteSettings, ViewSettings )
-        ]
-            |> List.map
-                (\( n, r, v ) ->
-                    Input.button
-                        [ Font.underline |> whenAttr (v == model.view)
-                        , Element.mouseOver
-                            [ Font.color blue
-                            ]
-                        ]
-                        { onPress =
-                            if v == model.view then
-                                Nothing
-
-                            else
-                                Just <| NavigateTo r
-                        , label = text n
-                        }
-                )
-            |> row [ spacing 40 ]
-            |> when False
       ]
         |> row
             [ width fill
@@ -1865,17 +1857,45 @@ viewFrameMobile model elem =
                     --|> whenAttr model.dropdown
                     , style "z-index" "1"
                     ]
+                |> when (not tall)
                 |> Element.inFront
             ]
     , elem
+    , [ ( Icons.calendar_today, RouteCalendar, ViewCalendar )
+      , ( Icons.label, RouteTags, ViewTags )
+      , ( Icons.settings, RouteSettings, ViewSettings )
+      ]
+        |> List.map
+            (\( n, r, v ) ->
+                Input.button
+                    [ Font.underline |> whenAttr (v == model.view)
+                    , (if v == model.view then
+                        blue
+
+                       else
+                        black
+                      )
+                        |> Font.color
+                    ]
+                    { onPress =
+                        if v == model.view then
+                            Nothing
+
+                        else
+                            Just <| NavigateTo r
+                    , label = icon n 40
+                    }
+            )
+        |> row [ spacing 50, centerX, Element.alignBottom ]
+        |> when tall
     ]
         |> column
-            [ spacing 10
+            [ spacing nd
             , height fill
             , width fill
             , Element.clip
             , fShrink
-            , padding 10
+            , padding nd
             ]
 
 
