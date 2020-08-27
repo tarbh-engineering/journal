@@ -23,6 +23,7 @@ import Time exposing (Month(..))
 import Time.Format.I18n.I_en_us exposing (monthName)
 import Types exposing (Def(..), Funnel(..), Model, Msg(..), Route(..), Sort(..), Status(..), Tag, View(..))
 import Validate exposing (isValidEmail)
+import View.Img
 import View.Misc exposing (btn, btn2, btn3, formatDay, icon, spinner)
 import View.Style exposing (abel, black, blue, ebg, fadeIn, grey, rotate, varela, white, yellow)
 
@@ -88,6 +89,116 @@ shadow =
         , size = 2
         , color = black
         }
+
+
+viewCal2 model =
+    let
+        wd =
+            fill
+
+        ht =
+            if model.screen.width <= 360 then
+                40
+
+            else
+                50
+    in
+    [ [ { onPress = Just PrevMonth
+        , label =
+            icon Icons.chevron_left 30
+                |> el [ centerX, centerY ]
+        }
+            |> rBtn
+      , [ model.month |> monthName |> text
+        , model.year |> String.fromInt |> text
+        ]
+            |> row
+                [ centerX
+                , spacing 10
+                , Background.color white
+                , padding 10
+                ]
+      , { onPress = Just NextMonth
+        , label =
+            icon Icons.chevron_right 30
+                |> el [ centerX, centerY ]
+        }
+            |> rBtn
+      ]
+        |> row [ width fill, spaceEvenly, padding 5 ]
+    , Element.table
+        [ spacing 5 ]
+        { data = Calendar.weeks Time.Mon model.month model.year
+        , columns =
+            [ { header = weekday "Mon"
+              , width = wd
+              , view = .mon >> viewCell model ht
+              }
+            , { header = weekday "Tue"
+              , width = wd
+              , view = .tue >> viewCell model ht
+              }
+            , { header = weekday "Wed"
+              , width = wd
+              , view = .wed >> viewCell model ht
+              }
+            , { header = weekday "Thu"
+              , width = wd
+              , view = .thu >> viewCell model ht
+              }
+            , { header = weekday "Fri"
+              , width = wd
+              , view = .fri >> viewCell model ht
+              }
+            , { header = weekday "Sat"
+              , width = wd
+              , view = .sat >> viewCell model ht
+              }
+            , { header = weekday "Sun"
+              , width = wd
+              , view = .sun >> viewCell model ht
+              }
+            ]
+        }
+    , model.current
+        |> whenJust
+            (\day ->
+                [ ( Icons.arrow_back, Element.alignLeft, -1 )
+                , ( Icons.arrow_forward, Element.alignRight, 1 )
+                ]
+                    |> List.map
+                        (\( icn, attr, n ) ->
+                            Input.button
+                                [ Font.size 40
+                                , Element.mouseOver [ Font.color black ]
+                                , Element.mouseDown
+                                    [ Element.moveDown 4
+                                    , Element.moveRight 4
+                                    , Font.shadow
+                                        { offset = ( 0, 0 )
+                                        , blur = 0
+                                        , color = black
+                                        }
+                                    ]
+                                , attr
+                                ]
+                                { onPress =
+                                    day
+                                        |> Day.shift n
+                                        |> RouteDay
+                                        |> NavigateTo
+                                        |> Just
+                                , label = icon icn 30
+                                }
+                        )
+                    |> row [ width fill, Element.alignBottom ]
+            )
+        |> when False
+    ]
+        |> column
+            [ spacing 10
+            , width fill
+            ]
 
 
 viewCalendar : Model -> Element Msg
@@ -321,6 +432,7 @@ viewCell model n day =
             |> whenAttr curr
         , [ Date.day day.date
                 |> String.fromInt
+                |> String.padLeft 2 '0'
                 |> text
                 |> el
                     [ Element.alignTop
@@ -457,11 +569,11 @@ view model =
                     )
 
         ViewCalendar ->
-            (if isMobile then
-                viewPageMobile model
+            (if model.screen.width > 768 then
+                viewPage model
 
              else
-                viewPage model
+                viewPageMobile model
             )
                 |> frame
 
@@ -617,13 +729,28 @@ viewTagsMobile model =
                 [ tags
                     |> List.map
                         (\t ->
-                            Input.button [ Font.size 25, width fill, padding 5 ]
+                            Input.button
+                                [ Font.size 25
+                                , width fill
+                                , padding 5
+                                ]
                                 { onPress = Just <| TagSelect <| Just t.id
                                 , label =
                                     [ text t.name
                                     , text <| String.fromInt t.count
                                     ]
-                                        |> row [ spaceEvenly, width fill ]
+                                        |> row
+                                            [ spaceEvenly
+                                            , padding 15
+                                            , Border.rounded 15
+                                            , width fill
+                                            , Border.shadow
+                                                { offset = ( 3, 3 )
+                                                , blur = 3
+                                                , size = 1
+                                                , color = Element.rgb255 150 150 150
+                                                }
+                                            ]
                                 }
                         )
                     |> column
@@ -886,11 +1013,9 @@ viewHomeMobile model =
                 , Font.semiBold
                 , abel
                 ]
-        , Element.image
-            [ height <| px 85
-            , width <| px 85
-            ]
-            { src = "/icons/192.png", description = "" }
+        , View.Img.tmp 85
+            |> Element.html
+            |> el []
         ]
             |> row
                 [ spacing 20
@@ -1270,11 +1395,9 @@ viewHome model =
                 , Font.semiBold
                 , abel
                 ]
-      , Element.image
-            [ height <| px 150
-            , width <| px 150
-            ]
-            { src = "/icons/192.png", description = "" }
+      , View.Img.tmp 150
+            |> Element.html
+            |> el []
       ]
         |> row
             [ spacing 40
@@ -1797,11 +1920,9 @@ viewFrameMobile model elem =
     [ [ Input.button []
             { onPress = Just <| NavigateTo RouteHome
             , label =
-                [ Element.image
-                    [ height <| px pic
-                    , width <| px pic
-                    ]
-                    { src = "/icons/192.png", description = "" }
+                [ View.Img.tmp pic
+                    |> Element.html
+                    |> el []
                 , text "DEMO"
                     |> el
                         [ Font.semiBold
@@ -1947,7 +2068,11 @@ viewPage model =
             else
                 20
     in
-    [ viewCalendar model
+    [ viewCal2 model
+        |> el
+            [ Element.alignTop
+            , width fill
+            ]
     , viewPost model
     ]
         |> row [ width fill, height fill, spacing wd, paddingXY 20 wd ]
@@ -1985,101 +2110,9 @@ viewPageMobile model =
             model.postBeingEdited || model.postView || model.tagView
 
         cal =
-            [ [ { onPress = Just PrevMonth
-                , label =
-                    icon Icons.chevron_left 30
-                        |> el [ centerX, centerY ]
-                }
-                    |> rBtn
-              , [ model.month |> monthName |> text
-                , model.year |> String.fromInt |> text
-                ]
-                    |> row
-                        [ centerX
-                        , spacing 10
-                        , Background.color white
-                        , padding 10
-                        ]
-              , { onPress = Just NextMonth
-                , label =
-                    icon Icons.chevron_right 30
-                        |> el [ centerX, centerY ]
-                }
-                    |> rBtn
-              ]
-                |> row [ width fill, spaceEvenly, padding 5 ]
-            , Element.table
-                [ spacing 5 ]
-                { data = Calendar.weeks Time.Mon model.month model.year
-                , columns =
-                    [ { header = weekday "Mon"
-                      , width = wd
-                      , view = .mon >> viewCell model ht
-                      }
-                    , { header = weekday "Tue"
-                      , width = wd
-                      , view = .tue >> viewCell model ht
-                      }
-                    , { header = weekday "Wed"
-                      , width = wd
-                      , view = .wed >> viewCell model ht
-                      }
-                    , { header = weekday "Thu"
-                      , width = wd
-                      , view = .thu >> viewCell model ht
-                      }
-                    , { header = weekday "Fri"
-                      , width = wd
-                      , view = .fri >> viewCell model ht
-                      }
-                    , { header = weekday "Sat"
-                      , width = wd
-                      , view = .sat >> viewCell model ht
-                      }
-                    , { header = weekday "Sun"
-                      , width = wd
-                      , view = .sun >> viewCell model ht
-                      }
-                    ]
-                }
-            , model.current
-                |> whenJust
-                    (\day ->
-                        [ ( Icons.arrow_back, Element.alignLeft, -1 )
-                        , ( Icons.arrow_forward, Element.alignRight, 1 )
-                        ]
-                            |> List.map
-                                (\( icn, attr, n ) ->
-                                    Input.button
-                                        [ Font.size 40
-                                        , Element.mouseOver [ Font.color black ]
-                                        , Element.mouseDown
-                                            [ Element.moveDown 4
-                                            , Element.moveRight 4
-                                            , Font.shadow
-                                                { offset = ( 0, 0 )
-                                                , blur = 0
-                                                , color = black
-                                                }
-                                            ]
-                                        , attr
-                                        ]
-                                        { onPress =
-                                            day
-                                                |> Day.shift n
-                                                |> RouteDay
-                                                |> NavigateTo
-                                                |> Just
-                                        , label = icon icn 30
-                                        }
-                                )
-                            |> row [ width fill, Element.alignBottom ]
-                    )
-                |> when False
-            ]
-                |> column
-                    [ spacing 10
-                    , Element.alignTop
+            viewCal2 model
+                |> el
+                    [ Element.alignTop
                     , width fill
 
                     --, style "transform-origin" "bottom center"
