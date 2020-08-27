@@ -632,7 +632,6 @@ viewTagsMobile model =
                         , style "min-height" "auto"
                         , width fill
                         , height fill
-                        , padding 10
                         ]
                 , if model.tagCreate then
                     [ Input.text
@@ -727,10 +726,11 @@ viewTag model t =
     , if List.isEmpty ts then
         [ text "No posts."
             |> el [ centerX ]
-        , btn
-            "Go to calendar"
-            (NavigateTo RouteCalendar)
-            |> el [ centerX ]
+
+        --, btn
+        --"Go to calendar"
+        --(NavigateTo RouteCalendar)
+        --|> el [ centerX ]
         ]
             |> column [ spacing 20, padding 20, centerX ]
 
@@ -1811,6 +1811,19 @@ viewFrameMobile model elem =
                 ]
                     |> row [ spacing 10 ]
             }
+      , (case model.view of
+            ViewCalendar ->
+                "Calendar"
+
+            ViewTags ->
+                "Tags"
+
+            _ ->
+                "Settings"
+        )
+            |> text
+            |> el [ Font.italic ]
+            |> when model.tall
       ]
         |> row
             [ width fill
@@ -1857,9 +1870,9 @@ viewFrameMobile model elem =
                 |> Element.inFront
             ]
     , elem
-    , [ ( Icons.calendar_today, RouteCalendar, ViewCalendar )
+    , [ ( Icons.settings, RouteSettings, ViewSettings )
+      , ( Icons.calendar_today, RouteCalendar, ViewCalendar )
       , ( Icons.label, RouteTags, ViewTags )
-      , ( Icons.settings, RouteSettings, ViewSettings )
       ]
         |> List.map
             (\( n, r, v ) ->
@@ -2304,7 +2317,7 @@ vp2 model d =
                     , height fill
                     , Background.color grey
                     , Font.size fs
-                    , padding 20
+                    , padding 10
                     , ebg
                     ]
 
@@ -2413,7 +2426,6 @@ vp2 model d =
                 |> List.intersperse hairline
                 |> column
                     [ spacing 10
-                    , paddingXY 15 0
                     , width fill
                     , centerX
                     , height fill
