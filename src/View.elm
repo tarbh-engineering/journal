@@ -1858,7 +1858,7 @@ viewFrameMobile model elem =
                     }
             )
         |> row [ Element.alignBottom, width fill ]
-        |> when model.tall
+        |> when (model.tall && model.screen.height >= 660)
     ]
         |> column
             [ spacing nd
