@@ -30,6 +30,7 @@ import Types exposing (Auth, GqlResult, GqlTask, Model, Msg(..), Post, Route(..)
 import Url
 import Uuid
 import Validate exposing (isValidEmail)
+import View.Misc exposing (isWide)
 
 
 wait : Task Never ()
@@ -68,7 +69,6 @@ update msg model =
             ( model
             , model.posts
                 |> Day.values
-                |> List.filterMap Helpers.extract
                 |> JE.list
                     (\p ->
                         [ ( "day"
@@ -362,7 +362,6 @@ update msg model =
                 | postEditorBody =
                     model.current
                         |> Maybe.andThen (\d -> Day.get d model.posts)
-                        |> Maybe.andThen Helpers.extract
                         |> Maybe.andThen .body
                         |> Maybe.withDefault ""
                 , postBeingEdited = True
@@ -397,7 +396,6 @@ update msg model =
                 |> unwrap
                     (model.current
                         |> Maybe.andThen (\d -> Day.get d model.posts)
-                        |> Maybe.andThen Helpers.extract
                         |> unwrap Cmd.none
                             (\p ->
                                 wait
@@ -417,10 +415,7 @@ update msg model =
                 |> unpack
                     (\err ->
                         ( { model
-                            | posts =
-                                model.posts
-                                    |> clearLoading
-                            , online = not <| isNetworkError err
+                            | online = not <| isNetworkError err
                           }
                         , logGqlError "PostsCb" err
                         )
@@ -431,25 +426,9 @@ update msg model =
                                 posts
                                     |> List.foldr
                                         (\v ->
-                                            Day.update v.date
-                                                (unwrap
-                                                    (Found v)
-                                                    (\post ->
-                                                        case post of
-                                                            Missing ->
-                                                                Found v
-
-                                                            Loading _ ->
-                                                                Found v
-
-                                                            Found _ ->
-                                                                Found v
-                                                    )
-                                                    >> Just
-                                                )
+                                            Day.insert v.date v
                                         )
                                         model.posts
-                                    |> clearLoading
                           }
                         , Cmd.none
                         )
@@ -539,7 +518,7 @@ update msg model =
                                 model.posts
                                     |> Day.insert
                                         post.date
-                                        (Found post)
+                                        post
                             , postBeingEdited = False
                             , inProgress = model.inProgress |> (\p -> { p | post = False })
                             , online = True
@@ -577,7 +556,7 @@ update msg model =
                                 model.posts
                                     |> Day.insert
                                         post.date
-                                        (Found post)
+                                        post
                             , inProgress = inProgress
                           }
                         , Cmd.none
@@ -608,7 +587,7 @@ update msg model =
                                         model.posts
                                             |> Day.insert
                                                 post.date
-                                                (Found post)
+                                                post
                                     , postBeingEdited = False
                                     , inProgress = inProgress
                                     , postView =
@@ -768,7 +747,7 @@ update msg model =
         SetDef d ->
             ( { model
                 | def =
-                    if Just d == model.def || model.faq || model.funnel /= Types.Hello then
+                    if Just d == model.def then
                         Nothing
 
                     else
@@ -835,7 +814,7 @@ update msg model =
                                 model.posts
                                     |> Day.insert
                                         post.date
-                                        (Found post)
+                                        post
                             , inProgress = inProgress
                           }
                         , Cmd.none
@@ -845,8 +824,7 @@ update msg model =
         EmailSubmit ->
             let
                 email =
-                    --String.trim model.loginForm.email
-                    ""
+                    String.trim model.loginForm.email
             in
             if String.isEmpty email then
                 ( { model | errors = [ "empty field(s)" ] }
@@ -856,7 +834,6 @@ update msg model =
             else if isValidEmail email then
                 ( { model
                     | errors = []
-                    , def = Nothing
                     , inProgress =
                         model.inProgress
                             |> (\p -> { p | login = True })
@@ -1255,7 +1232,6 @@ update msg model =
         FaqToggle ->
             ( { model
                 | faq = not model.faq
-                , def = Nothing
               }
             , Cmd.none
             )
@@ -1407,7 +1383,6 @@ routeDemo model route =
                                     | count =
                                         model.posts
                                             |> Day.values
-                                            |> List.filterMap Helpers.extract
                                             |> List.filter
                                                 (.tags >> List.member t.id)
                                             |> List.length
@@ -1441,33 +1416,18 @@ routeDemo model route =
 
         RouteDay d ->
             model.posts
-                |> Helpers.getStatus d
+                |> Day.get d
                 |> (\data ->
                         let
                             shouldFocusOnEditor =
-                                case data of
-                                    Missing ->
-                                        not model.isMobile
+                                if data == Nothing then
+                                    isWide model.screen
 
-                                    Loading _ ->
-                                        False
-
-                                    Found _ ->
-                                        model.postBeingEdited && not model.isMobile
+                                else
+                                    isWide model.screen && model.postBeingEdited
 
                             editorText =
-                                case data of
-                                    Missing ->
-                                        ""
-
-                                    Loading ma ->
-                                        ma
-                                            |> Maybe.andThen .body
-                                            |> Maybe.withDefault ""
-
-                                    Found a ->
-                                        a.body
-                                            |> Maybe.withDefault ""
+                                data |> Maybe.andThen .body |> Maybe.withDefault ""
                         in
                         ( { model
                             | postEditorBody = editorText
@@ -1547,50 +1507,21 @@ routeLive model auth route =
 routeLiveDay : Model -> Date -> Auth -> ( Model, Cmd Msg )
 routeLiveDay model d auth =
     model.posts
-        |> Helpers.getStatus d
+        |> Day.get d
         |> (\data ->
                 let
-                    newPost =
-                        case data of
-                            Missing ->
-                                Loading Nothing
-
-                            Loading ma ->
-                                Loading ma
-
-                            Found a ->
-                                Loading (Just a)
-
                     shouldFocusOnEditor =
-                        case data of
-                            Missing ->
-                                not model.isMobile
+                        if data == Nothing then
+                            isWide model.screen
 
-                            Loading _ ->
-                                False
-
-                            Found _ ->
-                                not model.isMobile && model.postBeingEdited
+                        else
+                            isWide model.screen && model.postBeingEdited
 
                     editorText =
-                        case data of
-                            Missing ->
-                                ""
-
-                            Loading ma ->
-                                ma
-                                    |> Maybe.andThen .body
-                                    |> Maybe.withDefault ""
-
-                            Found a ->
-                                a.body
-                                    |> Maybe.withDefault ""
+                        data |> Maybe.andThen .body |> Maybe.withDefault ""
                 in
                 ( { model
-                    | posts =
-                        model.posts
-                            |> Day.insert d newPost
-                    , postEditorBody = editorText
+                    | postEditorBody = editorText
                     , postCreateTags = []
                     , postBeingEdited = False
                     , inProgress = model.inProgress |> (\p -> { p | post = False })

@@ -43,7 +43,7 @@ type alias Screen =
 
 
 type alias Model =
-    { posts : DayDict (Status Post)
+    { posts : DayDict Post
     , tags : UuidDict Tag
     , errors : List String
     , view : View

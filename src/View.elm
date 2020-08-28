@@ -21,10 +21,10 @@ import Material.Icons as Icons
 import Maybe.Extra exposing (isJust, isNothing, unwrap)
 import Time exposing (Month(..))
 import Time.Format.I18n.I_en_us exposing (monthName)
-import Types exposing (Def(..), Funnel(..), Model, Msg(..), Route(..), Sort(..), Status(..), Tag, View(..))
+import Types exposing (Def(..), Funnel(..), Model, Msg(..), Post, Route(..), Sort(..), Status(..), Tag, View(..))
 import Validate exposing (isValidEmail)
 import View.Img
-import View.Misc exposing (btn, btn2, btn3, formatDay, icon, spinner)
+import View.Misc exposing (btn, btn2, btn3, formatDay, icon, isWide, spinner)
 import View.Style exposing (abel, black, blue, ebg, fadeIn, grey, rotate, varela, white, yellow)
 
 
@@ -81,6 +81,15 @@ onKeydown decoders =
         |> Element.htmlAttribute
 
 
+shadow2 =
+    Border.shadow
+        { offset = ( 3, 3 )
+        , blur = 4
+        , size = 2
+        , color = Element.rgb255 150 150 150
+        }
+
+
 shadow : Attribute msg
 shadow =
     Border.shadow
@@ -91,17 +100,26 @@ shadow =
         }
 
 
-viewCal2 model =
+viewCalendar : Model -> Element Msg
+viewCalendar model =
     let
-        wd =
-            fill
-
         ht =
-            if model.screen.width <= 360 then
+            if model.screen.width <= 360 || model.screen.height < 700 then
                 40
+
+            else if isWide model.screen then
+                if model.screen.width > 1024 then
+                    80
+
+                else
+                    60
 
             else
                 50
+
+        wd =
+            --fill
+            px ht
     in
     [ [ { onPress = Just PrevMonth
         , label =
@@ -160,155 +178,10 @@ viewCal2 model =
               }
             ]
         }
-    , model.current
-        |> whenJust
-            (\day ->
-                [ ( Icons.arrow_back, Element.alignLeft, -1 )
-                , ( Icons.arrow_forward, Element.alignRight, 1 )
-                ]
-                    |> List.map
-                        (\( icn, attr, n ) ->
-                            Input.button
-                                [ Font.size 40
-                                , Element.mouseOver [ Font.color black ]
-                                , Element.mouseDown
-                                    [ Element.moveDown 4
-                                    , Element.moveRight 4
-                                    , Font.shadow
-                                        { offset = ( 0, 0 )
-                                        , blur = 0
-                                        , color = black
-                                        }
-                                    ]
-                                , attr
-                                ]
-                                { onPress =
-                                    day
-                                        |> Day.shift n
-                                        |> RouteDay
-                                        |> NavigateTo
-                                        |> Just
-                                , label = icon icn 30
-                                }
-                        )
-                    |> row [ width fill, Element.alignBottom ]
-            )
-        |> when False
     ]
         |> column
             [ spacing 10
-            , width fill
             ]
-
-
-viewCalendar : Model -> Element Msg
-viewCalendar model =
-    let
-        wd =
-            if model.screen.width <= 1024 then
-                55
-
-            else
-                75
-    in
-    [ [ Input.button [ Font.color white, Element.alignLeft ]
-            { onPress = Just PrevMonth
-            , label =
-                icon Icons.chevron_left 50
-                    |> el [ Element.moveUp 5, Font.color black ]
-            }
-      , [ model.month |> monthName |> text
-        , model.year |> String.fromInt |> text
-        ]
-            |> row
-                [ centerX
-                , spacing 10
-                , Background.color white
-                , padding 10
-                ]
-      , Input.button [ Font.color white, Element.alignRight ]
-            { onPress = Just NextMonth
-            , label =
-                icon Icons.chevron_right 50
-                    |> el [ Element.moveUp 5, Font.color black ]
-            }
-      ]
-        |> row [ width fill ]
-    , Element.table
-        [ spacing 10 ]
-        { data = Calendar.weeks Time.Mon model.month model.year
-        , columns =
-            [ { header = weekday "Mon"
-              , width = px wd
-              , view = .mon >> viewCell model wd
-              }
-            , { header = weekday "Tue"
-              , width = px wd
-              , view = .tue >> viewCell model wd
-              }
-            , { header = weekday "Wed"
-              , width = px wd
-              , view = .wed >> viewCell model wd
-              }
-            , { header = weekday "Thu"
-              , width = px wd
-              , view = .thu >> viewCell model wd
-              }
-            , { header = weekday "Fri"
-              , width = px wd
-              , view = .fri >> viewCell model wd
-              }
-            , { header = weekday "Sat"
-              , width = px wd
-              , view = .sat >> viewCell model wd
-              }
-            , { header = weekday "Sun"
-              , width = px wd
-              , view = .sun >> viewCell model wd
-              }
-            ]
-        }
-    , model.current
-        |> whenJust
-            (\day ->
-                [ ( '◀', Element.alignLeft, -1 )
-                , ( '▶', Element.alignRight, 1 )
-                ]
-                    |> List.map
-                        (\( char, attr, n ) ->
-                            Input.button
-                                [ Font.color blue
-                                , Font.size 40
-                                , Element.mouseOver [ Font.color black ]
-                                , Element.mouseDown
-                                    [ Element.moveDown 4
-                                    , Element.moveRight 4
-                                    , Font.shadow
-                                        { offset = ( 0, 0 )
-                                        , blur = 0
-                                        , color = black
-                                        }
-                                    ]
-                                , attr
-                                , padding 20
-                                , Border.width 2
-                                ]
-                                { onPress =
-                                    Just <|
-                                        NavigateTo <|
-                                            RouteDay <|
-                                                Day.shift n <|
-                                                    day
-                                , label =
-                                    char
-                                        |> String.fromChar
-                                        |> text
-                                }
-                        )
-                    |> row [ width fill, Element.alignBottom, paddingXY 0 50 ]
-            )
-    ]
-        |> column [ spacing 10, height fill ]
 
 
 cell2 : Model -> Day -> Element Msg
@@ -317,7 +190,6 @@ cell2 model day =
         hv =
             model.posts
                 |> Day.get day.date
-                |> Maybe.andThen Helpers.extract
                 |> unwrap False (always True)
 
         curr =
@@ -369,7 +241,6 @@ viewCell model n day =
         pst =
             model.posts
                 |> Day.get day.date
-                |> Maybe.andThen Helpers.extract
 
         hv =
             pst
@@ -382,10 +253,9 @@ viewCell model n day =
         [ height <| px n
 
         --, style "transition" "all 0.8s"
-        , Html.Attributes.class "shift"
-            |> Element.htmlAttribute
-            |> whenAttr (not model.isMobile)
-
+        --, Html.Attributes.class "shift"
+        --|> Element.htmlAttribute
+        --|> whenAttr (not model.isMobile)
         --, shiftShadow
         --|> whenAttr (Just day.date == model.current)
         --, Element.moveUp 5
@@ -438,7 +308,7 @@ viewCell model n day =
                     [ Element.alignTop
                     , Element.alignLeft
                     , Font.bold
-                    , Font.size 27
+                    , Font.size (n // 2)
                     , abel
                     ]
           , [ icon Icons.label 15
@@ -499,7 +369,7 @@ view model =
             , height <| px 10
             , Background.color black
             ]
-        |> when (not isMobile)
+        |> when (isWide model.screen)
     , case model.view of
         ViewHome ->
             if isMobile then
@@ -569,7 +439,7 @@ view model =
                     )
 
         ViewCalendar ->
-            (if model.screen.width > 768 then
+            (if isWide model.screen then
                 viewPage model
 
              else
@@ -715,7 +585,7 @@ viewTagsMobile model =
                     { onChange = TagCreateNameUpdate
                     , label = Input.labelHidden ""
                     , placeholder =
-                        text "New tag"
+                        text "Create your first tag"
                             |> Input.placeholder []
                             |> Just
                     , text = model.tagCreateName
@@ -807,7 +677,6 @@ viewTag model t =
         ts =
             model.posts
                 |> Day.values
-                |> List.filterMap Helpers.extract
                 |> List.filter
                     (\p ->
                         List.member t.id p.tags
@@ -851,13 +720,12 @@ viewTag model t =
                     |> row [ spaceEvenly, width fill ]
             }
     , if List.isEmpty ts then
-        [ text "No posts."
+        [ text "No posts with this tag."
             |> el [ centerX ]
-
-        --, btn
-        --"Go to calendar"
-        --(NavigateTo RouteCalendar)
-        --|> el [ centerX ]
+        , btn
+            "Go to calendar"
+            (NavigateTo RouteCalendar)
+            |> el [ centerX ]
         ]
             |> column [ spacing 20, padding 20, centerX ]
 
@@ -971,7 +839,6 @@ viewTags model =
             (\t ->
                 model.posts
                     |> Day.values
-                    |> List.filterMap Helpers.extract
                     |> List.filter
                         (\p ->
                             List.member t p.tags
@@ -1025,70 +892,7 @@ viewHomeMobile model =
                 , centerX
                 , padding 10
                 ]
-      , [ text "The"
-            |> el
-                [ Element.paddingEach
-                    { top = 0
-                    , bottom = 9
-                    , left = 0
-                    , right = 0
-                    }
-                ]
-
-        --|> viewDef model.def Types.Alts
-        , [ "secure"
-                |> viewDef model.def Types.Secure
-          , text ","
-          ]
-            |> row []
-        , "private"
-            |> viewDef model.def Types.Private
-        , [ "journal"
-                |> viewDef model.def Types.Journal
-          , text "."
-          ]
-            |> row []
-        ]
-            |> row
-                [ spacing 5
-                , Font.italic
-                , Font.size 20
-                , centerX
-                , varela
-                ]
-      , model.def
-            |> whenJust
-                (\d ->
-                    (case d of
-                        Alts ->
-                            [ text "Information about alternative products can be found here." ]
-
-                        Secure ->
-                            [ text "Built for performance and security, using the leading technologies available. The code can be viewed"
-                            , el [ width <| px 6 ] none
-                            , Element.newTabLink [ Font.underline ]
-                                { url = "https://github.com/tarbh-engineering/journal"
-                                , label = text "here"
-                                }
-                            , text "."
-                            ]
-
-                        Private ->
-                            [ text "Everything you write is protected by your password before it is saved, ensuring only you can ever read it." ]
-
-                        Journal ->
-                            [ text "For everyday use, on every device." ]
-                    )
-                        |> Element.paragraph
-                            [ padding 20
-                            , Background.color grey
-                            , width fill
-                            , Element.alignRight
-                            , ebg
-                            , Font.size 20
-                            ]
-                )
-            |> when (model.funnel == Types.Hello)
+      , viewInfo model.def
       ]
         |> column
             [ width fill
@@ -1112,121 +916,7 @@ viewHomeMobile model =
                         ]
 
             JoinUs ->
-                let
-                    waiting =
-                        not model.inProgress.monthlyPlan && not model.inProgress.annualPlan
-                in
-                [ text "Sign up"
-                    |> el [ Font.italic, Font.size 25, Font.bold ]
-                , [ text "Monthly plan"
-                  , Input.button
-                        [ Background.gradient
-                            { angle = degrees 0
-                            , steps =
-                                [ Element.rgb255 225 95 137
-                                , Element.rgb255 13 50 77
-                                ]
-                            }
-                        , width <| px 150
-                        , height <| px 40
-                        , Font.center
-                        , Font.color white
-                        , Border.rounded 10
-                        , Border.shadow
-                            { offset = ( 4, 4 )
-                            , blur = 4
-                            , size = 0
-                            , color = Element.rgb255 150 150 150
-                            }
-                        , Element.mouseDown
-                            [ Element.moveRight 5
-                            , Element.moveDown 5
-                            , Border.shadow
-                                { offset = ( 0, 0 )
-                                , blur = 0
-                                , size = 0
-                                , color = Element.rgb255 150 150 150
-                                }
-                            ]
-                            |> whenAttr waiting
-                        ]
-                        { onPress =
-                            if waiting then
-                                Just <| Buy False
-
-                            else
-                                Nothing
-                        , label =
-                            if model.inProgress.monthlyPlan then
-                                icon Icons.refresh 25
-                                    |> el [ rotate, centerX ]
-
-                            else
-                                text "$5 Buy"
-                        }
-                  ]
-                    |> row [ spaceEvenly, width fill ]
-                , [ text "Annual plan"
-                  , Input.button
-                        [ Background.gradient
-                            { angle = degrees 0
-                            , steps =
-                                [ Element.rgb255 225 95 137
-                                , Element.rgb255 13 50 77
-                                ]
-                            }
-                        , width <| px 150
-                        , height <| px 40
-                        , Font.center
-                        , Font.color white
-                        , Border.rounded 10
-                        , Border.shadow
-                            { offset = ( 4, 4 )
-                            , blur = 4
-                            , size = 0
-                            , color = Element.rgb255 150 150 150
-                            }
-                        , Element.mouseDown
-                            [ Element.moveRight 5
-                            , Element.moveDown 5
-                            , Border.shadow
-                                { offset = ( 0, 0 )
-                                , blur = 0
-                                , size = 0
-                                , color = Element.rgb255 150 150 150
-                                }
-                            ]
-                            |> whenAttr waiting
-                        ]
-                        { onPress =
-                            if waiting then
-                                Just <| Buy True
-
-                            else
-                                Nothing
-                        , label =
-                            if model.inProgress.annualPlan then
-                                icon Icons.refresh 25
-                                    |> el [ rotate, centerX ]
-
-                            else
-                                text "$40 Buy"
-                        }
-                  ]
-                    |> row [ spaceEvenly, width fill ]
-                , Element.image [ height <| px 35, centerX, fadeIn ]
-                    { src = "/stripe1.png", description = "" }
-                ]
-                    |> column
-                        [ centerX
-                        , spacing 20
-                        , width fill
-                        , padding 20
-                        , Element.alignBottom
-                        , Background.color grey
-                        , style "animation" "enter 1s"
-                        , style "transform-origin" "center"
-                        ]
+                viewBuy model
                     |> el [ width fill, paddingXY 20 0, Element.alignBottom ]
       , if model.thanks then
             "Thank you!"
@@ -1286,6 +976,232 @@ viewHomeMobile model =
             , spaceEvenly
             , fShrink
             , Element.clip
+            ]
+
+
+viewBuy model =
+    let
+        waiting =
+            not model.inProgress.monthlyPlan && not model.inProgress.annualPlan
+
+        monthlyCursor =
+            if model.inProgress.monthlyPlan then
+                "wait"
+
+            else if model.inProgress.annualPlan then
+                "not-allowed"
+
+            else
+                "pointer"
+
+        annualCursor =
+            if model.inProgress.annualPlan then
+                "wait"
+
+            else if model.inProgress.monthlyPlan then
+                "not-allowed"
+
+            else
+                "pointer"
+    in
+    [ text "Sign up"
+        |> el [ Font.italic, Font.size 25, Font.bold, centerX ]
+    , [ text "Monthly plan"
+      , Input.button
+            [ Background.gradient
+                { angle = degrees 0
+                , steps =
+                    [ Element.rgb255 225 95 137
+                    , Element.rgb255 13 50 77
+                    ]
+                }
+            , width <| px 150
+            , height <| px 40
+            , Font.center
+            , Font.color white
+            , Border.rounded 10
+            , Border.shadow
+                { offset = ( 4, 4 )
+                , blur = 4
+                , size = 0
+                , color = Element.rgb255 150 150 150
+                }
+            , Element.mouseDown
+                [ Element.moveRight 5
+                , Element.moveDown 5
+                , Border.shadow
+                    { offset = ( 0, 0 )
+                    , blur = 0
+                    , size = 0
+                    , color = Element.rgb255 150 150 150
+                    }
+                ]
+                |> whenAttr waiting
+            , style "cursor" monthlyCursor
+            ]
+            { onPress =
+                if waiting then
+                    Just <| Buy False
+
+                else
+                    Nothing
+            , label =
+                if model.inProgress.monthlyPlan then
+                    icon Icons.refresh 25
+                        |> el [ rotate, centerX ]
+
+                else
+                    text "$5"
+            }
+      ]
+        |> row [ spaceEvenly, width fill ]
+    , [ text "Annual plan"
+      , Input.button
+            [ Background.gradient
+                { angle = degrees 0
+                , steps =
+                    [ Element.rgb255 225 95 137
+                    , Element.rgb255 13 50 77
+                    ]
+                }
+            , width <| px 150
+            , height <| px 40
+            , Font.center
+            , Font.color white
+            , Border.rounded 10
+            , Border.shadow
+                { offset = ( 4, 4 )
+                , blur = 4
+                , size = 0
+                , color = Element.rgb255 150 150 150
+                }
+            , Element.mouseDown
+                [ Element.moveRight 5
+                , Element.moveDown 5
+                , Border.shadow
+                    { offset = ( 0, 0 )
+                    , blur = 0
+                    , size = 0
+                    , color = Element.rgb255 150 150 150
+                    }
+                ]
+                |> whenAttr waiting
+            , style "cursor" annualCursor
+            ]
+            { onPress =
+                if waiting then
+                    Just <| Buy True
+
+                else
+                    Nothing
+            , label =
+                if model.inProgress.annualPlan then
+                    icon Icons.refresh 25
+                        |> el [ rotate, centerX ]
+
+                else
+                    text "$40"
+            }
+      ]
+        |> row [ spaceEvenly, width fill ]
+    , Element.image
+        [ height <| px 35
+        , centerX
+
+        --, fadeIn
+        , style "animation" "enter 1s"
+        , style "transform-origin" "center"
+        ]
+        { src = "/stripe1.png", description = "" }
+    , Input.button
+        [ Font.underline
+        , Element.alignRight
+        , Font.italic
+        , Font.size 16
+        , Element.mouseOver
+            [ Font.color blue
+            ]
+        ]
+        { onPress = Just Change
+        , label = text "Back"
+        }
+    ]
+        |> column
+            [ centerX
+            , spacing 20
+            , width fill
+            , padding 20
+            , Element.alignBottom
+            , Background.color grey
+
+            --, style "animation" "enter 1s"
+            , style "transform-origin" "center"
+            , shadow2
+            , Border.rounded 20
+            ]
+
+
+viewInfo mDef =
+    [ [ text "The"
+            |> el
+                [ Element.paddingEach
+                    { top = 0
+                    , bottom = 9
+                    , left = 0
+                    , right = 0
+                    }
+                ]
+
+      --|> viewDef model.def Types.Alts
+      , [ "secure"
+            |> viewDef mDef Types.Secure
+        , text ","
+        ]
+            |> row []
+      , "private"
+            |> viewDef mDef Types.Private
+      , [ "journal"
+            |> viewDef mDef Types.Journal
+        , text "."
+        ]
+            |> row []
+      ]
+        |> row
+            [ spacing 5
+            , Font.italic
+            , Font.size 20
+            , varela
+            , centerX
+            ]
+    , mDef
+        |> whenJust
+            (\d ->
+                (case d of
+                    Alts ->
+                        [ text "Information about alternative products can be found here." ]
+
+                    Secure ->
+                        [ text "Built for performance and security, using the leading technologies available."
+                        ]
+
+                    Private ->
+                        [ text "Everything you write is protected by your password before it is saved, ensuring only you can ever read it." ]
+
+                    Journal ->
+                        [ text "For everyday use, on every device." ]
+                )
+                    |> paragraph
+                        [ padding 20
+
+                        --, width Element.shrink
+                        , Background.color grey
+                        , ebg
+                        , Font.size 20
+                        ]
+            )
+    ]
+        |> column
+            [ width fill
             ]
 
 
@@ -1408,7 +1324,6 @@ viewHome model =
             ]
     , [ [ Element.image
             [ width <| px 200
-            , centerX
             , style "animation-name" "fadeIn"
             , style "animation-duration" "1s"
             ]
@@ -1417,7 +1332,6 @@ viewHome model =
             }
         , Input.button
             [ Font.underline
-            , Element.alignRight
             , Element.mouseOver
                 [ Font.color blue
                 ]
@@ -1429,106 +1343,23 @@ viewHome model =
             , label = text "Try demo"
             }
         ]
-            |> column [ spacing 10, width <| px 350 ]
-      , [ [ [ [ text "The"
-                    |> el
-                        [ Element.paddingEach
-                            { top = 0
-                            , bottom = 9
-                            , left = 0
-                            , right = 0
-                            }
-                        ]
-
-              --|> viewDef model.def Types.Alts
-              , [ "secure"
-                    |> viewDef model.def Types.Secure
-                , text ","
+            |> column [ spacing 10 ]
+      , [ viewInfo model.def
+            |> el
+                [ width <| px 420
+                , Element.alignTop
                 ]
-                    |> row []
-              , "private"
-                    |> viewDef model.def Types.Private
-              , [ "journal"
-                    |> viewDef model.def Types.Journal
-                , text "."
-                ]
-                    |> row []
-              ]
-                |> row
-                    [ spacing 5
-                    , Font.italic
-                    , Font.size 30
-                    , Element.alignRight
-                    , centerX
-                    , varela
-                    ]
-            , model.def
-                |> whenJust
-                    (\d ->
-                        (case d of
-                            Alts ->
-                                [ text "Information about alternative products can be found here." ]
-
-                            Secure ->
-                                [ text "Built for performance and security, using the leading technologies available. The code can be viewed"
-                                , el [ width <| px 6 ] none
-                                , Element.newTabLink [ Font.underline ]
-                                    { url = "https://github.com/tarbh-engineering/journal"
-                                    , label = text "here"
-                                    }
-                                , text "."
-                                ]
-
-                            Private ->
-                                [ text "Everything you write is protected by your password before it is saved, ensuring only you can ever read it." ]
-
-                            Journal ->
-                                [ text "For everyday use, on every device." ]
-                        )
-                            |> Element.paragraph
-                                [ padding 20
-                                , Background.color grey
-                                , width <| px 450
-                                , Element.alignRight
-                                , ebg
-                                , Font.size 25
-                                ]
-                    )
-            ]
-                |> column []
-          ]
-            |> column [ spacing 20, centerX, height <| px 150 ]
-        , if model.thanks then
-            "Thank you!"
-                |> text
-                |> el
-                    [ style "animation-name" "fadeIn"
-                    , style "animation-duration" "1s"
-                    , centerX
-                    , centerY
-                    , Font.size 30
-                    , varela
-                    ]
-                |> el [ width fill ]
-
-          else
-            viewEmail model
+        , viewFunnel model
         ]
-            |> column [ spacing 50, height fill, width fill ]
+            |> column [ spaceEvenly, height fill ]
       ]
         |> row
             [ spacing 40
-            , height fill
             , centerX
-            , width fill
             ]
     ]
         |> column
             [ spacing 30
-            , centerX
-            ]
-        |> el
-            [ height fill
             , width fill
             ]
 
@@ -1559,9 +1390,7 @@ viewEmail model =
         valid =
             isValidEmail model.loginForm.email
     in
-    [ paragraph [ ebg, Font.size 25, width Element.shrink, centerX ]
-        [ text "Coming soon. Sign up to be notified." ]
-    , [ Input.email
+    [ [ Input.email
             [ Border.rounded 0
             , Border.width 0
             , height <| px 50
@@ -1598,9 +1427,6 @@ viewEmail model =
     ]
         |> column
             [ spacing 20
-            , width fill
-            , Element.alignBottom
-            , centerY
             ]
 
 
@@ -1685,91 +1511,86 @@ viewFunnel model =
         valid =
             isValidEmail model.loginForm.email
     in
-    [ [ Input.email
-            [ Border.rounded 0
-            , Border.width 0
-            , cappedWidth 350
-
-            --, height <| px 50
-            , paddingXY 20 15
-
-            --, style "cursor" "wait"
-            --|> whenAttr model.inProgress
-            , Html.Attributes.disabled (model.funnel /= Types.Hello)
-                |> Element.htmlAttribute
-            , (if model.funnel /= Types.Hello then
-                grey
-
-               else
-                white
-              )
-                |> Background.color
-            , onKeydown [ onEnter ent ]
-
-            --|> whenAttr valid
-            ]
-            { onChange = LoginFormEmailUpdate
-            , label = Input.labelHidden ""
-            , placeholder =
-                text "Your email address"
-                    |> Input.placeholder []
-                    |> Just
-            , text = model.loginForm.email
-            }
-      , el [ height fill, width <| px 1, Background.color black ] none
-      , Input.button
-            [ --, Background.color darkBlue
-              --, Font.color white
-              --, style "cursor" "wait"
-              --|> whenAttr model.inProgress
-              width <| px 120
-            , height fill
-            , style "cursor" "not-allowed"
-                |> whenAttr
-                    (not <| isValidEmail model.loginForm.email)
-            , style "transition" "all 0.2s"
-            , Element.mouseOver
-                [ Font.color white
-                , Background.color black
-                ]
-                |> whenAttr
-                    (isValidEmail model.loginForm.email)
-            ]
-            { onPress =
-                if valid then
-                    Just ent
-
-                else
-                    Nothing
-            , label =
-                (if model.funnel /= Types.Hello then
-                    "Change"
-
-                 else
-                    "Continue"
-                )
-                    |> text
-                    |> el [ centerX ]
-            }
-      ]
-        |> row
-            [ cappedWidth 600
-            , Element.alignRight
-
-            --, style "cursor" "wait"
-            --|> whenAttr model.inProgress
-            --, (if model.inProgress then
-            --grey
-            --else
-            --white
-            --)
-            --|> Background.color
-            --, padding 10
-            , Border.width 1
-            ]
-    , case model.funnel of
+    [ case model.funnel of
         Hello ->
-            none
+            [ Input.email
+                [ Border.rounded 0
+                , Border.widthEach { top = 0, bottom = 1, left = 0, right = 0 }
+
+                --, Border.width 0
+                --, height <| px 50
+                --, paddingXY 20 15
+                --, style "cursor" "wait"
+                --|> whenAttr model.inProgress
+                , width fill
+                , onKeydown [ onEnter ent ]
+
+                --|> whenAttr valid
+                ]
+                { onChange = LoginFormEmailUpdate
+                , label = Input.labelHidden ""
+                , placeholder =
+                    text "Your email address"
+                        |> Input.placeholder []
+                        |> Just
+                , text = model.loginForm.email
+                }
+
+            --, el [ height fill, width <| px 1, Background.color black ] none
+            , Input.button
+                [ --, Background.color darkBlue
+                  --, Font.color white
+                  --, style "cursor" "wait"
+                  --|> whenAttr model.inProgress
+                  width <| px 120
+                , height fill
+                , style "cursor" "not-allowed"
+                    |> whenAttr
+                        (not <| isValidEmail model.loginForm.email)
+                , style "transition" "all 0.2s"
+                , Element.mouseOver
+                    [ Font.color white
+                    , Background.color black
+                    ]
+                    |> whenAttr
+                        (isValidEmail model.loginForm.email)
+                ]
+                { onPress =
+                    if valid then
+                        Just ent
+
+                    else
+                        Nothing
+                , label =
+                    (if model.funnel /= Types.Hello then
+                        "Change"
+
+                     else
+                        "Continue"
+                    )
+                        |> text
+                        |> el [ centerX ]
+                }
+                |> when False
+            , btn2 model.inProgress.login Icons.send "Submit" ent
+                |> el [ Element.alignRight ]
+            ]
+                |> column
+                    [ spacing 10
+
+                    --, Element.alignRight
+                    --, style "cursor" "wait"
+                    --|> whenAttr model.inProgress
+                    --, (if model.inProgress then
+                    --grey
+                    --else
+                    --white
+                    --)
+                    --|> Background.color
+                    --, padding 10
+                    --, Border.width 1
+                    , width fill
+                    ]
 
         WelcomeBack nonce ->
             viewWelcome model nonce
@@ -1785,24 +1606,43 @@ viewFunnel model =
                     ]
 
         JoinUs ->
-            [ text "Please choose your desired plan"
-                |> el [ Font.italic ]
-            , [ text "$5 per month"
-              , btn "Buy" (Buy False)
-              ]
-                |> row [ spaceEvenly, width fill ]
-            , [ text "$40 per year"
-              , btn "Buy" (Buy True)
-              ]
-                |> row [ spaceEvenly, width fill ]
-            ]
-                |> column
-                    [ centerX
-                    , spacing 20
-                    , width <| px 200
-                    ]
+            viewBuy model
     ]
-        |> column [ spacing 20, alignBottom, padding 30 ]
+        |> column [ spacing 20, alignBottom, width fill ]
+
+
+vb2 model =
+    [ text "Please choose your desired plan"
+        |> el [ Font.italic ]
+    , [ text "$5 per month"
+      , btn "Buy" (Buy False)
+      ]
+        |> row [ spacing 20, centerX ]
+    , [ text "$40 per year"
+      , btn "Buy" (Buy True)
+      ]
+        |> row [ spacing 20, centerX ]
+    , Input.button
+        [ Font.underline
+        , Element.alignRight
+        , Font.italic
+        , Font.size 16
+        , Element.mouseOver
+            [ Font.color blue
+            ]
+        ]
+        { onPress = Just Change
+        , label = text "Back"
+        }
+    ]
+        |> column
+            [ spacing 20
+            , shadow2
+            , padding 20
+            , Background.color grey
+            , Border.rounded 20
+            , centerX
+            ]
 
 
 viewWelcome : Model -> String -> Element Msg
@@ -1856,15 +1696,13 @@ viewFrame model elem =
                 20
     in
     [ [ Input.button
-            [ varela
-            , Font.semiBold
-            , Font.size 25
+            [ Font.semiBold
             ]
             { onPress = Just <| NavigateTo RouteHome
             , label =
-                [ text "BOLSTER"
+                [ text "BOLSTER" |> el [ abel, Font.size 30 ]
                 , text "DEMO"
-                    |> el [ Font.light ]
+                    |> el [ Font.light, varela ]
                     |> when (model.auth == Nothing)
                 ]
                     |> row [ spacing 10 ]
@@ -1897,7 +1735,7 @@ viewFrame model elem =
         |> row [ width fill, spaceEvenly, paddingXY 20 wd ]
     , elem
     ]
-        |> column [ spacing wd, height fill, cappedWidth 1450, centerX ]
+        |> column [ spacing wd, height fill, cappedWidth 1275, centerX ]
 
 
 viewFrameMobile : Model -> Element Msg -> Element Msg
@@ -1967,12 +1805,7 @@ viewFrameMobile model elem =
                 |> column
                     [ Background.color grey
                         |> whenAttr model.dropdown
-                    , Border.shadow
-                        { offset = ( 3, 3 )
-                        , blur = 4
-                        , size = 2
-                        , color = Element.rgb255 150 150 150
-                        }
+                    , shadow2
                         |> whenAttr model.dropdown
 
                     --, padding 10
@@ -2068,12 +1901,14 @@ viewPage model =
             else
                 20
     in
-    [ viewCal2 model
+    [ viewCalendar model
         |> el
             [ Element.alignTop
-            , width fill
             ]
-    , viewPost model
+    , model.current
+        |> unwrap
+            viewReady
+            (vp2 model)
     ]
         |> row [ width fill, height fill, spacing wd, paddingXY 20 wd ]
 
@@ -2110,7 +1945,7 @@ viewPageMobile model =
             model.postBeingEdited || model.postView || model.tagView
 
         cal =
-            viewCal2 model
+            viewCalendar model
                 |> el
                     [ Element.alignTop
                     , width fill
@@ -2158,7 +1993,6 @@ viewBarMobile model day =
         pst =
             model.posts
                 |> Day.get day
-                |> Maybe.andThen Helpers.extract
     in
     (if model.postBeingEdited then
         [ btn2 False Icons.close "Cancel" PostUpdateCancel
@@ -2241,7 +2075,6 @@ viewBar : Model -> Date -> Element Msg
 viewBar model day =
     model.posts
         |> Day.get day
-        |> Maybe.andThen Helpers.extract
         |> unwrap
             (if model.postBeingEdited then
                 [ btn2 model.inProgress.post Icons.save "Submit" (PostCreateSubmit day)
@@ -2322,37 +2155,9 @@ vp2 model d =
         pst =
             model.posts
                 |> Day.get d
-                |> Maybe.andThen Helpers.extract
 
         xs =
             UD.values model.tags
-
-        fn fn1 bl =
-            Html.textarea
-                [ Html.Attributes.id "editor"
-                , Html.Attributes.value model.postEditorBody
-                , Html.Attributes.style "font-size" "inherit"
-                , Html.Attributes.style "font-family" "inherit"
-
-                --, Html.Attributes.style "font-color" "black"
-                , Html.Attributes.style "cursor" "inherit"
-                , Html.Attributes.style "line-height" "30px"
-                , Html.Attributes.style "padding" "0px"
-                , Html.Attributes.style "flex-grow" "inherit"
-                , Html.Attributes.readonly <| not bl
-                , Html.Events.onInput BodyUpdate
-                ]
-                []
-                |> Element.html
-                |> el
-                    [ width fill
-                    , style "cursor" "text"
-                    , height fill
-                    , Background.color grey
-                    , Font.size fs
-                    , padding 10
-                    , ebg
-                    ]
 
         tMsg =
             pst
@@ -2361,13 +2166,13 @@ vp2 model d =
 
         data =
             model.posts
-                |> Helpers.getStatus d
+                |> Day.get d
 
         create =
-            fn (PostCreateSubmit d) model.postBeingEdited
+            viewPostEditor (PostCreateSubmit d) model.postEditorBody model.postBeingEdited fs
 
         make post =
-            fn (PostUpdateSubmit post.id) model.postBeingEdited
+            viewPostEditor (PostUpdateSubmit post.id) model.postEditorBody model.postBeingEdited fs
 
         txt =
             if model.tagView then
@@ -2400,83 +2205,11 @@ vp2 model d =
       ]
         |> row [ spaceEvenly, Font.size 17, width fill ]
     , if model.tagView then
-        if List.isEmpty xs then
-            [ [ text "You don't have any tags." ]
-                |> paragraph []
-            , btn
-                "Go to tags"
-                (NavigateTo RouteTags)
-                |> el [ centerX ]
-            ]
-                |> column [ spacing 20, padding 20, centerX ]
-
-        else
-            xs
-                |> List.map
-                    (\t ->
-                        let
-                            flip =
-                                pst |> unwrap False (\p -> List.member t.id p.tags)
-
-                            prog =
-                                List.member t.id model.inProgress.tags
-                        in
-                        --[ ellipsisText 20 t.name
-                        [ paragraph [] [ text t.name ]
-                        , Input.button
-                            [ width <| px 40
-                            , height <| px 40
-                            , Border.width 1
-                            , (if prog then
-                                grey
-
-                               else
-                                white
-                              )
-                                |> Background.color
-                            ]
-                            { onPress =
-                                if prog then
-                                    Nothing
-
-                                else
-                                    Just <| tMsg t
-                            , label =
-                                if prog then
-                                    spinner
-
-                                else
-                                    icon Icons.done 20
-                                        |> el [ centerX, centerY ]
-                                        |> when flip
-                            }
-                        ]
-                            |> row
-                                [ width fill
-                                , spacing 10
-                                ]
-                    )
-                |> List.intersperse hairline
-                |> column
-                    [ spacing 10
-                    , width fill
-                    , centerX
-                    , height fill
-                    , Element.scrollbarY
-                    , style "min-height" "auto"
-                    ]
+        viewPostTags model d pst
 
       else
-        case data of
-            Missing ->
-                create
-
-            Loading ma ->
-                ma
-                    |> unwrap create make
-
-            Found a ->
-                make a
+        data
+            |> unwrap create make
     ]
         |> column
             [ height fill
@@ -2487,6 +2220,112 @@ vp2 model d =
             , Element.clip
             , fShrink
             ]
+
+
+viewPostEditor fn txt disable fontSize =
+    Html.textarea
+        [ Html.Attributes.id "editor"
+        , Html.Attributes.value txt
+        , Html.Attributes.style "font-size" "inherit"
+        , Html.Attributes.style "font-family" "inherit"
+
+        --, Html.Attributes.style "font-color" "black"
+        , Html.Attributes.style "cursor" "inherit"
+        , Html.Attributes.style "line-height" "30px"
+        , Html.Attributes.style "padding" "0px"
+        , Html.Attributes.style "flex-grow" "inherit"
+        , Html.Attributes.readonly <| not disable
+        , Html.Events.onInput BodyUpdate
+        ]
+        []
+        |> Element.html
+        |> el
+            [ width fill
+            , style "cursor" "text"
+            , height fill
+            , Background.color grey
+            , Font.size fontSize
+            , padding 10
+            , ebg
+            ]
+
+
+viewPostTags : Model -> Date -> Maybe Post -> Element Msg
+viewPostTags model d pst =
+    let
+        tMsg =
+            pst
+                |> unwrap (PostCreateWithTag d)
+                    PostTagToggle
+
+        xs =
+            UD.values model.tags
+    in
+    if List.isEmpty xs then
+        [ [ text "You don't have any tags." ]
+            |> paragraph []
+        , btn
+            "Go to tags"
+            (NavigateTo RouteTags)
+            |> el [ centerX ]
+        ]
+            |> column [ spacing 20, padding 20, centerX ]
+
+    else
+        xs
+            |> List.map
+                (\t ->
+                    let
+                        flip =
+                            pst |> unwrap False (\p -> List.member t.id p.tags)
+
+                        prog =
+                            List.member t.id model.inProgress.tags
+                    in
+                    --[ ellipsisText 20 t.name
+                    [ paragraph [] [ text t.name ]
+                    , Input.button
+                        [ width <| px 40
+                        , height <| px 40
+                        , Border.width 1
+                        , (if prog then
+                            grey
+
+                           else
+                            white
+                          )
+                            |> Background.color
+                        ]
+                        { onPress =
+                            if prog then
+                                Nothing
+
+                            else
+                                Just <| tMsg t
+                        , label =
+                            if prog then
+                                spinner
+
+                            else
+                                icon Icons.done 20
+                                    |> el [ centerX, centerY ]
+                                    |> when flip
+                        }
+                    ]
+                        |> row
+                            [ width fill
+                            , spacing 10
+                            ]
+                )
+            |> List.intersperse hairline
+            |> column
+                [ spacing 10
+                , width fill
+                , centerX
+                , height fill
+                , Element.scrollbarY
+                , style "min-height" "auto"
+                ]
 
 
 viewPostMobile : Model -> Element Msg
@@ -2523,7 +2362,7 @@ viewPostMobile model =
 
                     data =
                         model.posts
-                            |> Helpers.getStatus d
+                            |> Day.get d
 
                     create =
                         fn (PostCreateSubmit d)
@@ -2563,7 +2402,6 @@ viewPostMobile model =
                     pst =
                         model.posts
                             |> Day.get d
-                            |> Maybe.andThen Helpers.extract
                 in
                 [ [ formatDay d
                         |> text
@@ -2635,16 +2473,8 @@ viewPostMobile model =
                                 )
 
                   else
-                    case data of
-                        Missing ->
-                            create
-
-                        Loading ma ->
-                            ma
-                                |> unwrap create make
-
-                        Found a ->
-                            make a
+                    data
+                        |> unwrap create make
                 ]
                     |> column
                         [ height fill
@@ -2658,180 +2488,166 @@ viewPostMobile model =
             )
 
 
-viewPost : Model -> Element Msg
-viewPost model =
-    model.current
-        |> unwrap
-            viewReady
-            (\d ->
-                let
-                    fn fn1 =
-                        Html.textarea
-                            [ Html.Attributes.id "editor"
-                            , Html.Attributes.value model.postEditorBody
-                            , Html.Attributes.style "font-size" "inherit"
-                            , Html.Attributes.style "font-family" "inherit"
-                            , Html.Attributes.style "cursor" "inherit"
-                            , Html.Attributes.style "line-height" "40px"
-                            , Html.Attributes.style "padding" "0px"
-                            , Html.Events.onInput BodyUpdate
-                            ]
-                            []
+viewPost : Model -> Date -> Element Msg
+viewPost model d =
+    let
+        fn fn1 =
+            Html.textarea
+                [ Html.Attributes.id "editor"
+                , Html.Attributes.value model.postEditorBody
+                , Html.Attributes.style "font-size" "inherit"
+                , Html.Attributes.style "font-family" "inherit"
+                , Html.Attributes.style "cursor" "inherit"
+                , Html.Attributes.style "line-height" "40px"
+                , Html.Attributes.style "padding" "0px"
+                , Html.Events.onInput BodyUpdate
+                ]
+                []
+                |> Element.html
+                |> el
+                    [ width fill
+                    , style "cursor" "text"
+                    , Element.alignTop
+                    , Helpers.View.cappedHeight 700
+                    , Background.color grey
+                    , Font.size 35
+                    , padding 20
+                    , onKeydown [ onCtrlEnter fn1 ]
+                    , ebg
+                    ]
+
+        data =
+            model.posts
+                |> Day.get d
+
+        create =
+            fn (PostCreateSubmit d)
+
+        make post =
+            if model.postBeingEdited then
+                fn (PostUpdateSubmit post.id)
+
+            else
+                Input.button
+                    [ width fill
+                    , Helpers.View.cappedHeight 700
+
+                    --, Element.mouseOver [ Background.color grey ]
+                    , Background.color grey
+                    , padding 20
+                    , Font.size 35
+                    , Element.alignTop
+                    , ebg
+                    , style "cursor" Icon.pencil
+                    ]
+                    { onPress = Just PostUpdateStart
+                    , label =
+                        post.body
+                            |> Maybe.withDefault ""
+                            -- HACK: Need to pass through Html in order
+                            -- to preserve formatting.
+                            |> Html.text
+                            |> List.singleton
+                            |> Html.div
+                                [ Html.Attributes.style "white-space" "pre-wrap"
+                                , Html.Attributes.style "line-height" "40px"
+                                , Html.Attributes.style "height" "100%"
+                                , Html.Attributes.style "width" "100%"
+                                , Html.Attributes.style "overflow-y" "auto"
+                                , Html.Attributes.style "word-break" "break-word"
+                                ]
                             |> Element.html
-                            |> el
-                                [ width fill
-                                , style "cursor" "text"
-                                , Element.alignTop
-                                , Helpers.View.cappedHeight 700
-                                , Background.color grey
-                                , Font.size 35
-                                , padding 20
-                                , onKeydown [ onCtrlEnter fn1 ]
-                                , ebg
-                                ]
+                    }
 
-                    data =
-                        model.posts
-                            |> Helpers.getStatus d
+        pst =
+            model.posts
+                |> Day.get d
+    in
+    [ [ [ formatDay d
+            |> text
+        , text "|"
+            |> when (model.postBeingEdited || pst == Nothing)
+        , pst
+            |> unwrap
+                ("Creating new entry" |> text |> el [ Font.italic ])
+                (always
+                    (("Updating entry" |> text |> el [ Font.italic ])
+                        |> when model.postBeingEdited
+                    )
+                )
+        ]
+            |> row [ spacing 10 ]
+      ]
+        |> row [ width fill, spaceEvenly, height <| px 55 ]
+    , if model.tagView then
+        pst
+            |> whenJust
+                (\p ->
+                    model.tags
+                        |> UD.values
+                        |> List.map
+                            (\t ->
+                                Input.button
+                                    [ padding 10
+                                    , Border.width 1
+                                    , (if List.member t.id p.tags then
+                                        blue
 
-                    create =
-                        fn (PostCreateSubmit d)
-
-                    make post =
-                        if model.postBeingEdited then
-                            fn (PostUpdateSubmit post.id)
-
-                        else
-                            Input.button
-                                [ width fill
-                                , Helpers.View.cappedHeight 700
-
-                                --, Element.mouseOver [ Background.color grey ]
-                                , Background.color grey
-                                , padding 20
-                                , Font.size 35
-                                , Element.alignTop
-                                , ebg
-                                , style "cursor" Icon.pencil
-                                ]
-                                { onPress = Just PostUpdateStart
-                                , label =
-                                    post.body
-                                        |> Maybe.withDefault ""
-                                        -- HACK: Need to pass through Html in order
-                                        -- to preserve formatting.
-                                        |> Html.text
-                                        |> List.singleton
-                                        |> Html.div
-                                            [ Html.Attributes.style "white-space" "pre-wrap"
-                                            , Html.Attributes.style "line-height" "40px"
-                                            , Html.Attributes.style "height" "100%"
-                                            , Html.Attributes.style "width" "100%"
-                                            , Html.Attributes.style "overflow-y" "auto"
-                                            , Html.Attributes.style "word-break" "break-word"
-                                            ]
-                                        |> Element.html
-                                }
-
-                    pst =
-                        model.posts
-                            |> Day.get d
-                            |> Maybe.andThen Helpers.extract
-                in
-                [ [ [ formatDay d
-                        |> text
-                    , text "|"
-                        |> when (model.postBeingEdited || pst == Nothing)
-                    , pst
-                        |> unwrap
-                            ("Creating new entry" |> text |> el [ Font.italic ])
-                            (always
-                                (("Updating entry" |> text |> el [ Font.italic ])
-                                    |> when model.postBeingEdited
-                                )
+                                       else
+                                        white
+                                      )
+                                        |> Background.color
+                                    ]
+                                    { onPress = Just <| PostTagToggle p t
+                                    , label = text t.name
+                                    }
                             )
+                        |> Element.wrappedRow [ spacing 20 ]
+                )
+
+      else
+        data
+            |> unwrap create make
+    , pst
+        |> unwrap
+            ([ btn2 model.inProgress.post Icons.save "Submit" (PostCreateSubmit d)
+                |> when (model.postEditorBody /= "")
+             , btn2 False Icons.close "Cancel" PostCancel
+             ]
+                |> row [ spacing 10 ]
+            )
+            (\p ->
+                if model.postBeingEdited then
+                    [ btn2
+                        model.inProgress.post
+                        Icons.save
+                        "Submit"
+                        (PostUpdateSubmit p.id)
+                        |> when (Just model.postEditorBody /= p.body && model.postEditorBody /= "")
+                    , btn2 model.inProgress.postDelete Icons.delete "Delete" (PostDelete p.id p.date)
+                    , btn2 False Icons.close "Cancel" PostUpdateCancel
                     ]
                         |> row [ spacing 10 ]
-                  ]
-                    |> row [ width fill, spaceEvenly, height <| px 55 ]
-                , if model.tagView then
-                    pst
-                        |> whenJust
-                            (\p ->
-                                model.tags
-                                    |> UD.values
-                                    |> List.map
-                                        (\t ->
-                                            Input.button
-                                                [ padding 10
-                                                , Border.width 1
-                                                , (if List.member t.id p.tags then
-                                                    blue
 
-                                                   else
-                                                    white
-                                                  )
-                                                    |> Background.color
-                                                ]
-                                                { onPress = Just <| PostTagToggle p t
-                                                , label = text t.name
-                                                }
-                                        )
-                                    |> Element.wrappedRow [ spacing 20 ]
-                            )
+                else
+                    btn2 False
+                        (if model.tagView then
+                            Icons.edit
 
-                  else
-                    case data of
-                        Missing ->
-                            create
-
-                        Loading ma ->
-                            ma
-                                |> unwrap create make
-
-                        Found a ->
-                            make a
-                , pst
-                    |> unwrap
-                        ([ btn2 model.inProgress.post Icons.save "Submit" (PostCreateSubmit d)
-                            |> when (model.postEditorBody /= "")
-                         , btn2 False Icons.close "Cancel" PostCancel
-                         ]
-                            |> row [ spacing 10 ]
+                         else
+                            Icons.label
                         )
-                        (\p ->
-                            if model.postBeingEdited then
-                                [ btn2
-                                    model.inProgress.post
-                                    Icons.save
-                                    "Submit"
-                                    (PostUpdateSubmit p.id)
-                                    |> when (Just model.postEditorBody /= p.body && model.postEditorBody /= "")
-                                , btn2 model.inProgress.postDelete Icons.delete "Delete" (PostDelete p.id p.date)
-                                , btn2 False Icons.close "Cancel" PostUpdateCancel
-                                ]
-                                    |> row [ spacing 10 ]
+                        (if model.tagView then
+                            "Pad"
 
-                            else
-                                btn2 False
-                                    (if model.tagView then
-                                        Icons.edit
-
-                                     else
-                                        Icons.label
-                                    )
-                                    (if model.tagView then
-                                        "Pad"
-
-                                     else
-                                        "Tags"
-                                    )
-                                    PostViewToggle
+                         else
+                            "Tags"
                         )
-                    |> el [ Element.alignRight, Element.alignBottom ]
-                ]
-                    |> column [ height fill, width fill, spacing 10 ]
+                        PostViewToggle
             )
+        |> el [ Element.alignRight, Element.alignBottom ]
+    ]
+        |> column [ height fill, width fill, spacing 10 ]
 
 
 shiftShadow : Attribute msg

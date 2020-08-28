@@ -1,4 +1,4 @@
-module View.Misc exposing (btn, btn2, btn3, formatDay, icon, monthToString, spinner)
+module View.Misc exposing (btn, btn2, btn3, formatDay, icon, isWide, monthToString, spinner)
 
 import Date exposing (Date)
 import Element exposing (Element, el, fill, height, html, none, padding, px, row, spaceEvenly, spacing, text, width)
@@ -10,7 +10,13 @@ import Helpers.View exposing (style, whenAttr)
 import Material.Icons.Types exposing (Coloring(..), Icon)
 import Ordinal
 import Time exposing (Month(..))
+import Types exposing (Screen)
 import View.Style exposing (black, grey, rotate, varela, white)
+
+
+isWide : Screen -> Bool
+isWide scr =
+    scr.width > 768
 
 
 formatDay : Date -> String
