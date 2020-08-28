@@ -1432,7 +1432,7 @@ routeDemo model route =
                         ( { model
                             | postEditorBody = editorText
                             , postCreateTags = []
-                            , postBeingEdited = False
+                            , postBeingEdited = shouldFocusOnEditor
                             , current = Just d
                             , month = Date.month d
                             , year = Date.year d
@@ -1523,7 +1523,7 @@ routeLiveDay model d auth =
                 ( { model
                     | postEditorBody = editorText
                     , postCreateTags = []
-                    , postBeingEdited = False
+                    , postBeingEdited = shouldFocusOnEditor
                     , inProgress = model.inProgress |> (\p -> { p | post = False })
                     , current = Just d
                     , month = Date.month d

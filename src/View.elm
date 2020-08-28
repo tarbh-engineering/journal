@@ -104,22 +104,24 @@ viewCalendar : Model -> Element Msg
 viewCalendar model =
     let
         ht =
-            if model.screen.width <= 360 || model.screen.height < 700 then
+            if model.screen.height < 700 then
                 40
 
             else if isWide model.screen then
-                if model.screen.width > 1024 then
-                    80
+                60
 
-                else
-                    60
+            else if model.screen.width > 700 then
+                80
 
             else
                 50
 
         wd =
-            --fill
-            px ht
+            if model.screen.width < 450 then
+                fill
+
+            else
+                px ht
     in
     [ [ { onPress = Just PrevMonth
         , label =
@@ -181,6 +183,9 @@ viewCalendar model =
     ]
         |> column
             [ spacing 10
+            , width fill
+                |> whenAttr (model.screen.width < 450)
+            , centerX
             ]
 
 
@@ -346,15 +351,15 @@ weekday =
 view : Model -> Html Msg
 view model =
     let
-        isMobile =
-            model.screen.width <= 1024
+        wide =
+            isWide model.screen
 
         frame =
-            if isMobile then
-                viewFrameMobile model
+            if wide then
+                viewFrame model
 
             else
-                viewFrame model
+                viewFrameMobile model
 
         wd =
             if model.screen.height <= 768 then
@@ -369,14 +374,14 @@ view model =
             , height <| px 10
             , Background.color black
             ]
-        |> when (isWide model.screen)
+        |> when wide
     , case model.view of
         ViewHome ->
-            if isMobile then
-                viewHomeMobile model
+            if wide then
+                viewHome model
 
             else
-                viewHome model
+                viewHomeMobile model
 
         ViewMagic ->
             model.magic
@@ -439,7 +444,7 @@ view model =
                     )
 
         ViewCalendar ->
-            (if isWide model.screen then
+            (if wide then
                 viewPage model
 
              else
@@ -479,11 +484,11 @@ view model =
                 |> frame
 
         ViewTags ->
-            (if isMobile then
-                viewTagsMobile model
+            (if wide then
+                viewTags model
 
              else
-                viewTags model
+                viewTagsMobile model
             )
                 |> frame
 
@@ -1933,13 +1938,6 @@ viewPageMobile model =
     let
         wd =
             fill
-
-        ht =
-            if model.screen.width <= 360 then
-                40
-
-            else
-                50
 
         flip =
             model.postBeingEdited || model.postView || model.tagView
