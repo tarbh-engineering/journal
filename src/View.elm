@@ -25,7 +25,7 @@ import Time.Format.I18n.I_en_us exposing (monthName)
 import Types exposing (Def(..), Funnel(..), Model, Msg(..), Post, Route(..), Sort(..), Status(..), Tag, View(..))
 import Validate exposing (isValidEmail)
 import View.Img
-import View.Misc exposing (btn, btn2, btn3, formatDay, icon, isWide, spinner)
+import View.Misc exposing (btn, btn2, btn3, formatDay, icon, isWide, lnk, spinner)
 import View.Style exposing (abel, black, blue, ebg, fadeIn, grey, rotate, varela, white, yellow)
 
 
@@ -375,7 +375,7 @@ view model =
             , height <| px 10
             , Background.color black
             ]
-        |> when wide
+        |> when (not model.isMobile)
     , case model.view of
         ViewHome ->
             if wide then
@@ -515,7 +515,8 @@ view model =
             [ spacing wd
             , height fill
             , width fill
-            , Element.clip
+
+            --, Element.clip
             , fShrink
             ]
         |> render model.isMobile
@@ -617,6 +618,7 @@ viewTagsMobile model =
                                     ]
                                         |> row
                                             [ spaceEvenly
+                                            , Background.color grey
                                             , padding 15
                                             , Border.rounded 15
                                             , width fill
@@ -652,7 +654,7 @@ viewTagsMobile model =
                                 |> Just
                         , text = model.tagCreateName
                         }
-                    , [ btn "Cancel" TagCreateToggle
+                    , [ lnk "Cancel" TagCreateToggle
                       , btn2 model.inProgress.tag Icons.send "Submit" TagCreateSubmit
                       ]
                         |> row [ spacing 10, Element.alignRight ]
@@ -766,7 +768,7 @@ viewTag model t =
                 , Element.scrollbarY
                 , height fill
                 ]
-    , [ btn "Delete" <| TagDelete t
+    , [ btn2 False Icons.delete "Delete" <| TagDelete t
       , { onPress = Just <| TagSelect Nothing
         , label =
             icon Icons.undo 30
@@ -904,41 +906,7 @@ viewHomeMobile model =
             [ width fill
             , padding 20
             ]
-    , [ case model.funnel of
-            Hello ->
-                none
-
-            WelcomeBack nonce ->
-                viewWelcome model nonce
-
-            CheckEmail ->
-                [ text "Please check your email for signup instructions."
-                , btn "Re-send email" (NavigateTo RouteHome)
-                    |> el [ centerX ]
-                ]
-                    |> column
-                        [ centerX
-                        , spacing 20
-                        ]
-
-            JoinUs ->
-                viewBuy model
-                    |> el [ width fill, paddingXY 20 0, Element.alignBottom ]
-      , if model.thanks then
-            "Thank you!"
-                |> text
-                |> el
-                    [ style "animation-name" "fadeIn"
-                    , style "animation-duration" "1s"
-                    , centerX
-                    , centerY
-                    , Font.size 30
-                    , varela
-                    ]
-                |> el [ width fill ]
-
-        else
-            viewFx model
+    , [ viewFunnel model
       , Input.button
             [ centerX
             , centerY
@@ -981,7 +949,8 @@ viewHomeMobile model =
             , width fill
             , spaceEvenly
             , fShrink
-            , Element.clip
+
+            --, Element.clip
             ]
 
 
@@ -1110,27 +1079,17 @@ viewBuy model =
             }
       ]
         |> row [ spaceEvenly, width fill ]
-    , Element.image
-        [ height <| px 35
-        , centerX
+    , [ Element.image
+            [ height <| px 35
 
-        --, fadeIn
-        , style "animation" "enter 1s"
-        , style "transform-origin" "center"
-        ]
-        { src = "/stripe1.png", description = "" }
-    , Input.button
-        [ Font.underline
-        , Element.alignRight
-        , Font.italic
-        , Font.size 16
-        , Element.mouseOver
-            [ Font.color blue
+            --, fadeIn
+            , style "animation" "enter 1s"
+            , style "transform-origin" "center"
             ]
-        ]
-        { onPress = Just Change
-        , label = text "Back"
-        }
+            { src = "/stripe1.png", description = "" }
+      , lnk "Back" Change
+      ]
+        |> row [ spaceEvenly, width fill ]
     ]
         |> column
             [ centerX
@@ -1268,7 +1227,8 @@ viewFaq model =
             , padding 10
             , height fill
             , width fill
-            , Element.clip
+
+            --, Element.clip
             , fShrink
             ]
         |> when model.faq
@@ -1293,7 +1253,8 @@ viewFaq model =
                 , left = 20
                 , right = 20
                 }
-             , Element.clip
+
+             --, Element.clip
              , fShrink
              , Element.alignBottom
              ]
@@ -1436,74 +1397,6 @@ viewEmail model =
             ]
 
 
-viewFx : Model -> Element Msg
-viewFx model =
-    let
-        ent =
-            if model.funnel == Hello then
-                EmailSubmit
-
-            else
-                Change
-
-        valid =
-            isValidEmail model.loginForm.email
-    in
-    [ Input.email
-        [ Border.rounded 0
-
-        --, Border.width 1
-        , cappedWidth 500
-        , Border.widthEach { top = 0, bottom = 1, left = 0, right = 0 }
-
-        --, height <| px 50
-        , paddingXY 0 15
-
-        --, style "cursor" "wait"
-        --|> whenAttr model.inProgress
-        , Html.Attributes.disabled (model.funnel /= Types.Hello)
-            |> Element.htmlAttribute
-        , (if model.funnel /= Types.Hello then
-            grey
-
-           else
-            white
-          )
-            |> Background.color
-        , onKeydown [ onEnter ent ]
-
-        --|> whenAttr valid
-        , Input.button
-            [ Element.alignRight
-            , centerY
-            , Element.moveLeft 10
-            , fadeIn
-            ]
-            { onPress = Just <| LoginFormEmailUpdate ""
-            , label = text "X"
-            }
-            |> Element.inFront
-            |> whenAttr (model.loginForm.email /= "" && not model.inProgress.login && model.funnel == Types.Hello)
-        ]
-        { onChange = LoginFormEmailUpdate
-        , label = Input.labelHidden ""
-        , placeholder =
-            text "Your email address"
-                |> Input.placeholder []
-                |> Just
-        , text = model.loginForm.email
-        }
-    , (if model.funnel == Types.Hello then
-        btn2 model.inProgress.login Icons.send "Submit" ent
-
-       else
-        btn2 False Icons.keyboard_return "Back" Change
-      )
-        |> el [ Element.alignRight ]
-    ]
-        |> column [ spacing 10, alignBottom, paddingXY 20 0, width fill ]
-
-
 viewFunnel : Model -> Element Msg
 viewFunnel model =
     let
@@ -1517,7 +1410,7 @@ viewFunnel model =
         valid =
             isValidEmail model.loginForm.email
     in
-    [ case model.funnel of
+    case model.funnel of
         Hello ->
             [ Input.email
                 [ Border.rounded 0
@@ -1525,7 +1418,8 @@ viewFunnel model =
 
                 --, Border.width 0
                 --, height <| px 50
-                --, paddingXY 20 15
+                , paddingXY 0 10
+
                 --, style "cursor" "wait"
                 --|> whenAttr model.inProgress
                 , width fill
@@ -1595,6 +1489,7 @@ viewFunnel model =
                     --|> Background.color
                     --, padding 10
                     --, Border.width 1
+                    , paddingXY 20 0
                     , width fill
                     ]
 
@@ -1613,8 +1508,7 @@ viewFunnel model =
 
         JoinUs ->
             viewBuy model
-    ]
-        |> column [ spacing 20, alignBottom, width fill ]
+                |> el [ paddingXY 20 0, width fill ]
 
 
 vb2 model =
@@ -1628,18 +1522,8 @@ vb2 model =
       , btn "Buy" (Buy True)
       ]
         |> row [ spacing 20, centerX ]
-    , Input.button
-        [ Font.underline
-        , Element.alignRight
-        , Font.italic
-        , Font.size 16
-        , Element.mouseOver
-            [ Font.color blue
-            ]
-        ]
-        { onPress = Just Change
-        , label = text "Back"
-        }
+    , lnk "Back" Change
+        |> el [ Element.alignRight ]
     ]
         |> column
             [ spacing 20
@@ -1865,7 +1749,8 @@ viewFrameMobile model elem =
             [ spacing nd
             , height fill
             , width fill
-            , Element.clip
+
+            --, Element.clip
             , fShrink
             , padding nd
             ]
@@ -1967,7 +1852,8 @@ viewPageMobile model =
         |> column
             [ width fill
             , height fill
-            , Element.clip
+
+            --, Element.clip
             , fShrink
             , spacing 10
             ]
@@ -1977,7 +1863,7 @@ viewPageMobile model =
             , height fill
 
             --, paddingXY 20 10
-            , Element.clip
+            --, Element.clip
             , fShrink
             , cal
                 |> when model.postBeingEdited
@@ -1994,7 +1880,7 @@ viewBarMobile model day =
                 |> Day.get day
     in
     (if model.postBeingEdited then
-        [ btn2 False Icons.close "Cancel" PostUpdateCancel
+        [ lnk "Cancel" PostUpdateCancel
         , btn2 model.inProgress.post
             Icons.save
             "Submit"
@@ -2077,7 +1963,7 @@ viewBar model day =
         |> unwrap
             (if model.postBeingEdited then
                 [ btn2 model.inProgress.post Icons.save "Submit" (PostCreateSubmit day)
-                , btn2 False Icons.close "Cancel" PostUpdateCancel
+                , lnk "Cancel" PostUpdateCancel
                 ]
 
              else
@@ -2195,17 +2081,7 @@ viewPost model d =
                 [ formatDay d
                     |> text
                     |> el [ width fill ]
-                , [ Input.button
-                        [ Font.underline
-                        , Font.italic
-                        , Font.size 16
-                        , Element.mouseOver
-                            [ Font.color blue
-                            ]
-                        ]
-                        { onPress = Just PostUpdateCancel
-                        , label = text "Cancel"
-                        }
+                , [ lnk "Cancel" PostUpdateCancel
                         |> when (model.postBeingEdited && pst /= Nothing)
                   , if model.postBeingEdited then
                         btn2 model.inProgress.post
@@ -2266,7 +2142,7 @@ viewPost model d =
 
             --, style "animation" "rise 0.5s"
             --, style "transform-origin" "bottom"
-            , Element.clip
+            --, Element.clip
             , fShrink
             ]
 
@@ -2411,6 +2287,7 @@ shiftShadow =
 fShrink : Attribute msg
 fShrink =
     style "flex-shrink" "1"
+        |> whenAttr False
 
 
 ellipsisText : Int -> String -> Element msg

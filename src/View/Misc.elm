@@ -1,4 +1,4 @@
-module View.Misc exposing (btn, btn2, btn3, formatDay, icon, isWide, monthToString, spinner)
+module View.Misc exposing (btn, btn2, btn3, formatDay, icon, isTall, isWide, lnk, monthToString, spinner)
 
 import Date exposing (Date)
 import Element exposing (Element, el, fill, height, html, none, padding, px, row, spaceEvenly, spacing, text, width)
@@ -11,7 +11,12 @@ import Material.Icons.Types exposing (Coloring(..), Icon)
 import Ordinal
 import Time exposing (Month(..))
 import Types exposing (Screen)
-import View.Style exposing (black, grey, rotate, varela, white)
+import View.Style exposing (black, blue, grey, rotate, varela, white)
+
+
+isTall : Screen -> Bool
+isTall scr =
+    scr.height >= 660
 
 
 isWide : Screen -> Bool
@@ -77,6 +82,21 @@ icon ic n =
         |> el []
 
 
+lnk : String -> msg -> Element msg
+lnk txt msg =
+    Input.button
+        [ Font.underline
+        , Font.italic
+        , Font.size 16
+        , Element.mouseOver
+            [ Font.color blue
+            ]
+        ]
+        { onPress = Just msg
+        , label = text txt
+        }
+
+
 btn2 : Bool -> Icon msg -> String -> msg -> Element msg
 btn2 inProg ic str msg =
     Input.button
@@ -87,13 +107,19 @@ btn2 inProg ic str msg =
             [ Font.color white
             , Background.color black
             ]
-        , Border.color black
-        , Border.width 1
+        , Border.rounded 15
+        , Background.color grey
         , style "cursor" "wait"
             |> whenAttr inProg
         , Font.color black
         , height <| px 50
         , width <| px 120
+        , Border.shadow
+            { offset = ( 3, 3 )
+            , blur = 4
+            , size = 2
+            , color = Element.rgb255 150 150 150
+            }
         ]
         { onPress =
             if inProg then
