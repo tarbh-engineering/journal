@@ -7,6 +7,7 @@ import Day
 import Element exposing (Attribute, Color, Element, alignBottom, centerX, centerY, column, el, fill, height, html, none, padding, paddingXY, paragraph, px, rgb255, row, scrollbarY, spaceEvenly, spacing, text, width, wrappedRow)
 import Element.Background as Background
 import Element.Border as Border
+import Element.Events
 import Element.Font as Font
 import Element.Input as Input exposing (button)
 import Helpers
@@ -1913,7 +1914,7 @@ viewPage model =
     , model.current
         |> unwrap
             viewReady
-            (vp2 model)
+            (viewPost model)
     ]
         |> row [ width fill, height fill, spacing wd, paddingXY 20 wd ]
 
@@ -1958,7 +1959,7 @@ viewPageMobile model =
     [ cal
         |> when (not flip)
     , [ model.current
-            |> whenJust (vp2 model)
+            |> whenJust (viewPost model)
             |> when flip
       , model.current
             |> whenJust (viewBarMobile model)
@@ -2144,8 +2145,8 @@ viewReady =
         }
 
 
-vp2 : Model -> Date -> Element Msg
-vp2 model d =
+viewPost : Model -> Date -> Element Msg
+viewPost model d =
     let
         fs =
             25
@@ -2167,10 +2168,10 @@ vp2 model d =
                 |> Day.get d
 
         create =
-            viewPostEditor (PostCreateSubmit d) model.postEditorBody model.postBeingEdited fs
+            viewPostEditor (PostCreateSubmit d) model.postEditorBody False fs
 
         make post =
-            viewPostEditor (PostUpdateSubmit post.id) model.postEditorBody model.postBeingEdited fs
+            viewPostEditor (PostUpdateSubmit post.id) model.postEditorBody (not model.postBeingEdited) fs
 
         txt =
             if model.tagView then
@@ -2188,20 +2189,69 @@ vp2 model d =
                                 Nothing
                             )
                         )
+
+        topBar =
+            if isWide model.screen then
+                [ formatDay d
+                    |> text
+                    |> el [ width fill ]
+                , [ Input.button
+                        [ Font.underline
+                        , Font.italic
+                        , Font.size 16
+                        , Element.mouseOver
+                            [ Font.color blue
+                            ]
+                        ]
+                        { onPress = Just PostUpdateCancel
+                        , label = text "Cancel"
+                        }
+                        |> when (model.postBeingEdited && pst /= Nothing)
+                  , if model.postBeingEdited then
+                        btn2 model.inProgress.post
+                            Icons.save
+                            "Submit"
+                            (pst
+                                |> unwrap (PostCreateSubmit d)
+                                    (\p ->
+                                        if model.postEditorBody == "" then
+                                            PostClear p
+
+                                        else
+                                            PostUpdateSubmit p.id
+                                    )
+                            )
+
+                    else
+                        btn2 False
+                            Icons.edit
+                            "Update"
+                            PostUpdateStart
+                  ]
+                    |> row [ spacing 20 ]
+                ]
+                    |> row
+                        [ spaceEvenly
+                        , Font.size 17
+                        , width fill
+                        ]
+
+            else
+                [ formatDay d
+                    |> text
+                    |> el [ width fill ]
+                , text "|"
+                    |> when (txt /= Nothing)
+                , txt
+                    |> whenJust
+                        (text
+                            >> el [ Element.alignRight ]
+                            >> el [ Font.italic, width fill ]
+                        )
+                ]
+                    |> row [ spaceEvenly, Font.size 17, width fill ]
     in
-    [ [ formatDay d
-            |> text
-            |> el [ width fill ]
-      , text "|"
-            |> when (txt /= Nothing)
-      , txt
-            |> whenJust
-                (text
-                    >> el [ Element.alignRight ]
-                    >> el [ Font.italic, width fill ]
-                )
-      ]
-        |> row [ spaceEvenly, Font.size 17, width fill ]
+    [ topBar
     , if model.tagView then
         viewPostTags model d pst
 
@@ -2213,8 +2263,9 @@ vp2 model d =
             [ height fill
             , width fill
             , spacing 10
-            , style "animation" "rise 0.5s"
-            , style "transform-origin" "bottom"
+
+            --, style "animation" "rise 0.5s"
+            --, style "transform-origin" "bottom"
             , Element.clip
             , fShrink
             ]
@@ -2232,19 +2283,28 @@ viewPostEditor fn txt disable fontSize =
         , Html.Attributes.style "line-height" "30px"
         , Html.Attributes.style "padding" "0px"
         , Html.Attributes.style "flex-grow" "inherit"
-        , Html.Attributes.readonly <| not disable
+        , Html.Attributes.readonly disable
         , Html.Events.onInput BodyUpdate
         ]
         []
         |> Element.html
         |> el
             [ width fill
-            , style "cursor" "text"
+            , (if disable then
+                --Icon.pencil
+                "default"
+
+               else
+                "text"
+              )
+                |> style "cursor"
             , height fill
             , Background.color grey
             , Font.size fontSize
             , padding 10
             , ebg
+
+            --, Element.Events.onDoubleClick PostUpdateStart
             ]
 
 
@@ -2324,328 +2384,6 @@ viewPostTags model d pst =
                 , Element.scrollbarY
                 , style "min-height" "auto"
                 ]
-
-
-viewPostMobile : Model -> Element Msg
-viewPostMobile model =
-    model.current
-        |> unwrap
-            viewReady
-            (\d ->
-                let
-                    fn fn1 =
-                        Html.textarea
-                            [ Html.Attributes.id "editor"
-                            , Html.Attributes.value model.postEditorBody
-                            , Html.Attributes.style "font-size" "inherit"
-                            , Html.Attributes.style "font-family" "inherit"
-                            , Html.Attributes.style "cursor" "inherit"
-                            , Html.Attributes.style "line-height" "40px"
-                            , Html.Attributes.style "padding" "0px"
-                            , Html.Events.onInput BodyUpdate
-                            ]
-                            []
-                            |> Element.html
-                            |> el
-                                [ width fill
-                                , style "cursor" "text"
-                                , Element.alignTop
-                                , height fill
-                                , Background.color grey
-                                , Font.size 35
-                                , padding 20
-                                , onKeydown [ onCtrlEnter fn1 ]
-                                , ebg
-                                ]
-
-                    data =
-                        model.posts
-                            |> Day.get d
-
-                    create =
-                        fn (PostCreateSubmit d)
-
-                    make post =
-                        if model.postBeingEdited then
-                            fn (PostUpdateSubmit post.id)
-
-                        else
-                            post.body
-                                |> Maybe.withDefault ""
-                                -- HACK: Need to pass through Html in order
-                                -- to preserve formatting.
-                                |> Html.text
-                                |> List.singleton
-                                |> Html.div
-                                    [ Html.Attributes.style "white-space" "pre-wrap"
-                                    , Html.Attributes.style "line-height" "40px"
-                                    , Html.Attributes.style "height" "100%"
-                                    , Html.Attributes.style "width" "100%"
-                                    , Html.Attributes.style "overflow-y" "auto"
-                                    , Html.Attributes.style "word-break" "break-word"
-                                    , Html.Attributes.style "min-height" "min-content"
-                                    ]
-                                |> Element.html
-                                |> el
-                                    [ width fill
-                                    , height fill
-                                    , Background.color grey
-                                    , padding 20
-                                    , Font.size 35
-                                    , ebg
-                                    , Element.clip
-                                    , fShrink
-                                    ]
-
-                    pst =
-                        model.posts
-                            |> Day.get d
-                in
-                [ [ formatDay d
-                        |> text
-                  , text "|"
-                        |> when model.postBeingEdited
-                  , pst
-                        |> unwrap
-                            ("Creating new entry" |> text |> el [ Font.italic ])
-                            (always
-                                (("Updating entry" |> text |> el [ Font.italic ])
-                                    |> when model.postBeingEdited
-                                )
-                            )
-                  ]
-                    |> row [ spaceEvenly, Font.size 17, width fill, height <| px 20 ]
-                , if model.tagView then
-                    let
-                        xs =
-                            UD.values model.tags
-                    in
-                    if List.isEmpty xs then
-                        "Make a tag!"
-                            |> text
-                            |> el [ centerX, Font.bold ]
-
-                    else
-                        pst
-                            |> unwrap
-                                (xs
-                                    |> List.map
-                                        (\t ->
-                                            Input.button
-                                                [ padding 10
-                                                , Border.width 1
-                                                , (if List.member t.id model.postCreateTags then
-                                                    blue
-
-                                                   else
-                                                    white
-                                                  )
-                                                    |> Background.color
-                                                ]
-                                                { onPress = Just <| PostCreateWithTag d t
-                                                , label = text t.name
-                                                }
-                                        )
-                                    |> Element.wrappedRow [ spacing 20 ]
-                                )
-                                (\p ->
-                                    xs
-                                        |> List.map
-                                            (\t ->
-                                                Input.button
-                                                    [ padding 10
-                                                    , Border.width 1
-                                                    , (if List.member t.id p.tags then
-                                                        blue
-
-                                                       else
-                                                        white
-                                                      )
-                                                        |> Background.color
-                                                    ]
-                                                    { onPress = Just <| PostTagToggle p t
-                                                    , label = text t.name
-                                                    }
-                                            )
-                                        |> Element.wrappedRow [ spacing 20 ]
-                                )
-
-                  else
-                    data
-                        |> unwrap create make
-                ]
-                    |> column
-                        [ height fill
-                        , width fill
-                        , spacing 10
-                        , style "animation" "rise 0.5s"
-                        , style "transform-origin" "bottom"
-                        , Element.clip
-                        , fShrink
-                        ]
-            )
-
-
-viewPost : Model -> Date -> Element Msg
-viewPost model d =
-    let
-        fn fn1 =
-            Html.textarea
-                [ Html.Attributes.id "editor"
-                , Html.Attributes.value model.postEditorBody
-                , Html.Attributes.style "font-size" "inherit"
-                , Html.Attributes.style "font-family" "inherit"
-                , Html.Attributes.style "cursor" "inherit"
-                , Html.Attributes.style "line-height" "40px"
-                , Html.Attributes.style "padding" "0px"
-                , Html.Events.onInput BodyUpdate
-                ]
-                []
-                |> Element.html
-                |> el
-                    [ width fill
-                    , style "cursor" "text"
-                    , Element.alignTop
-                    , Helpers.View.cappedHeight 700
-                    , Background.color grey
-                    , Font.size 35
-                    , padding 20
-                    , onKeydown [ onCtrlEnter fn1 ]
-                    , ebg
-                    ]
-
-        data =
-            model.posts
-                |> Day.get d
-
-        create =
-            fn (PostCreateSubmit d)
-
-        make post =
-            if model.postBeingEdited then
-                fn (PostUpdateSubmit post.id)
-
-            else
-                Input.button
-                    [ width fill
-                    , Helpers.View.cappedHeight 700
-
-                    --, Element.mouseOver [ Background.color grey ]
-                    , Background.color grey
-                    , padding 20
-                    , Font.size 35
-                    , Element.alignTop
-                    , ebg
-                    , style "cursor" Icon.pencil
-                    ]
-                    { onPress = Just PostUpdateStart
-                    , label =
-                        post.body
-                            |> Maybe.withDefault ""
-                            -- HACK: Need to pass through Html in order
-                            -- to preserve formatting.
-                            |> Html.text
-                            |> List.singleton
-                            |> Html.div
-                                [ Html.Attributes.style "white-space" "pre-wrap"
-                                , Html.Attributes.style "line-height" "40px"
-                                , Html.Attributes.style "height" "100%"
-                                , Html.Attributes.style "width" "100%"
-                                , Html.Attributes.style "overflow-y" "auto"
-                                , Html.Attributes.style "word-break" "break-word"
-                                ]
-                            |> Element.html
-                    }
-
-        pst =
-            model.posts
-                |> Day.get d
-    in
-    [ [ [ formatDay d
-            |> text
-        , text "|"
-            |> when (model.postBeingEdited || pst == Nothing)
-        , pst
-            |> unwrap
-                ("Creating new entry" |> text |> el [ Font.italic ])
-                (always
-                    (("Updating entry" |> text |> el [ Font.italic ])
-                        |> when model.postBeingEdited
-                    )
-                )
-        ]
-            |> row [ spacing 10 ]
-      ]
-        |> row [ width fill, spaceEvenly, height <| px 55 ]
-    , if model.tagView then
-        pst
-            |> whenJust
-                (\p ->
-                    model.tags
-                        |> UD.values
-                        |> List.map
-                            (\t ->
-                                Input.button
-                                    [ padding 10
-                                    , Border.width 1
-                                    , (if List.member t.id p.tags then
-                                        blue
-
-                                       else
-                                        white
-                                      )
-                                        |> Background.color
-                                    ]
-                                    { onPress = Just <| PostTagToggle p t
-                                    , label = text t.name
-                                    }
-                            )
-                        |> Element.wrappedRow [ spacing 20 ]
-                )
-
-      else
-        data
-            |> unwrap create make
-    , pst
-        |> unwrap
-            ([ btn2 model.inProgress.post Icons.save "Submit" (PostCreateSubmit d)
-                |> when (model.postEditorBody /= "")
-             , btn2 False Icons.close "Cancel" PostCancel
-             ]
-                |> row [ spacing 10 ]
-            )
-            (\p ->
-                if model.postBeingEdited then
-                    [ btn2
-                        model.inProgress.post
-                        Icons.save
-                        "Submit"
-                        (PostUpdateSubmit p.id)
-                        |> when (Just model.postEditorBody /= p.body && model.postEditorBody /= "")
-                    , btn2 model.inProgress.postDelete Icons.delete "Delete" (PostDelete p.id p.date)
-                    , btn2 False Icons.close "Cancel" PostUpdateCancel
-                    ]
-                        |> row [ spacing 10 ]
-
-                else
-                    btn2 False
-                        (if model.tagView then
-                            Icons.edit
-
-                         else
-                            Icons.label
-                        )
-                        (if model.tagView then
-                            "Pad"
-
-                         else
-                            "Tags"
-                        )
-                        PostViewToggle
-            )
-        |> el [ Element.alignRight, Element.alignBottom ]
-    ]
-        |> column [ height fill, width fill, spacing 10 ]
 
 
 shiftShadow : Attribute msg

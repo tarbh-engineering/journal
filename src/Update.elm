@@ -1444,7 +1444,7 @@ routeDemo model route =
                                 else
                                     model.postView
                           }
-                        , if shouldFocusOnEditor then
+                        , if False then
                             focusOnEditor
 
                           else
@@ -1535,7 +1535,7 @@ routeLiveDay model d auth =
                         (Data.fetchDay d)
                         (PostCb d)
                         auth
-                    , if shouldFocusOnEditor then
+                    , if False then
                         focusOnEditor
 
                       else
