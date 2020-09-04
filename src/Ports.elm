@@ -1,4 +1,4 @@
-port module Ports exposing (boot, buy, clearAuth, log, onUrlChange, online, pushUrl, saveAuth)
+port module Ports exposing (boot, buy, clearAuth, log, onUrlChange, online, paymentFail, pushUrl, saveAuth)
 
 import Json.Decode exposing (Value)
 
@@ -24,6 +24,9 @@ port pushUrl : String -> Cmd msg
 
 
 -- In
+
+
+port paymentFail : (() -> msg) -> Sub msg
 
 
 port online : (Bool -> msg) -> Sub msg

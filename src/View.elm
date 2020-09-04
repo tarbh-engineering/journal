@@ -620,6 +620,26 @@ viewTagsMobile model =
 
              else
                 [ tags
+                    |> (case model.tagsSort of
+                            Types.SortName ->
+                                List.sortBy .name
+
+                            Types.SortDate ->
+                                --List.sortWith
+                                --(\a b ->
+                                --Date.compare a.created b.created
+                                --)
+                                identity
+
+                            Types.SortUsage ->
+                                List.sortBy .count
+                       )
+                    |> (if model.tagsSortReverse then
+                            List.reverse
+
+                        else
+                            identity
+                       )
                     |> List.map
                         (\t ->
                             Input.button
@@ -654,37 +674,55 @@ viewTagsMobile model =
                         , width fill
                         , height fill
                         ]
-                , if model.tagCreate then
-                    [ Input.text
-                        [ Border.rounded 0
-                        , Border.width 1
-                        , width fill
-                        , padding 10
-                        , onKeydown [ onEnter TagCreateSubmit ]
+                , case model.tagsView of
+                    Types.TagsCreate ->
+                        [ Input.text
+                            [ Border.rounded 0
+                            , Border.width 1
+                            , width fill
+                            , padding 10
+                            , onKeydown [ onEnter TagCreateSubmit ]
+                            ]
+                            { onChange = TagCreateNameUpdate
+                            , label = Input.labelHidden ""
+                            , placeholder =
+                                text "New tag"
+                                    |> Input.placeholder []
+                                    |> Just
+                            , text = model.tagCreateName
+                            }
+                        , [ lnk "Cancel" <| TagsViewSet Types.TagsView
+                          , btn2 model.inProgress.tag Icons.send "Submit" TagCreateSubmit
+                          ]
+                            |> row [ spacing 10, Element.alignRight ]
                         ]
-                        { onChange = TagCreateNameUpdate
-                        , label = Input.labelHidden ""
-                        , placeholder =
-                            text "New tag"
-                                |> Input.placeholder []
-                                |> Just
-                        , text = model.tagCreateName
-                        }
-                    , [ lnk "Cancel" TagCreateToggle
-                      , btn2 model.inProgress.tag Icons.send "Submit" TagCreateSubmit
-                      ]
-                        |> row [ spacing 10, Element.alignRight ]
-                    ]
-                        |> column [ spacing 10, width fill ]
+                            |> column [ spacing 10, width fill ]
 
-                  else
-                    { onPress = Just TagCreateToggle
-                    , label =
-                        icon Icons.add 30
-                            |> el [ centerX, centerY ]
-                    }
-                        |> rBtn
-                        |> el [ Element.alignBottom, Element.alignRight ]
+                    Types.TagsView ->
+                        [ { onPress = Just <| TagsViewSet Types.TagsSort
+                          , label =
+                                icon Icons.tune 30
+                                    |> el [ centerX, centerY ]
+                          }
+                            |> rBtn
+                        , { onPress = Just <| TagsViewSet Types.TagsCreate
+                          , label =
+                                icon Icons.add 30
+                                    |> el [ centerX, centerY ]
+                          }
+                            |> rBtn
+                        ]
+                            |> row [ Element.alignBottom, width fill, spaceEvenly ]
+
+                    Types.TagsSort ->
+                        [ [ viewSortSelect Types.SortName model.tagsSort
+                          , viewSortSelect Types.SortDate model.tagsSort
+                          , viewSortSelect Types.SortUsage model.tagsSort
+                          ]
+                            |> column [ spacing 10 ]
+                        , lnk "Cancel" <| TagsViewSet Types.TagsView
+                        ]
+                            |> column [ spacing 20 ]
                 ]
                     |> column
                         [ spacing 10
@@ -693,6 +731,48 @@ viewTagsMobile model =
                         ]
             )
             (viewTag model)
+
+
+viewSortSelect : Types.TagsSort -> Types.TagsSort -> Element Msg
+viewSortSelect sort curr =
+    let
+        txt =
+            case sort of
+                Types.SortName ->
+                    "Name"
+
+                Types.SortDate ->
+                    "Date created"
+
+                Types.SortUsage ->
+                    "Usage count"
+
+        icn =
+            case sort of
+                Types.SortName ->
+                    Icons.sort_by_alpha
+
+                Types.SortDate ->
+                    Icons.date_range
+
+                Types.SortUsage ->
+                    Icons.insert_chart_outlined
+
+        active =
+            sort == curr
+    in
+    Input.button
+        [ (if active then
+            blue
+
+           else
+            black
+          )
+            |> Font.color
+        ]
+        { onPress = Just <| TagsSortSet sort
+        , label = [ icon icn 30, text txt ] |> row [ spacing 10 ]
+        }
 
 
 viewTag : Model -> Tag -> Element Msg

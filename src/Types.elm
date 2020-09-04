@@ -1,4 +1,4 @@
-module Types exposing (App(..), Auth, Cipher, Def(..), Flags, Funnel(..), GqlResult, GqlTask, Keys, Model, Msg(..), Post, PostRaw, Route(..), Screen, Sort(..), Status(..), Tag, TagRaw, View(..))
+module Types exposing (App(..), Auth, Cipher, Def(..), Flags, Funnel(..), GqlResult, GqlTask, Keys, Model, Msg(..), Post, PostRaw, Route(..), Screen, Sort(..), Status(..), Tag, TagRaw, TagsSort(..), TagsView(..), View(..))
 
 import Array exposing (Array)
 import Browser exposing (UrlRequest)
@@ -12,34 +12,6 @@ import Helpers.UuidDict exposing (UuidDict)
 import Json.Decode exposing (Value)
 import Task exposing (Task)
 import Time exposing (Month(..))
-
-
-type Status a
-    = Missing
-    | Loading (Maybe a)
-    | Found a
-
-
-type alias Flags =
-    { month : Int
-    , year : Int
-    , online : Bool
-    , screen : Screen
-    , isMobile : Bool
-    , swEnabled : Bool
-    }
-
-
-type alias Auth =
-    { key : Value
-    , token : Jwt
-    }
-
-
-type alias Screen =
-    { width : Int
-    , height : Int
-    }
 
 
 type alias Model =
@@ -87,45 +59,10 @@ type alias Model =
     , swEnabled : Bool
     , faq : Bool
     , dropdown : Bool
-    , tagCreate : Bool
     , tall : Bool
-    }
-
-
-type App
-    = Waiting
-    | SwUnavailable
-    | Ready
-
-
-type Funnel
-    = Hello
-    | WelcomeBack String
-    | JoinUs
-    | CheckEmail
-
-
-type Def
-    = Alts
-    | Secure
-    | Private
-    | Journal
-
-
-type Sort
-    = Alpha Bool
-
-
-type alias LoginForm =
-    { email : String
-    , password : String
-    , passwordVisible : Bool
-    }
-
-
-type alias Keys =
-    { encryptionKey : Value
-    , serverKey : String
+    , tagsView : TagsView
+    , tagsSort : TagsSort
+    , tagsSortReverse : Bool
     }
 
 
@@ -150,6 +87,7 @@ type Msg
     | LoginSubmit String
     | SignupSubmit
     | Buy Bool
+    | PaymentFail
     | LoginFormEmailUpdate String
     | LoginFormPasswordUpdate String
     | LoginFormPasswordVisibleToggle
@@ -197,7 +135,18 @@ type Msg
     | Boot { key : Maybe String, href : String }
     | DropdownToggle
     | FakeData
-    | TagCreateToggle
+    | TagsViewSet TagsView
+    | TagsSortSet TagsSort
+
+
+type alias Flags =
+    { month : Int
+    , year : Int
+    , online : Bool
+    , screen : Screen
+    , isMobile : Bool
+    , swEnabled : Bool
+    }
 
 
 type Route
@@ -212,12 +161,89 @@ type Route
     | RouteStats
 
 
+type View
+    = ViewHome
+    | ViewCalendar
+    | ViewSettings
+    | ViewSuccess
+    | ViewTags
+    | ViewMagic
+    | ViewStats
+
+
 type alias GqlResult a =
     Result (Graphql.Http.Error ()) a
 
 
 type alias GqlTask a =
     Task (Graphql.Http.Error ()) a
+
+
+type alias Auth =
+    { key : Value
+    , token : Jwt
+    }
+
+
+type alias Screen =
+    { width : Int
+    , height : Int
+    }
+
+
+type TagsSort
+    = SortName
+    | SortDate
+    | SortUsage
+
+
+type TagsView
+    = TagsView
+    | TagsCreate
+    | TagsSort
+
+
+type App
+    = Waiting
+    | SwUnavailable
+    | Ready
+
+
+type Funnel
+    = Hello
+    | WelcomeBack String
+    | JoinUs
+    | CheckEmail
+
+
+type Def
+    = Alts
+    | Secure
+    | Private
+    | Journal
+
+
+type Sort
+    = Alpha Bool
+
+
+type alias LoginForm =
+    { email : String
+    , password : String
+    , passwordVisible : Bool
+    }
+
+
+type alias Keys =
+    { encryptionKey : Value
+    , serverKey : String
+    }
+
+
+type Status a
+    = Missing
+    | Loading (Maybe a)
+    | Found a
 
 
 type alias Post =
@@ -254,13 +280,3 @@ type alias TagRaw =
     , id : Uuid
     , count : Int
     }
-
-
-type View
-    = ViewHome
-    | ViewCalendar
-    | ViewSettings
-    | ViewSuccess
-    | ViewTags
-    | ViewMagic
-    | ViewStats

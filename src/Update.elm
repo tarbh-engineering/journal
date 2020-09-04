@@ -65,6 +65,20 @@ clearLoading =
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
+        PaymentFail ->
+            ( { model
+                | inProgress =
+                    model.inProgress
+                        |> (\p ->
+                                { p
+                                    | annualPlan = False
+                                    , monthlyPlan = False
+                                }
+                           )
+              }
+            , Cmd.none
+            )
+
         GoToToday ->
             ( model
             , Helpers.today
@@ -671,7 +685,7 @@ update msg model =
                             | tags =
                                 UD.insert tag.id tag model.tags
                             , tagCreateName = ""
-                            , tagCreate = False
+                            , tagsView = Types.TagsView
                             , inProgress =
                                 model.inProgress
                                     |> (\p -> { p | tag = False })
@@ -1262,9 +1276,22 @@ update msg model =
                     )
             )
 
-        TagCreateToggle ->
+        TagsSortSet sort ->
             ( { model
-                | tagCreate = not model.tagCreate
+                | tagsSort = sort
+                , tagsSortReverse =
+                    if sort == model.tagsSort then
+                        not model.tagsSortReverse
+
+                    else
+                        False
+              }
+            , Cmd.none
+            )
+
+        TagsViewSet t ->
+            ( { model
+                | tagsView = t
               }
             , Cmd.none
             )

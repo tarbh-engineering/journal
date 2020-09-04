@@ -26,6 +26,7 @@ main =
                 Sub.batch
                     [ Browser.Events.onVisibilityChange VisibilityChange
                     , Ports.online SetOnline
+                    , Ports.paymentFail (always PaymentFail)
                     , Ports.boot Boot
                     , Ports.onUrlChange
                         (Url.fromString
@@ -102,6 +103,8 @@ emptyModel =
     , swEnabled = False
     , faq = False
     , dropdown = False
-    , tagCreate = False
     , tall = False
+    , tagsView = Types.TagsView
+    , tagsSort = Types.SortName
+    , tagsSortReverse = False
     }

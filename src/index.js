@@ -43,16 +43,18 @@ const swEnabled = Boolean(
     asyncEnabled
 );
 
-const cryptoEnabled = [
-  window.crypto,
-  isFn(crypto.getRandomValues),
-  crypto.subtle,
-  isFn(crypto.subtle.importKey),
-  isFn(crypto.subtle.exportKey),
-  isFn(crypto.subtle.encrypt),
-  isFn(crypto.subtle.decrypt),
-  isFn(crypto.subtle.deriveBits),
-].every((x) => x);
+const cryptoEnabled = Boolean(
+  window.crypto &&
+    window.crypto.subtle &&
+    [
+      crypto.getRandomValues,
+      crypto.subtle.importKey,
+      crypto.subtle.exportKey,
+      crypto.subtle.encrypt,
+      crypto.subtle.decrypt,
+      crypto.subtle.deriveBits,
+    ].every(isFn)
+);
 
 const now = new Date();
 
@@ -96,7 +98,7 @@ app.ports.log.subscribe(console.log);
 
 app.ports.clearAuth.subscribe(() => localStorage.removeItem("authed"));
 
-app.ports.buy.subscribe(({ email, annual }) => {
+app.ports.buy.subscribe(({ email, annual }) =>
   loadStripe(stripeProjectId)
     .then((stripe) =>
       stripe.redirectToCheckout({
@@ -107,8 +109,11 @@ app.ports.buy.subscribe(({ email, annual }) => {
       })
     )
     .then(console.log)
-    .catch(console.error);
-});
+    .catch((e) => {
+      console.error(e);
+      app.ports.paymentFail.send(null);
+    })
+);
 
 app.ports.saveAuth.subscribe((key) =>
   localStorage.setItem(CRYPTO_KEY, JSON.stringify(key))
