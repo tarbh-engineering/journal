@@ -11,7 +11,7 @@ import Material.Icons.Types exposing (Coloring(..), Icon)
 import Ordinal
 import Time exposing (Month(..))
 import Types exposing (Screen)
-import View.Style exposing (black, blue, grey, rotate, varela, white)
+import View.Style exposing (black, blue, sand, rotate, varela, white)
 
 
 isTall : Screen -> Bool
@@ -108,7 +108,7 @@ btn2 inProg ic str msg =
             , Background.color black
             ]
         , Border.rounded 15
-        , Background.color grey
+        , Background.color sand
         , style "cursor" "wait"
             |> whenAttr inProg
         , Font.color black
@@ -154,7 +154,7 @@ btn3 inProg ic str msg =
         , Font.color black
         , height <| px 50
         , Border.rounded 25
-        , Background.color grey
+        , Background.color sand
         , varela
         , Border.shadow
             { offset = ( 3, 3 )

@@ -136,7 +136,7 @@ type Msg
     | PostMutateCb (GqlResult Post)
     | PostDeleteCb (GqlResult Date)
     | TagsCb (GqlResult (List Tag))
-    | PostCancel
+    | PostViewCancel
     | PostCreateSubmit Date
     | PostDelete Uuid Date
     | PostUpdateStart
@@ -156,6 +156,7 @@ type Msg
     | Logout
     | LogoutCb (GqlResult Bool)
     | InitCb (Maybe Route) (GqlResult (Maybe Auth))
+    | PostViewTagStart
     | TagDelete Tag
     | TagDeleteCb (GqlResult Uuid)
     | TagUpdate String
@@ -173,6 +174,7 @@ type Msg
     | UrlChange (Maybe Route)
     | UrlRequest UrlRequest
     | NavigateTo Route
+    | GoToToday
     | SetOnline Bool
     | SetSelectedResult Uuid
     | PostClear Post
@@ -185,7 +187,8 @@ type Msg
     | FaqToggle
     | Force
     | Change
-    | TagSelect (Maybe Uuid)
+    | TagSelect Uuid
+    | TagDeselect
     | SetDef Def
     | RefreshCb (Auth -> Cmd Msg) (GqlResult (Maybe Jwt))
     | Bad (Auth -> Cmd Msg)
@@ -201,8 +204,10 @@ type Route
     = RouteToday
     | RouteCalendar
     | RouteDay Date
+    | RouteDayDetail Date
     | RouteHome
     | RouteTags
+    | RouteTag
     | RouteSettings
     | RouteStats
 

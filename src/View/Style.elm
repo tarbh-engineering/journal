@@ -1,4 +1,4 @@
-module View.Style exposing (abel, black, blue, ebg, fadeIn, grey, purple, rotate, serif, varela, white, yellow)
+module View.Style exposing (abel, black, blue, ebg, fadeIn, grey, purple, rotate, sand, serif, varela, white, yellow)
 
 import Element exposing (Attribute, Color, rgb255)
 import Element.Font as Font
@@ -70,6 +70,11 @@ black =
     rgb255 0 0 0
 
 
+sand : Color
+sand =
+    rgb255 255 245 235
+
+
 grey : Color
 grey =
-    rgb255 255 245 235
+    rgb255 150 150 150

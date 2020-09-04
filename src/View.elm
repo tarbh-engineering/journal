@@ -26,7 +26,7 @@ import Types exposing (Def(..), Funnel(..), Model, Msg(..), Post, Route(..), Sor
 import Validate exposing (isValidEmail)
 import View.Img
 import View.Misc exposing (btn, btn2, btn3, formatDay, icon, isWide, lnk, spinner)
-import View.Style exposing (abel, black, blue, ebg, fadeIn, grey, rotate, varela, white, yellow)
+import View.Style exposing (abel, black, blue, ebg, fadeIn, grey, rotate, sand, varela, white, yellow)
 
 
 onCtrlEnter : msg -> Decoder msg
@@ -202,7 +202,7 @@ cell2 model day =
             Just day.date == model.current && day.month == EQ
     in
     Input.button
-        [ Background.color grey
+        [ Background.color sand
         , width fill
         , height <| px 50
         , style "transition" "all 0.4s"
@@ -220,7 +220,7 @@ cell2 model day =
                 yellow
 
             else
-                grey
+                sand
 
            else
             Element.rgb255 190 165 140
@@ -289,7 +289,7 @@ viewCell model n day =
                 yellow
 
             else
-                grey
+                sand
 
            else
             Element.rgb255 190 165 140
@@ -584,10 +584,17 @@ viewTagsMobile model =
             (if List.isEmpty tags then
                 [ Input.text
                     [ Border.rounded 0
-                    , Border.width 1
                     , width fill
-                    , padding 10
+                    , paddingXY 0 10
                     , onKeydown [ onEnter TagCreateSubmit ]
+                    , Border.widthEach { bottom = 1, top = 0, left = 0, right = 0 }
+                    , Background.gradient
+                        { angle = degrees 0
+                        , steps =
+                            [ Element.rgb255 245 220 235
+                            , Element.rgb255 255 255 255
+                            ]
+                        }
                     ]
                     { onChange = TagCreateNameUpdate
                     , label = Input.labelHidden ""
@@ -597,8 +604,17 @@ viewTagsMobile model =
                             |> Just
                     , text = model.tagCreateName
                     }
-                , btn3 model.inProgress.tag Icons.send "Submit" TagCreateSubmit
-                    |> el [ Element.alignRight, paddingXY 5 0 ]
+                , [ [ "Gym"
+                    , "Nice food"
+                    , "Flight"
+                    , "etc."
+                    ]
+                        |> List.map (text >> el [ Font.italic ])
+                        |> column [ spacing 5 ]
+                  , btn3 model.inProgress.tag Icons.send "Submit" TagCreateSubmit
+                        |> el [ Element.alignTop ]
+                  ]
+                    |> row [ spaceEvenly, width fill ]
                 ]
                     |> column [ width fill, spacing 10, centerY ]
 
@@ -611,14 +627,14 @@ viewTagsMobile model =
                                 , width fill
                                 , padding 5
                                 ]
-                                { onPress = Just <| TagSelect <| Just t.id
+                                { onPress = Just <| TagSelect t.id
                                 , label =
                                     [ text t.name
                                     , text <| String.fromInt t.count
                                     ]
                                         |> row
                                             [ spaceEvenly
-                                            , Background.color grey
+                                            , Background.color sand
                                             , padding 15
                                             , Border.rounded 15
                                             , width fill
@@ -728,7 +744,7 @@ viewTag model t =
                     |> row [ spaceEvenly, width fill ]
             }
     , if List.isEmpty ts then
-        [ text "No posts with this tag."
+        [ text "No days with this tag."
             |> el [ centerX ]
         , btn
             "Go to calendar"
@@ -769,7 +785,7 @@ viewTag model t =
                 , height fill
                 ]
     , [ btn2 False Icons.delete "Delete" <| TagDelete t
-      , { onPress = Just <| TagSelect Nothing
+      , { onPress = Just TagDeselect
         , label =
             icon Icons.undo 30
                 |> el [ centerX, centerY ]
@@ -822,7 +838,7 @@ viewTags model =
 
                     else
                         [ Input.button []
-                            { onPress = Just <| TagSelect <| Just t.id
+                            { onPress = Just <| TagSelect t.id
                             , label = text t.name
                             }
 
@@ -931,7 +947,7 @@ viewHomeMobile model =
             --]
             --}
             , Font.color black
-            , Background.color grey
+            , Background.color sand
             ]
             { onPress = Just <| NavigateTo RouteCalendar
             , label = text "Try demo"
@@ -979,9 +995,7 @@ viewBuy model =
             else
                 "pointer"
     in
-    [ text "Sign up"
-        |> el [ Font.italic, Font.size 25, Font.bold, centerX ]
-    , [ text "Monthly plan"
+    [ [ text "Monthly plan"
       , Input.button
             [ Background.gradient
                 { angle = degrees 0
@@ -1097,7 +1111,7 @@ viewBuy model =
             , width fill
             , padding 20
             , Element.alignBottom
-            , Background.color grey
+            , Background.color sand
 
             --, style "animation" "enter 1s"
             , style "transform-origin" "center"
@@ -1159,7 +1173,7 @@ viewInfo mDef =
                         [ padding 20
 
                         --, width Element.shrink
-                        , Background.color grey
+                        , Background.color sand
                         , ebg
                         , Font.size 20
                         ]
@@ -1240,7 +1254,7 @@ viewFaq model =
                 , size = 0
                 , color = Element.rgb255 150 150 150
                 }
-            , Background.color grey
+            , Background.color sand
             , Border.rounded 25
             , height fill
             , width fill
@@ -1340,7 +1354,7 @@ viewDef curr def str =
         , Element.mouseOver
             [ Font.color blue
             ]
-        , Background.color grey
+        , Background.color sand
             |> whenAttr (Just def == curr)
 
         --, Font.color blue
@@ -1367,7 +1381,7 @@ viewEmail model =
             , Html.Attributes.disabled model.inProgress.login
                 |> Element.htmlAttribute
             , (if model.funnel /= Types.Hello then
-                grey
+                sand
 
                else
                 white
@@ -1482,7 +1496,7 @@ viewFunnel model =
                     --, style "cursor" "wait"
                     --|> whenAttr model.inProgress
                     --, (if model.inProgress then
-                    --grey
+                    --sand
                     --else
                     --white
                     --)
@@ -1529,7 +1543,7 @@ vb2 model =
             [ spacing 20
             , shadow2
             , padding 20
-            , Background.color grey
+            , Background.color sand
             , Border.rounded 20
             , centerX
             ]
@@ -1693,7 +1707,7 @@ viewFrameMobile model elem =
                     |> when model.dropdown
               ]
                 |> column
-                    [ Background.color grey
+                    [ Background.color sand
                         |> whenAttr model.dropdown
                     , shadow2
                         |> whenAttr model.dropdown
@@ -1715,8 +1729,10 @@ viewFrameMobile model elem =
             ]
     , elem
     , [ ( Icons.settings, RouteSettings, ViewSettings )
-      , ( Icons.calendar_today, RouteCalendar, ViewCalendar )
-      , ( Icons.label, RouteTags, ViewTags )
+      , ( Icons.event, RouteCalendar, ViewCalendar )
+
+      -- note_add
+      , ( Icons.assignment_turned_in, RouteTags, ViewTags )
       ]
         |> List.map
             (\( n, r, v ) ->
@@ -1813,7 +1829,7 @@ rBtn =
             , size = 1
             , color = Element.rgb255 150 150 150
             }
-        , Background.color grey
+        , Background.color sand
         , Border.rounded 25
         , padding 5
         ]
@@ -1821,54 +1837,128 @@ rBtn =
 
 viewPageMobile : Model -> Element Msg
 viewPageMobile model =
-    let
-        wd =
-            fill
+    [ if model.postView then
+        if model.tagView then
+            model.current
+                |> whenJust
+                    (\d ->
+                        let
+                            pst =
+                                model.posts
+                                    |> Day.get d
 
-        flip =
-            model.postBeingEdited || model.postView || model.tagView
+                            topBar =
+                                [ formatDay d
+                                    |> text
+                                    |> el [ width fill ]
+                                , text "|"
+                                , text "Tags"
+                                    |> el [ Element.alignRight ]
+                                    |> el [ Font.italic, width fill ]
+                                ]
+                                    |> row [ spaceEvenly, Font.size 17, width fill ]
+                        in
+                        [ topBar
+                        , viewPostTags model d pst
+                        ]
+                            |> column
+                                [ height fill
+                                , width fill
+                                , spacing 10
 
-        cal =
-            viewCalendar model
-                |> el
-                    [ Element.alignTop
-                    , width fill
+                                --, style "animation" "rise 0.5s"
+                                --, style "transform-origin" "bottom"
+                                --, Element.clip
+                                , fShrink
+                                ]
+                    )
 
-                    --, style "transform-origin" "bottom center"
-                    --, style "animation-fill-mode" "forwards"
-                    --, style "animation" "fadeOut 0.5s"
-                    --|> whenAttr flip
-                    , Element.transparent flip
-                    ]
-    in
-    [ cal
-        |> when (not flip)
-    , [ model.current
-            |> whenJust (viewPost model)
-            |> when flip
-      , model.current
-            |> whenJust (viewBarMobile model)
-      ]
-        |> column
-            [ width fill
-            , height fill
+        else
+            model.current
+                |> whenJust
+                    (\d ->
+                        let
+                            fs =
+                                25
 
-            --, Element.clip
-            , fShrink
-            , spacing 10
-            ]
+                            pst =
+                                model.posts
+                                    |> Day.get d
+
+                            xs =
+                                UD.values model.tags
+
+                            create =
+                                viewPostEditor (PostCreateSubmit d) model.postEditorBody False fs
+
+                            make post =
+                                viewPostEditor (PostUpdateSubmit post.id) model.postEditorBody (not model.postBeingEdited) fs
+
+                            txt =
+                                pst
+                                    |> unwrap
+                                        (Just "Creating new entry")
+                                        (always
+                                            (if model.postBeingEdited then
+                                                Just "Updating entry"
+
+                                             else
+                                                Nothing
+                                            )
+                                        )
+
+                            topBar =
+                                [ formatDay d
+                                    |> text
+                                    |> el [ width fill ]
+                                , text "|"
+                                    |> when (txt /= Nothing)
+                                , txt
+                                    |> whenJust
+                                        (text
+                                            >> el [ Element.alignRight ]
+                                            >> el [ Font.italic, width fill ]
+                                        )
+                                ]
+                                    |> row [ spaceEvenly, Font.size 17, width fill ]
+                        in
+                        [ topBar
+                        , pst
+                            |> unwrap create make
+                        ]
+                            |> column
+                                [ height fill
+                                , width fill
+                                , spacing 10
+
+                                --, style "animation" "rise 0.5s"
+                                --, style "transform-origin" "bottom"
+                                --, Element.clip
+                                , fShrink
+                                ]
+                    )
+
+      else
+        viewCalendar model
+            |> el
+                [ Element.alignTop
+                , width fill
+
+                --, style "transform-origin" "bottom center"
+                --, style "animation-fill-mode" "forwards"
+                --, style "animation" "fadeOut 0.5s"
+                ]
+    , model.current
+        |> whenJust (viewBarMobile model)
     ]
         |> column
             [ width fill
             , height fill
+            , spaceEvenly
 
             --, paddingXY 20 10
             --, Element.clip
             , fShrink
-            , cal
-                |> when model.postBeingEdited
-                |> el [ padding 20, width fill, height fill ]
-                |> Element.behindContent
             ]
 
 
@@ -1879,40 +1969,50 @@ viewBarMobile model day =
             model.posts
                 |> Day.get day
     in
-    (if model.postBeingEdited then
-        [ lnk "Cancel" PostUpdateCancel
-        , btn2 model.inProgress.post
-            Icons.save
-            "Submit"
-            (pst
-                |> unwrap (PostCreateSubmit day)
-                    (\p ->
-                        if model.postEditorBody == "" then
-                            PostClear p
+    if model.postView then
+        if model.tagView then
+            [ btn2 False Icons.edit "Write" PostUpdateStart
 
-                        else
-                            PostUpdateSubmit p.id
-                    )
-            )
-        ]
+            --, btn2 False Icons.close "Close" TagViewToggle
+            , btn "X" <| NavigateTo RouteCalendar
+            ]
+                |> row [ width fill, spaceEvenly, alignBottom, width fill ]
 
-     else if model.tagView then
-        [ btn2 False Icons.edit "Write" PostUpdateStart
+        else if model.postBeingEdited then
+            [ lnk "Cancel" PostUpdateCancel
+            , btn2 model.inProgress.post
+                Icons.save
+                "Submit"
+                (pst
+                    |> unwrap (PostCreateSubmit day)
+                        (\p ->
+                            if model.postEditorBody == "" then
+                                PostClear p
 
-        --, btn2 False Icons.close "Close" TagViewToggle
-        , btn "X" TagViewToggle
-        ]
+                            else
+                                PostUpdateSubmit p.id
+                        )
+                )
+            ]
+                |> row [ spacing 20, Element.alignRight ]
 
-     else if model.postView then
-        [ btn2 False Icons.label "Tags" TagViewToggle
-        , btn2 False Icons.edit "Edit" PostUpdateStart
+        else
+            [ btn2 False Icons.label "Tags" TagViewToggle
+            , btn2 False Icons.edit "Edit" PostUpdateStart
 
-        --, btn2 False Icons.close "Close" PostViewToggle
-        , btn "X" PostViewToggle
-        ]
+            --, btn2 False Icons.close "Close" PostViewToggle
+            , btn "X" <| NavigateTo RouteCalendar
+            ]
+                |> row [ width fill, spaceEvenly, alignBottom, width fill ]
 
-     else
-        [ btn2 False Icons.label "Tags" TagViewToggle
+    else
+        [ { onPress = Just GoToToday
+          , label =
+                icon Icons.brightness_5 30
+                    |> el [ centerX, centerY ]
+          }
+            |> rBtn
+        , btn2 False Icons.label "Tags" PostViewTagStart
         , pst
             |> unwrap
                 (btn2 False Icons.edit "Write" PostUpdateStart)
@@ -1936,7 +2036,7 @@ viewBarMobile model day =
                                 ]
                                     |> row
                                         [ spacing 10
-                                        , Background.color grey
+                                        , Background.color sand
                                         , padding 10
 
                                         --, Border.shadow
@@ -1952,8 +2052,7 @@ viewBarMobile model day =
                  --btn2 False Icons.visibility "View" PostViewToggle
                 )
         ]
-    )
-        |> row [ width fill, spaceEvenly, alignBottom, width fill ]
+            |> row [ Element.alignRight, spacing 10 ]
 
 
 viewBar : Model -> Date -> Element Msg
@@ -2020,7 +2119,7 @@ viewReady =
     Input.button
         [ width fill
         , Helpers.View.cappedHeight 700
-        , Background.color grey
+        , Background.color sand
         , style "cursor" Icon.pencil
         ]
         { onPress =
@@ -2175,7 +2274,7 @@ viewPostEditor fn txt disable fontSize =
               )
                 |> style "cursor"
             , height fill
-            , Background.color grey
+            , Background.color sand
             , Font.size fontSize
             , padding 10
             , ebg
@@ -2217,13 +2316,16 @@ viewPostTags model d pst =
                             List.member t.id model.inProgress.tags
                     in
                     --[ ellipsisText 20 t.name
-                    [ paragraph [] [ text t.name ]
+                    [ Input.button [ width fill ]
+                        { onPress = Just <| TagSelect t.id
+                        , label = paragraph [] [ text t.name ]
+                        }
                     , Input.button
                         [ width <| px 40
                         , height <| px 40
                         , Border.width 1
                         , (if prog then
-                            grey
+                            sand
 
                            else
                             white

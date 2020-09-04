@@ -22,8 +22,14 @@ goTo route =
         RouteDay day ->
             absolute [ "calendar", Day.toString day ] []
 
+        RouteDayDetail day ->
+            absolute [ "calendar", Day.toString day, "view" ] []
+
         RouteTags ->
             absolute [ "tags" ] []
+
+        RouteTag ->
+            absolute [ "tags", "detail" ] []
 
         RouteStats ->
             absolute [ "stats" ] []
@@ -44,8 +50,10 @@ routes =
     , map (Just RouteCalendar) (s "calendar")
     , map (Just RouteSettings) (s "settings")
     , map (Just RouteTags) (s "tags")
+    , map (Just RouteTag) (s "tags" </> s "detail")
     , map (Just RouteStats) (s "stats")
     , map (parseDay RouteDay) (s "calendar" </> string)
+    , map (parseDay RouteDayDetail) (s "calendar" </> string </> s "view")
     ]
 
 

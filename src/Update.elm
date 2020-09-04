@@ -65,6 +65,12 @@ clearLoading =
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
+        GoToToday ->
+            ( model
+            , Helpers.today
+                |> Task.perform (RouteDay >> NavigateTo)
+            )
+
         ExportPosts ->
             ( model
             , model.posts
@@ -241,6 +247,9 @@ update msg model =
                                                 RouteTags ->
                                                     Cmd.none
 
+                                                RouteTag ->
+                                                    Cmd.none
+
                                                 RouteSettings ->
                                                     Cmd.none
 
@@ -248,6 +257,9 @@ update msg model =
                                                     Cmd.none
 
                                                 RouteStats ->
+                                                    Cmd.none
+
+                                                RouteDayDetail _ ->
                                                     Cmd.none
 
                                                 RouteDay d ->
@@ -259,8 +271,10 @@ update msg model =
                         )
                     )
 
-        PostCancel ->
-            ( { model | current = Nothing }, Cmd.none )
+        PostViewCancel ->
+            ( { model | postView = False, tagView = False }
+            , Cmd.none
+            )
 
         FocusCb res ->
             res
@@ -342,17 +356,37 @@ update msg model =
             , Cmd.none
             )
 
+        PostViewTagStart ->
+            ( { model
+                | tagView = True
+              }
+            , if isWide model.screen then
+                Cmd.none
+
+              else
+                model.current
+                    |> unwrap
+                        Cmd.none
+                        (RouteDayDetail >> goTo)
+            )
+
         PostViewToggle ->
             ( { model
-                | postView = not model.postView
+                | tagView = True
               }
-            , Cmd.none
+            , if isWide model.screen then
+                Cmd.none
+
+              else
+                model.current
+                    |> unwrap
+                        Cmd.none
+                        (RouteDayDetail >> goTo)
             )
 
         TagViewToggle ->
             ( { model
                 | tagView = not model.tagView
-                , postView = False
               }
             , Cmd.none
             )
@@ -367,7 +401,14 @@ update msg model =
                 , postBeingEdited = True
                 , tagView = False
               }
-            , focusOnEditor
+            , if isWide model.screen then
+                focusOnEditor
+
+              else
+                model.current
+                    |> unwrap
+                        Cmd.none
+                        (RouteDayDetail >> goTo)
             )
 
         PostClear post ->
@@ -1020,6 +1061,9 @@ update msg model =
                                         RouteTags ->
                                             ViewTags
 
+                                        RouteTag ->
+                                            ViewTags
+
                                         RouteStats ->
                                             ViewStats
 
@@ -1030,6 +1074,9 @@ update msg model =
                                             ViewCalendar
 
                                         RouteDay _ ->
+                                            ViewCalendar
+
+                                        RouteDayDetail d ->
                                             ViewCalendar
                                 )
               }
@@ -1300,27 +1347,43 @@ update msg model =
 
         TagSelect id ->
             ( { model
-                | tag = id
+                | tag = Just id
               }
-            , id
-                |> unwrap Cmd.none
-                    (\id_ ->
-                        model.auth
-                            |> unwrap Cmd.none
-                                (trip (Data.fetchPostsByTag id_)
-                                    PostsCb
-                                )
-                    )
+              --id
+              --|> unwrap Cmd.none
+              --(\id_ ->
+              --model.auth
+              --|> unwrap Cmd.none
+              --(trip (Data.fetchPostsByTag id_)
+              --PostsCb
+              --)
+              --)
+            , if isWide model.screen then
+                Cmd.none
+
+              else
+                goTo RouteTag
+            )
+
+        TagDeselect ->
+            ( { model
+                | tag = Nothing
+              }
+            , if isWide model.screen then
+                Cmd.none
+
+              else
+                goTo RouteTags
             )
 
         UrlChange r_ ->
             let
                 model_ =
                     { model
-                        | postBeingEdited = False
-                        , tagView = False
-                        , postView = False
-                        , dropdown = False
+                        | -- postBeingEdited = False
+                          --, tagView = False
+                          --, postView = False
+                          dropdown = False
                     }
             in
             r_
@@ -1371,9 +1434,18 @@ routeDemo model route =
             , Cmd.none
             )
 
+        RouteTag ->
+            ( { model | view = ViewTags }, Cmd.none )
+
         RouteTags ->
             ( { model
                 | view = ViewTags
+                , tag =
+                    if isWide model.screen then
+                        model.tag
+
+                    else
+                        Nothing
                 , tags =
                     model.tags
                         |> UD.values
@@ -1403,6 +1475,8 @@ routeDemo model route =
         RouteCalendar ->
             ( { model
                 | view = ViewCalendar
+                , postView = False
+                , tagView = False
               }
             , Cmd.none
             )
@@ -1412,6 +1486,17 @@ routeDemo model route =
                 | view = ViewStats
               }
             , Cmd.none
+            )
+
+        RouteDayDetail _ ->
+            ( { model
+                | postView = True
+              }
+            , if model.postBeingEdited && not model.tagView then
+                focusOnEditor
+
+              else
+                Cmd.none
             )
 
         RouteDay d ->
@@ -1437,12 +1522,7 @@ routeDemo model route =
                             , month = Date.month d
                             , year = Date.year d
                             , view = ViewCalendar
-                            , postView =
-                                if model.view == ViewTags then
-                                    True
-
-                                else
-                                    model.postView
+                            , postView = False
                           }
                         , if False then
                             focusOnEditor
@@ -1468,6 +1548,9 @@ routeLive model auth route =
               }
             , Cmd.none
             )
+
+        RouteTag ->
+            ( model, Cmd.none )
 
         RouteTags ->
             ( { model
@@ -1499,6 +1582,9 @@ routeLive model auth route =
               }
             , Cmd.none
             )
+
+        RouteDayDetail d ->
+            ( model, Cmd.none )
 
         RouteDay d ->
             routeLiveDay model d auth
