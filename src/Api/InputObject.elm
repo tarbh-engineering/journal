@@ -869,9 +869,9 @@ buildTag_bool_exp fillOptionals =
     let
         optionals =
             fillOptionals
-                { and_ = Absent, not_ = Absent, or_ = Absent, ciphertext = Absent, id = Absent, iv = Absent, post_tags = Absent }
+                { and_ = Absent, not_ = Absent, or_ = Absent, ciphertext = Absent, created_at = Absent, id = Absent, iv = Absent, post_tags = Absent }
     in
-    Tag_bool_exp { and_ = optionals.and_, not_ = optionals.not_, or_ = optionals.or_, ciphertext = optionals.ciphertext, id = optionals.id, iv = optionals.iv, post_tags = optionals.post_tags }
+    Tag_bool_exp { and_ = optionals.and_, not_ = optionals.not_, or_ = optionals.or_, ciphertext = optionals.ciphertext, created_at = optionals.created_at, id = optionals.id, iv = optionals.iv, post_tags = optionals.post_tags }
 
 
 type alias Tag_bool_expOptionalFields =
@@ -879,6 +879,7 @@ type alias Tag_bool_expOptionalFields =
     , not_ : OptionalArgument Tag_bool_exp
     , or_ : OptionalArgument (List (Maybe Tag_bool_exp))
     , ciphertext : OptionalArgument String_comparison_exp
+    , created_at : OptionalArgument Timestamptz_comparison_exp
     , id : OptionalArgument Uuid_comparison_exp
     , iv : OptionalArgument String_comparison_exp
     , post_tags : OptionalArgument Post_tag_bool_exp
@@ -895,6 +896,7 @@ type alias Tag_bool_expRaw =
     , not_ : OptionalArgument Tag_bool_exp
     , or_ : OptionalArgument (List (Maybe Tag_bool_exp))
     , ciphertext : OptionalArgument String_comparison_exp
+    , created_at : OptionalArgument Timestamptz_comparison_exp
     , id : OptionalArgument Uuid_comparison_exp
     , iv : OptionalArgument String_comparison_exp
     , post_tags : OptionalArgument Post_tag_bool_exp
@@ -912,7 +914,7 @@ type Tag_bool_exp
 encodeTag_bool_exp : Tag_bool_exp -> Value
 encodeTag_bool_exp (Tag_bool_exp input) =
     Encode.maybeObject
-        [ ( "_and", (encodeTag_bool_exp |> Encode.maybe |> Encode.list) |> Encode.optional input.and_ ), ( "_not", encodeTag_bool_exp |> Encode.optional input.not_ ), ( "_or", (encodeTag_bool_exp |> Encode.maybe |> Encode.list) |> Encode.optional input.or_ ), ( "ciphertext", encodeString_comparison_exp |> Encode.optional input.ciphertext ), ( "id", encodeUuid_comparison_exp |> Encode.optional input.id ), ( "iv", encodeString_comparison_exp |> Encode.optional input.iv ), ( "post_tags", encodePost_tag_bool_exp |> Encode.optional input.post_tags ) ]
+        [ ( "_and", (encodeTag_bool_exp |> Encode.maybe |> Encode.list) |> Encode.optional input.and_ ), ( "_not", encodeTag_bool_exp |> Encode.optional input.not_ ), ( "_or", (encodeTag_bool_exp |> Encode.maybe |> Encode.list) |> Encode.optional input.or_ ), ( "ciphertext", encodeString_comparison_exp |> Encode.optional input.ciphertext ), ( "created_at", encodeTimestamptz_comparison_exp |> Encode.optional input.created_at ), ( "id", encodeUuid_comparison_exp |> Encode.optional input.id ), ( "iv", encodeString_comparison_exp |> Encode.optional input.iv ), ( "post_tags", encodePost_tag_bool_exp |> Encode.optional input.post_tags ) ]
 
 
 buildTag_insert_input :
@@ -1062,13 +1064,14 @@ buildTag_order_by fillOptionals =
     let
         optionals =
             fillOptionals
-                { ciphertext = Absent, id = Absent, iv = Absent, post_tags_aggregate = Absent }
+                { ciphertext = Absent, created_at = Absent, id = Absent, iv = Absent, post_tags_aggregate = Absent }
     in
-    { ciphertext = optionals.ciphertext, id = optionals.id, iv = optionals.iv, post_tags_aggregate = optionals.post_tags_aggregate }
+    { ciphertext = optionals.ciphertext, created_at = optionals.created_at, id = optionals.id, iv = optionals.iv, post_tags_aggregate = optionals.post_tags_aggregate }
 
 
 type alias Tag_order_byOptionalFields =
     { ciphertext : OptionalArgument Api.Enum.Order_by.Order_by
+    , created_at : OptionalArgument Api.Enum.Order_by.Order_by
     , id : OptionalArgument Api.Enum.Order_by.Order_by
     , iv : OptionalArgument Api.Enum.Order_by.Order_by
     , post_tags_aggregate : OptionalArgument Post_tag_aggregate_order_by
@@ -1079,6 +1082,7 @@ type alias Tag_order_byOptionalFields =
 -}
 type alias Tag_order_by =
     { ciphertext : OptionalArgument Api.Enum.Order_by.Order_by
+    , created_at : OptionalArgument Api.Enum.Order_by.Order_by
     , id : OptionalArgument Api.Enum.Order_by.Order_by
     , iv : OptionalArgument Api.Enum.Order_by.Order_by
     , post_tags_aggregate : OptionalArgument Post_tag_aggregate_order_by
@@ -1090,7 +1094,7 @@ type alias Tag_order_by =
 encodeTag_order_by : Tag_order_by -> Value
 encodeTag_order_by input =
     Encode.maybeObject
-        [ ( "ciphertext", Encode.enum Api.Enum.Order_by.toString |> Encode.optional input.ciphertext ), ( "id", Encode.enum Api.Enum.Order_by.toString |> Encode.optional input.id ), ( "iv", Encode.enum Api.Enum.Order_by.toString |> Encode.optional input.iv ), ( "post_tags_aggregate", encodePost_tag_aggregate_order_by |> Encode.optional input.post_tags_aggregate ) ]
+        [ ( "ciphertext", Encode.enum Api.Enum.Order_by.toString |> Encode.optional input.ciphertext ), ( "created_at", Encode.enum Api.Enum.Order_by.toString |> Encode.optional input.created_at ), ( "id", Encode.enum Api.Enum.Order_by.toString |> Encode.optional input.id ), ( "iv", Encode.enum Api.Enum.Order_by.toString |> Encode.optional input.iv ), ( "post_tags_aggregate", encodePost_tag_aggregate_order_by |> Encode.optional input.post_tags_aggregate ) ]
 
 
 buildTag_pk_columns_input :
@@ -1150,6 +1154,54 @@ encodeTag_set_input : Tag_set_input -> Value
 encodeTag_set_input input =
     Encode.maybeObject
         [ ( "ciphertext", Encode.string |> Encode.optional input.ciphertext ), ( "iv", Encode.string |> Encode.optional input.iv ) ]
+
+
+buildTimestamptz_comparison_exp :
+    (Timestamptz_comparison_expOptionalFields -> Timestamptz_comparison_expOptionalFields)
+    -> Timestamptz_comparison_exp
+buildTimestamptz_comparison_exp fillOptionals =
+    let
+        optionals =
+            fillOptionals
+                { eq_ = Absent, gt_ = Absent, gte_ = Absent, in_ = Absent, is_null_ = Absent, lt_ = Absent, lte_ = Absent, neq_ = Absent, nin_ = Absent }
+    in
+    { eq_ = optionals.eq_, gt_ = optionals.gt_, gte_ = optionals.gte_, in_ = optionals.in_, is_null_ = optionals.is_null_, lt_ = optionals.lt_, lte_ = optionals.lte_, neq_ = optionals.neq_, nin_ = optionals.nin_ }
+
+
+type alias Timestamptz_comparison_expOptionalFields =
+    { eq_ : OptionalArgument CustomScalars.Timestamptz
+    , gt_ : OptionalArgument CustomScalars.Timestamptz
+    , gte_ : OptionalArgument CustomScalars.Timestamptz
+    , in_ : OptionalArgument (List CustomScalars.Timestamptz)
+    , is_null_ : OptionalArgument Bool
+    , lt_ : OptionalArgument CustomScalars.Timestamptz
+    , lte_ : OptionalArgument CustomScalars.Timestamptz
+    , neq_ : OptionalArgument CustomScalars.Timestamptz
+    , nin_ : OptionalArgument (List CustomScalars.Timestamptz)
+    }
+
+
+{-| Type for the Timestamptz\_comparison\_exp input object.
+-}
+type alias Timestamptz_comparison_exp =
+    { eq_ : OptionalArgument CustomScalars.Timestamptz
+    , gt_ : OptionalArgument CustomScalars.Timestamptz
+    , gte_ : OptionalArgument CustomScalars.Timestamptz
+    , in_ : OptionalArgument (List CustomScalars.Timestamptz)
+    , is_null_ : OptionalArgument Bool
+    , lt_ : OptionalArgument CustomScalars.Timestamptz
+    , lte_ : OptionalArgument CustomScalars.Timestamptz
+    , neq_ : OptionalArgument CustomScalars.Timestamptz
+    , nin_ : OptionalArgument (List CustomScalars.Timestamptz)
+    }
+
+
+{-| Encode a Timestamptz\_comparison\_exp into a value that can be used as an argument.
+-}
+encodeTimestamptz_comparison_exp : Timestamptz_comparison_exp -> Value
+encodeTimestamptz_comparison_exp input =
+    Encode.maybeObject
+        [ ( "_eq", (CustomScalars.codecs |> Api.Scalar.unwrapEncoder .codecTimestamptz) |> Encode.optional input.eq_ ), ( "_gt", (CustomScalars.codecs |> Api.Scalar.unwrapEncoder .codecTimestamptz) |> Encode.optional input.gt_ ), ( "_gte", (CustomScalars.codecs |> Api.Scalar.unwrapEncoder .codecTimestamptz) |> Encode.optional input.gte_ ), ( "_in", ((CustomScalars.codecs |> Api.Scalar.unwrapEncoder .codecTimestamptz) |> Encode.list) |> Encode.optional input.in_ ), ( "_is_null", Encode.bool |> Encode.optional input.is_null_ ), ( "_lt", (CustomScalars.codecs |> Api.Scalar.unwrapEncoder .codecTimestamptz) |> Encode.optional input.lt_ ), ( "_lte", (CustomScalars.codecs |> Api.Scalar.unwrapEncoder .codecTimestamptz) |> Encode.optional input.lte_ ), ( "_neq", (CustomScalars.codecs |> Api.Scalar.unwrapEncoder .codecTimestamptz) |> Encode.optional input.neq_ ), ( "_nin", ((CustomScalars.codecs |> Api.Scalar.unwrapEncoder .codecTimestamptz) |> Encode.list) |> Encode.optional input.nin_ ) ]
 
 
 buildUuid_comparison_exp :

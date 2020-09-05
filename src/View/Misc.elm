@@ -1,17 +1,19 @@
-module View.Misc exposing (btn, btn2, btn3, formatDay, icon, isTall, isWide, lnk, monthToString, spinner)
+module View.Misc exposing (btn, btn2, btn3, formatDateTime, formatDay, icon, isTall, isWide, lnk, monthToString, spinner)
 
-import Date exposing (Date)
+import Calendar exposing (Date)
+import DateTime exposing (DateTime)
 import Element exposing (Element, el, fill, height, html, none, padding, px, row, spaceEvenly, spacing, text, width)
 import Element.Background as Background
 import Element.Border as Border
 import Element.Font as Font
 import Element.Input as Input exposing (button)
+import Helpers
 import Helpers.View exposing (style, whenAttr)
 import Material.Icons.Types exposing (Coloring(..), Icon)
 import Ordinal
 import Time exposing (Month(..))
 import Types exposing (Screen)
-import View.Style exposing (black, blue, sand, rotate, varela, white)
+import View.Style exposing (black, blue, rotate, sand, varela, white)
 
 
 isTall : Screen -> Bool
@@ -24,13 +26,29 @@ isWide scr =
     scr.width > 768
 
 
+formatDateTime : DateTime -> String
+formatDateTime d =
+    [ d |> DateTime.getDay |> Ordinal.ordinal
+    , d
+        |> DateTime.getMonth
+        |> monthToString
+    , d |> DateTime.getYear |> String.fromInt
+    , [ d |> DateTime.getHours |> Helpers.padNum
+      , ":"
+      , d |> DateTime.getMinutes |> Helpers.padNum
+      ]
+        |> String.join ""
+    ]
+        |> String.join " "
+
+
 formatDay : Date -> String
 formatDay d =
-    [ d |> Date.day |> Ordinal.ordinal
+    [ d |> Calendar.getDay |> Ordinal.ordinal
     , d
-        |> Date.month
+        |> Calendar.getMonth
         |> monthToString
-    , d |> Date.year |> String.fromInt
+    , d |> Calendar.getYear |> String.fromInt
     ]
         |> String.join " "
 

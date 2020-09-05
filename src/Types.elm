@@ -4,8 +4,9 @@ import Array exposing (Array)
 import Browser exposing (UrlRequest)
 import Browser.Dom
 import Browser.Events exposing (Visibility(..))
+import Calendar exposing (Date)
 import CustomScalars exposing (Jwt, Uuid)
-import Date exposing (Date)
+import DateTime exposing (DateTime)
 import Day exposing (DayDict)
 import Graphql.Http
 import Helpers.UuidDict exposing (UuidDict)
@@ -272,6 +273,7 @@ type alias Tag =
     { name : String
     , id : Uuid
     , count : Int
+    , created : DateTime
     }
 
 
@@ -279,4 +281,5 @@ type alias TagRaw =
     { cipher : Cipher
     , id : Uuid
     , count : Int
+    , created : DateTime
     }

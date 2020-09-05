@@ -9,9 +9,9 @@ import Api.Object.Post_tag_aggregate
 import Api.Object.Post_tag_aggregate_fields
 import Api.Object.Tag
 import Api.Query
+import Calendar exposing (Date)
 import Crypto
 import CustomScalars exposing (Jwt, Uuid)
-import Date exposing (Date)
 import Dict
 import Graphql.Http exposing (HttpError(..), RawError(..))
 import Graphql.Http.GraphqlError
@@ -57,6 +57,7 @@ tagDecrypt key tag =
                 { id = tag.id
                 , name = str
                 , count = tag.count
+                , created = tag.created
                 }
             )
 
@@ -64,42 +65,34 @@ tagDecrypt key tag =
 rangeQuery : Date -> Date -> Api.InputObject.Post_bool_exp
 rangeQuery start end =
     Api.InputObject.buildPost_bool_exp
-        (\r1 ->
-            { r1
+        (\r ->
+            { r
                 | and_ =
-                    [ Api.InputObject.buildPost_bool_exp
-                        (\r2 ->
-                            { r2
-                                | date =
-                                    Api.InputObject.buildDate_comparison_exp
-                                        (\r3 ->
-                                            { r3
-                                                | gte_ =
-                                                    start
-                                                        |> Present
-                                            }
-                                        )
-                                        |> Present
-                            }
-                        )
-                        |> Just
-                    , Api.InputObject.buildPost_bool_exp
-                        (\r2 ->
-                            { r2
-                                | date =
-                                    Api.InputObject.buildDate_comparison_exp
-                                        (\r3 ->
-                                            { r3
-                                                | lte_ =
-                                                    end
-                                                        |> Present
-                                            }
-                                        )
-                                        |> Present
-                            }
-                        )
-                        |> Just
+                    [ \r_ ->
+                        { r_
+                            | gte_ =
+                                start
+                                    |> Present
+                        }
+                    , \r_ ->
+                        { r_
+                            | lte_ =
+                                end
+                                    |> Present
+                        }
                     ]
+                        |> List.map
+                            (\sel ->
+                                Api.InputObject.buildPost_bool_exp
+                                    (\r__ ->
+                                        { r__
+                                            | date =
+                                                Api.InputObject.buildDate_comparison_exp sel
+                                                    |> Present
+                                        }
+                                    )
+                                    |> Just
+                            )
                         |> Present
             }
         )
@@ -163,7 +156,7 @@ ignoreParsedErrorData =
 
 tagSelection : SelectionSet TagRaw Api.Object.Tag
 tagSelection =
-    Graphql.SelectionSet.map3 TagRaw
+    Graphql.SelectionSet.map4 TagRaw
         (Graphql.SelectionSet.map2 Cipher
             Api.Object.Tag.iv
             Api.Object.Tag.ciphertext
@@ -177,6 +170,7 @@ tagSelection =
                 |> Graphql.SelectionSet.map (Maybe.withDefault 0)
             )
         )
+        Api.Object.Tag.created_at
 
 
 postSelection : SelectionSet Types.PostRaw Api.Object.Post

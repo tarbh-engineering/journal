@@ -10,19 +10,21 @@ import Json.Decode as Decode exposing (Decoder)
 {-| select columns of table "tag"
 
   - Ciphertext - column name
+  - Created\_at - column name
   - Id - column name
   - Iv - column name
 
 -}
 type Tag_select_column
     = Ciphertext
+    | Created_at
     | Id
     | Iv
 
 
 list : List Tag_select_column
 list =
-    [ Ciphertext, Id, Iv ]
+    [ Ciphertext, Created_at, Id, Iv ]
 
 
 decoder : Decoder Tag_select_column
@@ -33,6 +35,9 @@ decoder =
                 case string of
                     "ciphertext" ->
                         Decode.succeed Ciphertext
+
+                    "created_at" ->
+                        Decode.succeed Created_at
 
                     "id" ->
                         Decode.succeed Id
@@ -52,6 +57,9 @@ toString enum =
     case enum of
         Ciphertext ->
             "ciphertext"
+
+        Created_at ->
+            "created_at"
 
         Id ->
             "id"
@@ -76,6 +84,9 @@ fromString enumString =
     case enumString of
         "ciphertext" ->
             Just Ciphertext
+
+        "created_at" ->
+            Just Created_at
 
         "id" ->
             Just Id

@@ -25,6 +25,11 @@ ciphertext =
     Object.selectionForField "String" "ciphertext" [] Decode.string
 
 
+created_at : SelectionSet CustomScalars.Timestamptz Api.Object.Tag
+created_at =
+    Object.selectionForField "CustomScalars.Timestamptz" "created_at" [] (CustomScalars.codecs |> Api.Scalar.unwrapCodecs |> .codecTimestamptz |> .decoder)
+
+
 id : SelectionSet CustomScalars.Uuid Api.Object.Tag
 id =
     Object.selectionForField "CustomScalars.Uuid" "id" [] (CustomScalars.codecs |> Api.Scalar.unwrapCodecs |> .codecUuid |> .decoder)

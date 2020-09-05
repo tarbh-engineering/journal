@@ -1,13 +1,12 @@
 module View exposing (view)
 
-import Calendar exposing (Day)
-import CustomScalars exposing (Uuid)
-import Date exposing (Date)
+import Calendar exposing (Date)
+import CalendarDates exposing (Day)
+import DateTime
 import Day
-import Element exposing (Attribute, Color, Element, alignBottom, centerX, centerY, column, el, fill, height, html, none, padding, paddingXY, paragraph, px, rgb255, row, scrollbarY, spaceEvenly, spacing, text, width, wrappedRow)
+import Element exposing (Attribute, Color, Element, alignBottom, centerX, centerY, column, el, fill, height, html, none, padding, paddingXY, paragraph, px, rgb255, row, scrollbarY, spaceEvenly, spacing, text, width)
 import Element.Background as Background
 import Element.Border as Border
-import Element.Events
 import Element.Font as Font
 import Element.Input as Input exposing (button)
 import Helpers
@@ -16,7 +15,6 @@ import Helpers.View exposing (cappedWidth, style, when, whenAttr, whenJust)
 import Html exposing (Html)
 import Html.Attributes
 import Html.Events
-import Icon
 import Json.Decode as Decode exposing (Decoder)
 import Material.Icons as Icons
 import Maybe.Extra exposing (isJust, isNothing, unwrap)
@@ -25,8 +23,8 @@ import Time.Format.I18n.I_en_us exposing (monthName)
 import Types exposing (Def(..), Funnel(..), Model, Msg(..), Post, Route(..), Sort(..), Status(..), Tag, View(..))
 import Validate exposing (isValidEmail)
 import View.Img
-import View.Misc exposing (btn, btn2, btn3, formatDay, icon, isWide, lnk, spinner)
-import View.Style exposing (abel, black, blue, ebg, fadeIn, grey, rotate, sand, varela, white, yellow)
+import View.Misc exposing (btn, btn2, btn3, formatDateTime, formatDay, icon, isWide, lnk, spinner)
+import View.Style exposing (abel, black, blue, ebg, rotate, sand, varela, white, yellow)
 
 
 onCtrlEnter : msg -> Decoder msg
@@ -82,6 +80,7 @@ onKeydown decoders =
         |> Element.htmlAttribute
 
 
+shadow2 : Attribute msg
 shadow2 =
     Border.shadow
         { offset = ( 3, 3 )
@@ -149,7 +148,7 @@ viewCalendar model =
         |> row [ width fill, spaceEvenly, padding 5 ]
     , Element.table
         [ spacing 5 ]
-        { data = Calendar.weeks Time.Mon model.month model.year
+        { data = CalendarDates.weeks Time.Mon model.month model.year
         , columns =
             [ { header = weekday "Mon"
               , width = wd
@@ -234,7 +233,7 @@ cell2 model day =
                 NavigateTo <|
                     RouteDay day.date
         , label =
-            Date.day day.date
+            Calendar.getDay day.date
                 |> String.fromInt
                 |> text
                 |> el [ Element.alignTop ]
@@ -306,9 +305,8 @@ viewCell model n day =
                 ]
             |> Element.inFront
             |> whenAttr curr
-        , [ Date.day day.date
-                |> String.fromInt
-                |> String.padLeft 2 '0'
+        , [ Calendar.getDay day.date
+                |> Helpers.padNum
                 |> text
                 |> el
                     [ Element.alignTop
@@ -625,11 +623,10 @@ viewTagsMobile model =
                                 List.sortBy .name
 
                             Types.SortDate ->
-                                --List.sortWith
-                                --(\a b ->
-                                --Date.compare a.created b.created
-                                --)
-                                identity
+                                List.sortWith
+                                    (\a b ->
+                                        DateTime.compare a.created b.created
+                                    )
 
                             Types.SortUsage ->
                                 List.sortBy .count
@@ -649,15 +646,23 @@ viewTagsMobile model =
                                 ]
                                 { onPress = Just <| TagSelect t.id
                                 , label =
-                                    [ text t.name
-                                    , text <| String.fromInt t.count
-                                    ]
+                                    [ [ text t.name
+                                      , text <| String.fromInt t.count
+                                      ]
                                         |> row
                                             [ spaceEvenly
-                                            , Background.color sand
+                                            , width fill
+                                            ]
+                                    , formatDateTime t.created
+                                        |> text
+                                        |> el [ Font.size 15, Font.italic ]
+                                    ]
+                                        |> column
+                                            [ spacing 10
+                                            , width fill
                                             , padding 15
                                             , Border.rounded 15
-                                            , width fill
+                                            , Background.color sand
                                             , Border.shadow
                                                 { offset = ( 3, 3 )
                                                 , blur = 3
@@ -682,6 +687,8 @@ viewTagsMobile model =
                             , width fill
                             , padding 10
                             , onKeydown [ onEnter TagCreateSubmit ]
+                            , Html.Attributes.id "editor"
+                                |> Element.htmlAttribute
                             ]
                             { onChange = TagCreateNameUpdate
                             , label = Input.labelHidden ""
@@ -974,10 +981,6 @@ viewTags model =
 
 viewHomeMobile : Model -> Element Msg
 viewHomeMobile model =
-    let
-        xs =
-            model.screen.width < 360
-    in
     [ [ [ text "BOLSTER"
             |> el
                 [ Font.size 65
@@ -1050,6 +1053,7 @@ viewHomeMobile model =
             ]
 
 
+viewBuy : Model -> Element Msg
 viewBuy model =
     let
         waiting =
@@ -1200,6 +1204,7 @@ viewBuy model =
             ]
 
 
+viewInfo : Maybe Def -> Element Msg
 viewInfo mDef =
     [ [ text "The"
             |> el
@@ -1605,30 +1610,6 @@ viewFunnel model =
                 |> el [ paddingXY 20 0, width fill ]
 
 
-vb2 model =
-    [ text "Please choose your desired plan"
-        |> el [ Font.italic ]
-    , [ text "$5 per month"
-      , btn "Buy" (Buy False)
-      ]
-        |> row [ spacing 20, centerX ]
-    , [ text "$40 per year"
-      , btn "Buy" (Buy True)
-      ]
-        |> row [ spacing 20, centerX ]
-    , lnk "Back" Change
-        |> el [ Element.alignRight ]
-    ]
-        |> column
-            [ spacing 20
-            , shadow2
-            , padding 20
-            , Background.color sand
-            , Border.rounded 20
-            , centerX
-            ]
-
-
 viewWelcome : Model -> String -> Element Msg
 viewWelcome model nonce =
     [ text "Welcome back"
@@ -1777,11 +1758,9 @@ viewFrameMobile model elem =
                     { onPress = Just DropdownToggle
                     , label = icon Icons.menu 40
                     }
-              , [ viewRoute Icons.calendar_today "Calendar" RouteCalendar ViewCalendar model.view
-                , viewRoute Icons.label "Tags" RouteTags ViewTags model.view
-
-                --, ( "Stats", RouteStats, ViewStats )
-                , viewRoute Icons.settings "Settings" RouteSettings ViewSettings model.view
+              , [ viewRoute RouteCalendar model.view
+                , viewRoute RouteTags model.view
+                , viewRoute RouteSettings model.view
                 ]
                     |> column [ spacing 10, padding 10 ]
                     |> when model.dropdown
@@ -1852,9 +1831,53 @@ viewFrameMobile model elem =
             ]
 
 
-viewRoute icn txt r v curr =
+viewRoute : Route -> View -> Element Msg
+viewRoute r v =
+    let
+        txt =
+            case r of
+                RouteCalendar ->
+                    "Calendar"
+
+                RouteTags ->
+                    "Tags"
+
+                RouteSettings ->
+                    "Settings"
+
+                _ ->
+                    "???"
+
+        icn =
+            case r of
+                RouteCalendar ->
+                    Icons.calendar_today
+
+                RouteTags ->
+                    Icons.label
+
+                RouteSettings ->
+                    Icons.settings
+
+                _ ->
+                    Icons.help
+
+        active =
+            case r of
+                RouteCalendar ->
+                    v == ViewCalendar
+
+                RouteTags ->
+                    v == ViewTags
+
+                RouteSettings ->
+                    v == ViewSettings
+
+                _ ->
+                    False
+    in
     Input.button
-        [ Border.width 1 |> whenAttr (v == curr)
+        [ Border.width 1 |> whenAttr active
         , Element.mouseOver
             [ Font.color blue
             ]
@@ -1863,7 +1886,7 @@ viewRoute icn txt r v curr =
         , padding 10
         ]
         { onPress =
-            (if v == curr then
+            (if active then
                 DropdownToggle
 
              else
@@ -2200,7 +2223,7 @@ viewReady =
         [ width fill
         , Helpers.View.cappedHeight 700
         , Background.color sand
-        , style "cursor" Icon.pencil
+        , style "cursor" View.Img.pencil
         ]
         { onPress =
             RouteToday
@@ -2326,7 +2349,8 @@ viewPost model d =
             ]
 
 
-viewPostEditor fn txt disable fontSize =
+viewPostEditor : Msg -> String -> Bool -> Int -> Element Msg
+viewPostEditor msg txt disable fontSize =
     Html.textarea
         [ Html.Attributes.id "editor"
         , Html.Attributes.value txt
@@ -2493,6 +2517,7 @@ ellipsisText n txt =
             ]
 
 
+hairline : Element msg
 hairline =
     el [ height <| px 1, width fill, Background.color black ] none
 

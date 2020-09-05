@@ -1,8 +1,9 @@
 module Routing exposing (goTo, router)
 
 import Api.Scalar exposing (Id(..), Uuid(..))
-import Date exposing (Date)
+import Calendar exposing (Date)
 import Day
+import Iso8601
 import Ports
 import Types exposing (Route(..))
 import Url exposing (Url)
@@ -59,7 +60,8 @@ routes =
 
 parseDay : (Date -> Route) -> String -> Maybe Route
 parseDay r =
-    Date.fromIsoString
+    Iso8601.toTime
+        >> Result.map Calendar.fromPosix
         >> Result.toMaybe
         >> Maybe.map r
 

@@ -8,6 +8,7 @@
         "direct": {
             "AdrianRibao/elm-derberos-date": "1.2.3",
             "CoderDennis/elm-time-format": "1.0.0",
+            "PanagiotisGeorgiadis/elm-datetime": "1.3.0",
             "danyx23/elm-uuid": "2.1.2",
             "dillonkearns/elm-graphql": "5.0.1",
             "elm/browser": "1.0.2",
@@ -23,12 +24,12 @@
             "elm-community/maybe-extra": "5.2.0",
             "elm-community/result-extra": "2.4.0",
             "icidasset/elm-material-icons": "4.0.0",
-            "justinmimbs/date": "3.2.1",
             "lynn/elm-ordinal": "1.0.4",
             "mdgriffith/elm-ui": "1.1.8",
-            "mgold/elm-nonempty-list": "4.1.0",
-            "ronanyeah/calendar-dates": "1.0.0",
+            "ohanhi/lorem": "1.0.2",
+            "ronanyeah/calendar-dates": "2.0.0",
             "ronanyeah/helpers": "3.0.0",
+            "rtfeldman/elm-iso8601-date-strings": "1.1.3",
             "rtfeldman/elm-validate": "4.0.1"
         },
         "indirect": {
@@ -39,6 +40,7 @@
             "elm/regex": "1.0.0",
             "elm/virtual-dom": "1.0.2",
             "elm-community/list-extra": "8.2.4",
+            "justinmimbs/date": "3.2.1",
             "lukewestby/elm-string-interpolate": "1.0.4"
         }
     },

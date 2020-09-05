@@ -1,19 +1,39 @@
-module Helpers exposing (extract, getStatus, jsonResolver, today)
+module Helpers exposing (jsonResolver, now, padNum, today)
 
-import Date exposing (Date)
-import Day exposing (DayDict)
+import Calendar exposing (Date)
+import DateTime exposing (DateTime)
 import Graphql.Http exposing (HttpError(..), RawError(..))
 import Http exposing (Resolver)
 import Json.Decode as JD exposing (Decoder)
 import Task exposing (Task)
 import Time
-import Types exposing (Status(..))
+
+
+padNum : Int -> String
+padNum =
+    String.fromInt >> String.padLeft 2 '0'
+
+
+now : Task e DateTime
+now =
+    Task.map2
+        (\z t ->
+            (Time.posixToMillis t + DateTime.getTimezoneOffset z t)
+                |> Time.millisToPosix
+                |> DateTime.fromPosix
+        )
+        Time.here
+        Time.now
 
 
 today : Task e Date
 today =
     Task.map2
-        Date.fromPosix
+        (\z t ->
+            (Time.posixToMillis t + DateTime.getTimezoneOffset z t)
+                |> Time.millisToPosix
+                |> Calendar.fromPosix
+        )
         Time.here
         Time.now
 
@@ -48,21 +68,3 @@ jsonResolver decoder =
                         |> JD.decodeString decoder
                         |> Result.mapError (Graphql.Http.BadPayload >> HttpError)
         )
-
-
-getStatus : Date -> DayDict (Status a) -> Status a
-getStatus d =
-    Day.get d >> Maybe.withDefault Missing
-
-
-extract : Status a -> Maybe a
-extract s =
-    case s of
-        Found a ->
-            Just a
-
-        Loading ma ->
-            ma
-
-        Missing ->
-            Nothing

@@ -4,10 +4,11 @@ import Browser
 import Browser.Dom
 import Browser.Events exposing (Visibility(..))
 import Browser.Navigation as Navigation
+import Calendar exposing (Date)
 import Crypto
 import Data
-import Date exposing (Date)
-import Day exposing (DayDict)
+import DateTime
+import Day
 import Derberos.Date.Utils exposing (getNextMonth, getPrevMonth)
 import Dict
 import File.Download
@@ -18,6 +19,7 @@ import Helpers.Parse
 import Helpers.UuidDict as UD
 import Json.Decode as JD
 import Json.Encode as JE
+import Lorem
 import Maybe.Extra exposing (isNothing, unwrap)
 import Ports
 import Process
@@ -42,24 +44,6 @@ focusOnEditor : Cmd Msg
 focusOnEditor =
     Browser.Dom.focus "editor"
         |> Task.attempt FocusCb
-
-
-clearLoading : DayDict (Status a) -> DayDict (Status a)
-clearLoading =
-    Day.map
-        (\_ s ->
-            case s of
-                Loading ms ->
-                    ms
-                        |> unwrap Missing Found
-
-                _ ->
-                    s
-        )
-        >> Day.filter
-            (\s ->
-                s /= Missing
-            )
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -172,37 +156,7 @@ update msg model =
         FakeData ->
             ( { model
                 | tags =
-                    [ "nulla"
-                    , "labore"
-                    , "voluptate"
-                    , "qui"
-                    , "eiusmod"
-                    , "exercitation"
-                    , "veniam"
-                    , "ut"
-                    , "et"
-                    , "consectetur"
-                    , "veniam"
-                    , "aliqua"
-                    , "elit"
-                    , "do"
-                    , "nostrud"
-                    , "aliquip"
-                    , "cupidatat"
-                    , "nostrud"
-                    , "enim"
-                    , "ipsum"
-                    , "aliquip"
-                    , "culpa"
-                    , "ut"
-                    , "eu"
-                    , "aute"
-                    , "eiusmod"
-                    , "elit"
-                    , "irure"
-                    , "fugiat"
-                    , "culpa"
-                    ]
+                    Lorem.words 20
                         |> List.indexedMap
                             (\n str ->
                                 let
@@ -215,6 +169,16 @@ update msg model =
                                 { id = id
                                 , name = str
                                 , count = 0
+                                , created =
+                                    1599320750750
+                                        |> Time.millisToPosix
+                                        |> DateTime.fromPosix
+                                        |> (\d ->
+                                                d
+                                                    |> DateTime.setDay (modBy 28 n)
+                                                    |> Maybe.andThen (DateTime.setHours (modBy 24 n))
+                                                    |> Maybe.withDefault d
+                                           )
                                 }
                             )
                         |> UD.fromList
@@ -249,11 +213,9 @@ update msg model =
                                         (\route_ ->
                                             case route_ of
                                                 RouteToday ->
-                                                    Task.map2
-                                                        Date.fromPosix
-                                                        Time.here
-                                                        Time.now
-                                                        |> Task.perform (RouteDay >> NavigateTo)
+                                                    Helpers.today
+                                                        |> Task.perform
+                                                            (RouteDay >> NavigateTo)
 
                                                 RouteHome ->
                                                     Cmd.none
@@ -743,14 +705,16 @@ update msg model =
                         (randomTask Uuid.uuidGenerator
                             |> always
                         )
-                    |> Task.map
-                        (\uuid ->
+                    |> Task.map2
+                        (\t uuid ->
                             { id = uuid
                             , name = model.tagCreateName
                             , count = 0
+                            , created = t
                             }
                                 |> Ok
                         )
+                        Helpers.now
                     |> Task.perform TagCreateCb
                 )
 
@@ -1090,7 +1054,7 @@ update msg model =
                                         RouteDay _ ->
                                             ViewCalendar
 
-                                        RouteDayDetail d ->
+                                        RouteDayDetail _ ->
                                             ViewCalendar
                                 )
               }
@@ -1293,7 +1257,11 @@ update msg model =
             ( { model
                 | tagsView = t
               }
-            , Cmd.none
+            , if t == Types.TagsCreate then
+                focusOnEditor
+
+              else
+                Cmd.none
             )
 
         DropdownToggle ->
@@ -1546,8 +1514,8 @@ routeDemo model route =
                             , postCreateTags = []
                             , postBeingEdited = shouldFocusOnEditor
                             , current = Just d
-                            , month = Date.month d
-                            , year = Date.year d
+                            , month = Calendar.getMonth d
+                            , year = Calendar.getYear d
                             , view = ViewCalendar
                             , postView = False
                           }
@@ -1610,7 +1578,7 @@ routeLive model auth route =
             , Cmd.none
             )
 
-        RouteDayDetail d ->
+        RouteDayDetail _ ->
             ( model, Cmd.none )
 
         RouteDay d ->
@@ -1639,8 +1607,8 @@ routeLiveDay model d auth =
                     , postBeingEdited = shouldFocusOnEditor
                     , inProgress = model.inProgress |> (\p -> { p | post = False })
                     , current = Just d
-                    , month = Date.month d
-                    , year = Date.year d
+                    , month = Calendar.getMonth d
+                    , year = Calendar.getYear d
                     , postView = False
                   }
                 , Cmd.batch
@@ -1720,12 +1688,13 @@ fetchCurrent auth =
             (\t ->
                 let
                     start =
-                        Date.floor Date.Month t
+                        Calendar.setDay 1 t
+                            |> Maybe.withDefault t
                 in
                 Data.range
                     start
                     (start
-                        |> Date.add Date.Months 1
+                        |> Calendar.incrementMonth
                     )
                     auth
             )
