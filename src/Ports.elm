@@ -1,6 +1,7 @@
-port module Ports exposing (boot, buy, clearAuth, log, onUrlChange, online, paymentFail, pushUrl, saveAuth)
+port module Ports exposing (boot, buy, clearAuth, log, onUrlChange, paymentFail, pushUrl, saveAuth)
 
 import Json.Decode exposing (Value)
+import Types
 
 
 
@@ -29,10 +30,7 @@ port pushUrl : String -> Cmd msg
 port paymentFail : (() -> msg) -> Sub msg
 
 
-port online : (Bool -> msg) -> Sub msg
-
-
 port onUrlChange : (String -> msg) -> Sub msg
 
 
-port boot : ({ key : Maybe String, href : String } -> msg) -> Sub msg
+port boot : (Types.BootFlags -> msg) -> Sub msg

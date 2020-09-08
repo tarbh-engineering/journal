@@ -20,11 +20,11 @@ import Material.Icons as Icons
 import Maybe.Extra exposing (isJust, isNothing, unwrap)
 import Time exposing (Month(..))
 import Time.Format.I18n.I_en_us exposing (monthName)
-import Types exposing (Def(..), Funnel(..), Model, Msg(..), Post, Route(..), Sort(..), Status(..), Tag, View(..))
+import Types exposing (Def(..), Funnel(..), Model, Msg(..), Post, Route, Tag, View(..))
 import Validate exposing (isValidEmail)
 import View.Img
 import View.Misc exposing (btn, btn2, btn3, formatDateTime, formatDay, icon, isWide, lnk, spinner)
-import View.Style exposing (abel, black, blue, ebg, rotate, sand, varela, white, yellow)
+import View.Style exposing (abel, black, blue, ebg, fadeIn, rotate, sand, varela, white, yellow)
 
 
 onCtrlEnter : msg -> Decoder msg
@@ -229,9 +229,9 @@ cell2 model day =
         , Font.bold
         ]
         { onPress =
-            Just <|
-                NavigateTo <|
-                    RouteDay day.date
+            Types.RouteDay day.date
+                |> NavigateTo
+                |> Just
         , label =
             Calendar.getDay day.date
                 |> String.fromInt
@@ -334,7 +334,7 @@ viewCell model n day =
                     PostViewToggle
 
              else
-                RouteDay day.date
+                Types.RouteDay day.date
                     |> NavigateTo
             )
                 |> Just
@@ -405,23 +405,6 @@ view model =
                                         |> Just
                                 , text = model.loginForm.password
                                 }
-                            , text "Don't forget it or you are screwed."
-                                |> el [ Font.italic, Font.size 15 ]
-                            , Input.text
-                                [ Border.rounded 0
-                                , Border.width 1
-                                , Border.color black
-                                , width fill
-                                , padding 10
-                                ]
-                                { onChange = LoginFormPasswordUpdate
-                                , label = Input.labelHidden ""
-                                , placeholder =
-                                    text "Optional password hint"
-                                        |> Input.placeholder []
-                                        |> Just
-                                , text = ""
-                                }
                             , btn "Submit" <| SignupSubmit
                             ]
                                 |> column
@@ -433,7 +416,7 @@ view model =
 
                         else
                             [ text "This link is broken."
-                            , btn "Re-send email" (NavigateTo RouteHome)
+                            , btn "Re-send email" (NavigateTo Types.RouteHome)
                                 |> el [ centerX ]
                             ]
                                 |> column
@@ -456,7 +439,7 @@ view model =
                 |> unwrap
                     ([ [ text "You're a guest, you don't have settings!" ]
                         |> paragraph [ varela, Font.center ]
-                     , btn "Sign up now" (NavigateTo RouteHome)
+                     , btn "Sign up now" (NavigateTo Types.RouteHome)
                         |> el [ centerX ]
                      , hairline
                      , btn "Load example data" FakeData
@@ -465,8 +448,8 @@ view model =
                         |> column [ spacing 20, padding 20, centerX ]
                     )
                     (\_ ->
-                        [ btn2 False Icons.save "Export posts" ExportPosts
-                        , btn2 model.inProgress.logout Icons.power_off "Logout" Logout
+                        [ btn3 False Icons.save "Export posts" ExportPosts
+                        , btn3 model.inProgress.logout Icons.power_off "Logout" Logout
                             |> el [ centerX ]
                         ]
                             |> column [ spacing 20 ]
@@ -474,12 +457,6 @@ view model =
                 |> el
                     [ centerX
                     ]
-                |> frame
-
-        ViewStats ->
-            "Coming soon"
-                |> text
-                |> el [ ebg, Font.size 30, centerX ]
                 |> frame
 
         ViewTags ->
@@ -504,7 +481,7 @@ view model =
                 |> el [ centerX ]
             , text "Please check your email for the next steps."
                 |> el [ centerX ]
-            , btn "Continue" (NavigateTo RouteHome)
+            , btn "Continue" (NavigateTo Types.RouteHome)
                 |> el [ centerX ]
             ]
                 |> column [ centerX, spacing 20, padding 40 ]
@@ -835,7 +812,7 @@ viewTag model t =
             |> el [ centerX ]
         , btn
             "Go to calendar"
-            (NavigateTo RouteCalendar)
+            (NavigateTo Types.RouteCalendar)
             |> el [ centerX ]
         ]
             |> column [ spacing 20, padding 20, centerX ]
@@ -846,7 +823,7 @@ viewTag model t =
                 (\p ->
                     Input.button [ Font.size 25 ]
                         { onPress =
-                            RouteDay p.date
+                            Types.RouteDay p.date
                                 |> NavigateTo
                                 |> Just
                         , label =
@@ -1032,7 +1009,7 @@ viewHomeMobile model =
             , Font.color black
             , Background.color sand
             ]
-            { onPress = Just <| NavigateTo RouteCalendar
+            { onPress = Just <| NavigateTo Types.RouteCalendar
             , label = text "Try demo"
             }
             |> el [ padding 20, Element.alignRight, Element.alignBottom ]
@@ -1079,7 +1056,7 @@ viewBuy model =
             else
                 "pointer"
     in
-    [ [ text "Monthly plan"
+    [ [ text "Monthly"
       , Input.button
             [ Background.gradient
                 { angle = degrees 0
@@ -1124,11 +1101,11 @@ viewBuy model =
                         |> el [ rotate, centerX ]
 
                 else
-                    text "$5"
+                    text "$6"
             }
       ]
         |> row [ spaceEvenly, width fill ]
-    , [ text "Annual plan"
+    , [ text "Annual"
       , Input.button
             [ Background.gradient
                 { angle = degrees 0
@@ -1173,7 +1150,7 @@ viewBuy model =
                         |> el [ rotate, centerX ]
 
                 else
-                    text "$40"
+                    text "$50"
             }
       ]
         |> row [ spaceEvenly, width fill ]
@@ -1215,8 +1192,6 @@ viewInfo mDef =
                     , right = 0
                     }
                 ]
-
-      --|> viewDef model.def Types.Alts
       , [ "secure"
             |> viewDef mDef Types.Secure
         , text ","
@@ -1241,15 +1216,12 @@ viewInfo mDef =
         |> whenJust
             (\d ->
                 (case d of
-                    Alts ->
-                        [ text "Information about alternative products can be found here." ]
-
                     Secure ->
                         [ text "Built for performance and security, using the leading technologies available."
                         ]
 
                     Private ->
-                        [ text "Everything you write is protected by your password before it is saved, ensuring only you can ever read it." ]
+                        [ text "Everything you write is end-to-end encrypted, ensuring only you can ever read it." ]
 
                     Journal ->
                         [ text "For everyday use, on every device." ]
@@ -1405,7 +1377,7 @@ viewHome model =
             , Font.size 25
             , varela
             ]
-            { onPress = Just <| NavigateTo RouteCalendar
+            { onPress = Just <| NavigateTo Types.RouteCalendar
             , label = text "Try demo"
             }
         ]
@@ -1597,7 +1569,7 @@ viewFunnel model =
 
         CheckEmail ->
             [ text "Please check your email for signup instructions."
-            , btn "Re-send email" (NavigateTo RouteHome)
+            , btn "Re-send email" (NavigateTo Types.RouteHome)
                 |> el [ centerX ]
             ]
                 |> column
@@ -1613,40 +1585,47 @@ viewFunnel model =
 viewWelcome : Model -> String -> Element Msg
 viewWelcome model nonce =
     [ text "Welcome back"
-        |> el [ Font.italic ]
+        |> el [ Font.italic, Font.bold, Font.size 28, abel ]
     , [ Input.currentPassword
             [ Border.rounded 0
-            , Border.width 0
+            , Border.widthEach { top = 0, bottom = 1, left = 0, right = 0 }
+
+            --, Border.width 0
+            --, height <| px 50
+            , paddingXY 0 10
+
+            --, style "cursor" "wait"
+            --|> whenAttr model.inProgress
             , width fill
-            , padding 10
-            , centerY
             , onKeydown [ onEnter <| LoginSubmit nonce ]
+
+            --|> whenAttr valid
             ]
             { onChange = LoginFormPasswordUpdate
             , label = Input.labelHidden ""
-            , show = False
             , placeholder =
                 text "Your password"
                     |> el [ centerY ]
                     |> Input.placeholder []
                     |> Just
             , text = model.loginForm.password
+            , show = False
             }
-            |> el
-                [ height fill
-                , width fill
-                , Border.widthEach { top = 1, bottom = 1, left = 1, right = 0 }
-                , Border.color black
-                ]
-      , btn "Submit" (LoginSubmit nonce)
+      , [ lnk "Back" Change
+        , btn3 model.inProgress.login Icons.save "Submit" (LoginSubmit nonce)
+        ]
+            |> row [ Element.alignRight, spacing 10 ]
       ]
-        |> row
+        |> column
             [ width fill
+            , spacing 10
             ]
     ]
         |> column
             [ width fill
-            , spacing 20
+            , spacing 10
+            , paddingXY 20 0
+            , fadeIn
             ]
 
 
@@ -1663,7 +1642,7 @@ viewFrame model elem =
     [ [ Input.button
             [ Font.semiBold
             ]
-            { onPress = Just <| NavigateTo RouteHome
+            { onPress = Just <| NavigateTo Types.RouteHome
             , label =
                 [ text "BOLSTER" |> el [ abel, Font.size 30 ]
                 , text "DEMO"
@@ -1672,11 +1651,9 @@ viewFrame model elem =
                 ]
                     |> row [ spacing 10 ]
             }
-      , [ ( "Calendar", RouteCalendar, ViewCalendar )
-        , ( "Tags", RouteTags, ViewTags )
-
-        --, ( "Stats", RouteStats, ViewStats )
-        , ( "Settings", RouteSettings, ViewSettings )
+      , [ ( "Calendar", Types.RouteCalendar, ViewCalendar )
+        , ( "Tags", Types.RouteTags, ViewTags )
+        , ( "Settings", Types.RouteSettings, ViewSettings )
         ]
             |> List.map
                 (\( n, r, v ) ->
@@ -1721,7 +1698,7 @@ viewFrameMobile model elem =
                 35
     in
     [ [ Input.button []
-            { onPress = Just <| NavigateTo RouteHome
+            { onPress = Just <| NavigateTo Types.RouteHome
             , label =
                 [ View.Img.tmp pic
                     |> Element.html
@@ -1758,9 +1735,9 @@ viewFrameMobile model elem =
                     { onPress = Just DropdownToggle
                     , label = icon Icons.menu 40
                     }
-              , [ viewRoute RouteCalendar model.view
-                , viewRoute RouteTags model.view
-                , viewRoute RouteSettings model.view
+              , [ viewRoute Types.RouteCalendar model.view
+                , viewRoute Types.RouteTags model.view
+                , viewRoute Types.RouteSettings model.view
                 ]
                     |> column [ spacing 10, padding 10 ]
                     |> when model.dropdown
@@ -1787,11 +1764,11 @@ viewFrameMobile model elem =
                 |> Element.inFront
             ]
     , elem
-    , [ ( Icons.settings, RouteSettings, ViewSettings )
-      , ( Icons.event, RouteCalendar, ViewCalendar )
+    , [ ( Icons.settings, Types.RouteSettings, ViewSettings )
+      , ( Icons.event, Types.RouteCalendar, ViewCalendar )
 
       -- note_add
-      , ( Icons.assignment_turned_in, RouteTags, ViewTags )
+      , ( Icons.assignment_turned_in, Types.RouteTags, ViewTags )
       ]
         |> List.map
             (\( n, r, v ) ->
@@ -1836,13 +1813,13 @@ viewRoute r v =
     let
         txt =
             case r of
-                RouteCalendar ->
+                Types.RouteCalendar ->
                     "Calendar"
 
-                RouteTags ->
+                Types.RouteTags ->
                     "Tags"
 
-                RouteSettings ->
+                Types.RouteSettings ->
                     "Settings"
 
                 _ ->
@@ -1850,13 +1827,13 @@ viewRoute r v =
 
         icn =
             case r of
-                RouteCalendar ->
+                Types.RouteCalendar ->
                     Icons.calendar_today
 
-                RouteTags ->
+                Types.RouteTags ->
                     Icons.label
 
-                RouteSettings ->
+                Types.RouteSettings ->
                     Icons.settings
 
                 _ ->
@@ -1864,13 +1841,13 @@ viewRoute r v =
 
         active =
             case r of
-                RouteCalendar ->
+                Types.RouteCalendar ->
                     v == ViewCalendar
 
-                RouteTags ->
+                Types.RouteTags ->
                     v == ViewTags
 
-                RouteSettings ->
+                Types.RouteSettings ->
                     v == ViewSettings
 
                 _ ->
@@ -2077,7 +2054,7 @@ viewBarMobile model day =
             [ btn2 False Icons.edit "Write" PostUpdateStart
 
             --, btn2 False Icons.close "Close" TagViewToggle
-            , btn "X" <| NavigateTo RouteCalendar
+            , btn "X" <| NavigateTo Types.RouteCalendar
             ]
                 |> row [ width fill, spaceEvenly, alignBottom, width fill ]
 
@@ -2104,7 +2081,7 @@ viewBarMobile model day =
             , btn2 False Icons.edit "Edit" PostUpdateStart
 
             --, btn2 False Icons.close "Close" PostViewToggle
-            , btn "X" <| NavigateTo RouteCalendar
+            , btn "X" <| NavigateTo Types.RouteCalendar
             ]
                 |> row [ width fill, spaceEvenly, alignBottom, width fill ]
 
@@ -2226,7 +2203,7 @@ viewReady =
         , style "cursor" View.Img.pencil
         ]
         { onPress =
-            RouteToday
+            Types.RouteToday
                 |> NavigateTo
                 |> Just
         , label = none
@@ -2403,7 +2380,7 @@ viewPostTags model d pst =
             |> paragraph []
         , btn
             "Go to tags"
-            (NavigateTo RouteTags)
+            (NavigateTo Types.RouteTags)
             |> el [ centerX ]
         ]
             |> column [ spacing 20, padding 20, centerX ]

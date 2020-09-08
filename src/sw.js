@@ -6,30 +6,34 @@ const make400 = (txt) =>
   new Response(JSON.stringify({ errors: [txt] }), { status: 400 });
 
 const handlers = async (request) => {
-  const action = request.url.substring(self.location.origin.length + 1);
+  const action = new URL(request.url).host;
 
-  switch (action) {
-    case "nonce": {
-      return jsonResponse(await crypto.nonce());
-    }
-    case "keys": {
-      const body = await request.json();
+  try {
+    switch (action) {
+      case "nonce": {
+        return jsonResponse(await crypto.nonce());
+      }
+      case "keys": {
+        const body = await request.json();
 
-      return jsonResponse(await crypto.keys(body));
-    }
-    case "decrypt": {
-      const body = await request.json();
+        return jsonResponse(await crypto.keys(body));
+      }
+      case "decrypt": {
+        const body = await request.json();
 
-      return jsonResponse(await crypto.decrypt(body));
-    }
-    case "encrypt": {
-      const body = await request.json();
+        return jsonResponse(await crypto.decrypt(body));
+      }
+      case "encrypt": {
+        const body = await request.json();
 
-      return jsonResponse(await crypto.encrypt(body));
+        return jsonResponse(await crypto.encrypt(body));
+      }
+      default: {
+        return make400("unmatched url");
+      }
     }
-    default: {
-      return make400("unmatched url");
-    }
+  } catch (_) {
+    return make400("there has been a problem");
   }
 };
 

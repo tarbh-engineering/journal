@@ -1,9 +1,9 @@
-module Types exposing (App(..), Auth, Cipher, Def(..), Flags, Funnel(..), GqlResult, GqlTask, Keys, Model, Msg(..), Post, PostRaw, Route(..), Screen, Sort(..), Status(..), Tag, TagRaw, TagsSort(..), TagsView(..), View(..))
+module Types exposing (App(..), Auth, BootFlags, Cipher, Def(..), Flags, Funnel(..), GqlResult, GqlTask, Keys, Model, Msg(..), Post, PostRaw, Route(..), Screen, Tag, TagRaw, TagsSort(..), TagsView(..), View(..))
 
 import Array exposing (Array)
 import Browser exposing (UrlRequest)
 import Browser.Dom
-import Browser.Events exposing (Visibility(..))
+import Browser.Events exposing (Visibility)
 import Calendar exposing (Date)
 import CustomScalars exposing (Jwt, Uuid)
 import DateTime exposing (DateTime)
@@ -12,7 +12,7 @@ import Graphql.Http
 import Helpers.UuidDict exposing (UuidDict)
 import Json.Decode exposing (Value)
 import Task exposing (Task)
-import Time exposing (Month(..))
+import Time exposing (Month)
 
 
 type alias Model =
@@ -41,8 +41,6 @@ type alias Model =
     , tagUpdate : String
     , flash : Maybe ( Array ( Bool, String ), List ( Int, String ) )
     , loginForm : LoginForm
-    , tagSort : Sort
-    , online : Bool
     , searchString : String
     , selectedResult : Maybe Uuid
     , screen : Screen
@@ -57,7 +55,7 @@ type alias Model =
     , mg : ( String, String )
     , thanks : Bool
     , status : App
-    , swEnabled : Bool
+    , swActive : Bool
     , faq : Bool
     , dropdown : Bool
     , tall : Bool
@@ -105,16 +103,14 @@ type Msg
     | TagCreateNameUpdate String
     | TagCreateSubmit
     | TagCreateCb (GqlResult Tag)
-    | TagSortUpdate Sort
     | PostTagToggle Post Tag
     | PostCreateWithTag Date Tag
     | PostCreateWithTagCb Uuid (GqlResult Post)
     | FocusCb (Result Browser.Dom.Error ())
-    | UrlChange (Maybe Route)
+    | UrlChange (Result String Route)
     | UrlRequest UrlRequest
     | NavigateTo Route
     | GoToToday
-    | SetOnline Bool
     | SetSelectedResult Uuid
     | PostClear Post
     | PostViewToggle
@@ -133,7 +129,7 @@ type Msg
     | Bad (Auth -> Cmd Msg)
     | ExportPosts
     | EmailCb
-    | Boot { key : Maybe String, href : String }
+    | Boot BootFlags
     | DropdownToggle
     | FakeData
     | TagsViewSet TagsView
@@ -143,10 +139,15 @@ type Msg
 type alias Flags =
     { month : Int
     , year : Int
-    , online : Bool
     , screen : Screen
     , isMobile : Bool
-    , swEnabled : Bool
+    }
+
+
+type alias BootFlags =
+    { key : Maybe String
+    , href : String
+    , swActive : Bool
     }
 
 
@@ -159,7 +160,6 @@ type Route
     | RouteTags
     | RouteTag
     | RouteSettings
-    | RouteStats
 
 
 type View
@@ -169,7 +169,6 @@ type View
     | ViewSuccess
     | ViewTags
     | ViewMagic
-    | ViewStats
 
 
 type alias GqlResult a =
@@ -218,14 +217,9 @@ type Funnel
 
 
 type Def
-    = Alts
-    | Secure
+    = Secure
     | Private
     | Journal
-
-
-type Sort
-    = Alpha Bool
 
 
 type alias LoginForm =
@@ -239,12 +233,6 @@ type alias Keys =
     { encryptionKey : Value
     , serverKey : String
     }
-
-
-type Status a
-    = Missing
-    | Loading (Maybe a)
-    | Found a
 
 
 type alias Post =

@@ -1,11 +1,10 @@
-module Routing exposing (goTo, router)
+module Routing exposing (goTo, parseSignup, router)
 
-import Api.Scalar exposing (Id(..), Uuid(..))
 import Calendar exposing (Date)
 import Day
 import Iso8601
 import Ports
-import Types exposing (Route(..))
+import Types exposing (Route)
 import Url exposing (Url)
 import Url.Builder exposing (absolute)
 import Url.Parser exposing ((</>), Parser, map, oneOf, parse, s, string, top)
@@ -14,31 +13,28 @@ import Url.Parser exposing ((</>), Parser, map, oneOf, parse, s, string, top)
 goTo : Route -> Cmd msg
 goTo route =
     (case route of
-        RouteCalendar ->
+        Types.RouteCalendar ->
             absolute [ "calendar" ] []
 
-        RouteToday ->
+        Types.RouteToday ->
             absolute [ "today" ] []
 
-        RouteDay day ->
+        Types.RouteDay day ->
             absolute [ "calendar", Day.toString day ] []
 
-        RouteDayDetail day ->
+        Types.RouteDayDetail day ->
             absolute [ "calendar", Day.toString day, "view" ] []
 
-        RouteTags ->
+        Types.RouteTags ->
             absolute [ "tags" ] []
 
-        RouteTag ->
+        Types.RouteTag ->
             absolute [ "tags", "detail" ] []
 
-        RouteStats ->
-            absolute [ "stats" ] []
-
-        RouteSettings ->
+        Types.RouteSettings ->
             absolute [ "settings" ] []
 
-        RouteHome ->
+        Types.RouteHome ->
             absolute [] []
     )
         |> Ports.pushUrl
@@ -46,16 +42,25 @@ goTo route =
 
 routes : List (Parser (Maybe Route -> a) a)
 routes =
-    [ map (Just RouteHome) top
-    , map (Just RouteToday) (s "today")
-    , map (Just RouteCalendar) (s "calendar")
-    , map (Just RouteSettings) (s "settings")
-    , map (Just RouteTags) (s "tags")
-    , map (Just RouteTag) (s "tags" </> s "detail")
-    , map (Just RouteStats) (s "stats")
-    , map (parseDay RouteDay) (s "calendar" </> string)
-    , map (parseDay RouteDayDetail) (s "calendar" </> string </> s "view")
+    [ map (Just Types.RouteHome) top
+    , map (Just Types.RouteToday) (s "today")
+    , map (Just Types.RouteCalendar) (s "calendar")
+    , map (Just Types.RouteSettings) (s "settings")
+    , map (Just Types.RouteTags) (s "tags")
+    , map (Just Types.RouteTag) (s "tags" </> s "detail")
+    , map (parseDay Types.RouteDay) (s "calendar" </> string)
+    , map (parseDay Types.RouteDayDetail) (s "calendar" </> string </> s "view")
     ]
+
+
+parseSignup : Url -> Maybe ( String, String )
+parseSignup =
+    Url.Parser.parse
+        (s "signup"
+            </> Url.Parser.string
+            </> Url.Parser.string
+            |> Url.Parser.map Tuple.pair
+        )
 
 
 parseDay : (Date -> Route) -> String -> Maybe Route
@@ -66,7 +71,10 @@ parseDay r =
         >> Maybe.map r
 
 
-router : Url -> Maybe Route
-router =
-    parse (oneOf routes)
-        >> Maybe.andThen identity
+router : String -> Result String Route
+router href =
+    href
+        |> Url.fromString
+        |> Maybe.andThen (parse (oneOf routes))
+        |> Maybe.andThen identity
+        |> Result.fromMaybe ("Bad route:\n" ++ href)

@@ -2,7 +2,7 @@ module Helpers exposing (jsonResolver, now, padNum, today)
 
 import Calendar exposing (Date)
 import DateTime exposing (DateTime)
-import Graphql.Http exposing (HttpError(..), RawError(..))
+import Graphql.Http
 import Http exposing (Resolver)
 import Json.Decode as JD exposing (Decoder)
 import Task exposing (Task)
@@ -45,26 +45,29 @@ jsonResolver decoder =
             case response of
                 Http.BadUrl_ u ->
                     Graphql.Http.BadUrl u
-                        |> HttpError
+                        |> Graphql.Http.HttpError
                         |> Err
 
                 Http.Timeout_ ->
                     Graphql.Http.Timeout
-                        |> HttpError
+                        |> Graphql.Http.HttpError
                         |> Err
 
                 Http.NetworkError_ ->
                     Graphql.Http.NetworkError
-                        |> HttpError
+                        |> Graphql.Http.HttpError
                         |> Err
 
                 Http.BadStatus_ metadata x ->
                     Graphql.Http.BadStatus metadata x
-                        |> HttpError
+                        |> Graphql.Http.HttpError
                         |> Err
 
                 Http.GoodStatus_ _ body ->
                     body
                         |> JD.decodeString decoder
-                        |> Result.mapError (Graphql.Http.BadPayload >> HttpError)
+                        |> Result.mapError
+                            (Graphql.Http.BadPayload
+                                >> Graphql.Http.HttpError
+                            )
         )

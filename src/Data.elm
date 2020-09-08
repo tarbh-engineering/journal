@@ -13,22 +13,32 @@ import Calendar exposing (Date)
 import Crypto
 import CustomScalars exposing (Jwt, Uuid)
 import Dict
-import Graphql.Http exposing (HttpError(..), RawError(..))
+import Graphql.Http
 import Graphql.Http.GraphqlError
 import Graphql.Operation
-import Graphql.OptionalArgument exposing (OptionalArgument(..))
+import Graphql.OptionalArgument as Opt exposing (OptionalArgument)
 import Graphql.SelectionSet exposing (SelectionSet)
 import Json.Decode exposing (Value)
 import Json.Encode as JE
 import JwtScalar exposing (useToken)
 import Maybe.Extra exposing (unwrap)
 import Task
-import Types exposing (Auth, Cipher, GqlTask, Msg(..), Post, PostRaw, Route(..), Sort(..), Status(..), Tag, TagRaw, View(..))
+import Types exposing (Auth, Cipher, GqlTask, Post, PostRaw, Tag, TagRaw)
 
 
 graphqlEndpoint : String
 graphqlEndpoint =
     "/graphql"
+
+
+isNetworkError : Graphql.Http.Error () -> Bool
+isNetworkError err =
+    case err of
+        Graphql.Http.HttpError httpErr ->
+            httpErr == Graphql.Http.NetworkError
+
+        Graphql.Http.GraphqlError _ _ ->
+            False
 
 
 postDecrypt : Value -> PostRaw -> GqlTask Post
@@ -72,13 +82,13 @@ rangeQuery start end =
                         { r_
                             | gte_ =
                                 start
-                                    |> Present
+                                    |> Opt.Present
                         }
                     , \r_ ->
                         { r_
                             | lte_ =
                                 end
-                                    |> Present
+                                    |> Opt.Present
                         }
                     ]
                         |> List.map
@@ -88,12 +98,12 @@ rangeQuery start end =
                                         { r__
                                             | date =
                                                 Api.InputObject.buildDate_comparison_exp sel
-                                                    |> Present
+                                                    |> Opt.Present
                                         }
                                     )
                                     |> Just
                             )
-                        |> Present
+                        |> Opt.Present
             }
         )
 
@@ -113,13 +123,13 @@ fetchDay day { key, token } =
                                             { r3
                                                 | eq_ =
                                                     day
-                                                        |> Present
+                                                        |> Opt.Present
                                             }
                                         )
-                                        |> Present
+                                        |> Opt.Present
                             }
                         )
-                        |> Present
+                        |> Opt.Present
             }
         )
         postSelection
@@ -138,7 +148,7 @@ range start end { key, token } =
             { r
                 | where_ =
                     rangeQuery start end
-                        |> Present
+                        |> Opt.Present
             }
         )
         postSelection
@@ -264,10 +274,10 @@ nonce email =
 
 equalToId : Uuid -> OptionalArgument Api.InputObject.Uuid_comparison_exp
 equalToId id =
-    Present <|
+    Opt.Present <|
         Api.InputObject.buildUuid_comparison_exp
             (\r ->
-                { r | eq_ = Present id }
+                { r | eq_ = Opt.Present id }
             )
 
 
@@ -283,7 +293,7 @@ fetchPostsByTag id { key, token } =
                                 | tag_id = equalToId id
                             }
                         )
-                        |> Present
+                        |> Opt.Present
             }
         )
         (Api.Object.Post_tag.post postSelection)
@@ -307,11 +317,11 @@ tagUpdate { id, name } { token, key } =
                                 Api.InputObject.buildTag_set_input
                                     (\a ->
                                         { a
-                                            | ciphertext = Present res.ciphertext
-                                            , iv = Present res.iv
+                                            | ciphertext = Opt.Present res.ciphertext
+                                            , iv = Opt.Present res.iv
                                         }
                                     )
-                                    |> Present
+                                    |> Opt.Present
                         }
                     )
                     { pk_columns = { id = id } }
@@ -373,8 +383,8 @@ tagAttach post tagId { token, key } =
             Api.InputObject.buildPost_tag_insert_input
                 (\r ->
                     { r
-                        | post_id = Present post.id
-                        , tag_id = Present tagId
+                        | post_id = Opt.Present post.id
+                        , tag_id = Opt.Present tagId
                     }
                 )
         }
@@ -407,12 +417,12 @@ postUpdateBody id body { key, token } =
                                     (\a ->
                                         { a
                                             | ciphertext =
-                                                Present res.ciphertext
+                                                Opt.Present res.ciphertext
                                             , iv =
-                                                Present res.iv
+                                                Opt.Present res.iv
                                         }
                                     )
-                                    |> Present
+                                    |> Opt.Present
                         }
                     )
                     { pk_columns = { id = id } }
@@ -440,9 +450,9 @@ tagCreate name { key, token } =
                             (\r ->
                                 { r
                                     | ciphertext =
-                                        Present res.ciphertext
+                                        Opt.Present res.ciphertext
                                     , iv =
-                                        Present res.iv
+                                        Opt.Present res.iv
                                 }
                             )
                     }
@@ -470,15 +480,15 @@ postCreate body tags_ d { key, token } =
                             (\r ->
                                 { r
                                     | ciphertext =
-                                        Present res.ciphertext
+                                        Opt.Present res.ciphertext
                                     , iv =
-                                        Present res.iv
+                                        Opt.Present res.iv
                                     , date =
                                         d
-                                            |> Present
+                                            |> Opt.Present
                                     , post_tags =
                                         if List.isEmpty tags_ then
-                                            Absent
+                                            Opt.Absent
 
                                         else
                                             Api.InputObject.buildPost_tag_arr_rel_insert_input
@@ -489,12 +499,12 @@ postCreate body tags_ d { key, token } =
                                                                 Api.InputObject.buildPost_tag_insert_input
                                                                     (\r__ ->
                                                                         { r__
-                                                                            | tag_id = Present id
+                                                                            | tag_id = Opt.Present id
                                                                         }
                                                                     )
                                                             )
                                                 }
-                                                |> Present
+                                                |> Opt.Present
                                 }
                             )
                     }
@@ -518,21 +528,21 @@ postCreateWithTag tag d { key, token } =
             Api.InputObject.buildPost_insert_input
                 (\r ->
                     { r
-                        | ciphertext = Null
-                        , iv = Null
-                        , date = Present d
+                        | ciphertext = Opt.Null
+                        , iv = Opt.Null
+                        , date = Opt.Present d
                         , post_tags =
                             Api.InputObject.buildPost_tag_arr_rel_insert_input
                                 { data =
                                     [ Api.InputObject.buildPost_tag_insert_input
                                         (\r__ ->
                                             { r__
-                                                | tag_id = Present tag
+                                                | tag_id = Opt.Present tag
                                             }
                                         )
                                     ]
                                 }
-                                |> Present
+                                |> Opt.Present
                     }
                 )
         }

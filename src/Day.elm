@@ -4,7 +4,6 @@ import Calendar exposing (Date)
 import Derberos.Date.Utils exposing (monthToNumber1)
 import Dict exposing (Dict)
 import Helpers exposing (padNum)
-import Time exposing (Month(..), Weekday(..))
 
 
 type DayDict a

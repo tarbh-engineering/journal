@@ -1,4 +1,4 @@
-module View.Misc exposing (btn, btn2, btn3, formatDateTime, formatDay, icon, isTall, isWide, lnk, monthToString, spinner)
+module View.Misc exposing (btn, btn2, btn3, formatDateTime, formatDay, icon, isTall, isWide, lnk, spinner)
 
 import Calendar exposing (Date)
 import DateTime exposing (DateTime)
@@ -9,9 +9,9 @@ import Element.Font as Font
 import Element.Input as Input exposing (button)
 import Helpers
 import Helpers.View exposing (style, whenAttr)
-import Material.Icons.Types exposing (Coloring(..), Icon)
+import Material.Icons.Types exposing (Icon)
 import Ordinal
-import Time exposing (Month(..))
+import Time.Format.I18n.I_en_us exposing (monthName)
 import Types exposing (Screen)
 import View.Style exposing (black, blue, rotate, sand, varela, white)
 
@@ -31,7 +31,7 @@ formatDateTime d =
     [ d |> DateTime.getDay |> Ordinal.ordinal
     , d
         |> DateTime.getMonth
-        |> monthToString
+        |> monthName
     , d |> DateTime.getYear |> String.fromInt
     , [ d |> DateTime.getHours |> Helpers.padNum
       , ":"
@@ -47,55 +47,15 @@ formatDay d =
     [ d |> Calendar.getDay |> Ordinal.ordinal
     , d
         |> Calendar.getMonth
-        |> monthToString
+        |> monthName
     , d |> Calendar.getYear |> String.fromInt
     ]
         |> String.join " "
 
 
-monthToString : Month -> String
-monthToString month =
-    case month of
-        Jan ->
-            "January"
-
-        Feb ->
-            "February"
-
-        Mar ->
-            "March"
-
-        Apr ->
-            "April"
-
-        May ->
-            "May"
-
-        Jun ->
-            "June"
-
-        Jul ->
-            "July"
-
-        Aug ->
-            "August"
-
-        Sep ->
-            "September"
-
-        Oct ->
-            "October"
-
-        Nov ->
-            "November"
-
-        Dec ->
-            "December"
-
-
 icon : Icon msg -> Int -> Element msg
 icon ic n =
-    ic n Inherit
+    ic n Material.Icons.Types.Inherit
         |> Element.html
         |> el []
 
@@ -150,7 +110,7 @@ btn2 inProg ic str msg =
                 spinner
 
               else
-                ic 26 Inherit
+                ic 26 Material.Icons.Types.Inherit
                     |> Element.html
                     |> el []
             , text str

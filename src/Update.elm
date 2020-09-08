@@ -2,7 +2,6 @@ module Update exposing (update)
 
 import Browser
 import Browser.Dom
-import Browser.Events exposing (Visibility(..))
 import Browser.Navigation as Navigation
 import Calendar exposing (Date)
 import Crypto
@@ -12,8 +11,7 @@ import Day
 import Derberos.Date.Utils exposing (getNextMonth, getPrevMonth)
 import Dict
 import File.Download
-import Graphql.Http exposing (HttpError(..), RawError(..))
-import Graphql.OptionalArgument exposing (OptionalArgument(..))
+import Graphql.Http
 import Helpers
 import Helpers.Parse
 import Helpers.UuidDict as UD
@@ -27,8 +25,8 @@ import Random
 import Result.Extra exposing (unpack)
 import Routing exposing (goTo)
 import Task exposing (Task)
-import Time exposing (Month(..))
-import Types exposing (Auth, GqlResult, GqlTask, Model, Msg(..), Post, Route(..), Sort(..), Status(..), View(..))
+import Time
+import Types exposing (Auth, GqlResult, GqlTask, Model, Msg(..), Post, Route(..))
 import Url
 import Uuid
 import Validate exposing (isValidEmail)
@@ -142,14 +140,6 @@ update msg model =
             , Cmd.none
             )
 
-        SetOnline online ->
-            ( { model | online = online }
-            , Cmd.none
-            )
-
-        TagSortUpdate sort ->
-            ( { model | tagSort = sort }, Cmd.none )
-
         Resize screen ->
             ( { model | screen = screen }, Cmd.none )
 
@@ -230,9 +220,6 @@ update msg model =
                                                     Cmd.none
 
                                                 RouteCalendar ->
-                                                    Cmd.none
-
-                                                RouteStats ->
                                                     Cmd.none
 
                                                 RouteDayDetail _ ->
@@ -431,9 +418,7 @@ update msg model =
             res
                 |> unpack
                     (\err ->
-                        ( { model
-                            | online = not <| isNetworkError err
-                          }
+                        ( model
                         , logGqlError "PostsCb" err
                         )
                     )
@@ -455,7 +440,7 @@ update msg model =
             res
                 |> unpack
                     (\err ->
-                        ( { model | online = not <| isNetworkError err }
+                        ( model
                         , logGqlError "TagsCb" err
                         )
                     )
@@ -474,8 +459,7 @@ update msg model =
                 |> unpack
                     (\err ->
                         ( { model
-                            | online = not <| isNetworkError err
-                            , inProgress =
+                            | inProgress =
                                 model.inProgress
                                     |> (\p -> { p | postDelete = False })
                             , postBeingEdited = False
@@ -502,7 +486,7 @@ update msg model =
             res
                 |> unpack
                     (\err ->
-                        ( { model | online = not <| isNetworkError err }
+                        ( model
                         , logGqlError "TagDeleteCb" err
                         )
                     )
@@ -522,8 +506,7 @@ update msg model =
                 |> unpack
                     (\err ->
                         ( { model
-                            | online = not <| isNetworkError err
-                            , inProgress = model.inProgress |> (\p -> { p | post = False })
+                            | inProgress = model.inProgress |> (\p -> { p | post = False })
                             , postBeingEdited = False
                           }
                         , logGqlError "PostMutateCb" err
@@ -538,7 +521,6 @@ update msg model =
                                         post
                             , postBeingEdited = False
                             , inProgress = model.inProgress |> (\p -> { p | post = False })
-                            , online = True
                             , postView = model.isMobile
                           }
                         , Cmd.none
@@ -561,8 +543,7 @@ update msg model =
                 |> unpack
                     (\err ->
                         ( { model
-                            | online = not <| isNetworkError err
-                            , inProgress = inProgress
+                            | inProgress = inProgress
                           }
                         , logGqlError "PostTagCb" err
                         )
@@ -589,8 +570,7 @@ update msg model =
                 |> unpack
                     (\err ->
                         ( { model
-                            | online = not <| isNetworkError err
-                            , inProgress = inProgress
+                            | inProgress = inProgress
                             , postBeingEdited = False
                           }
                         , logGqlError "PostCb" err
@@ -634,8 +614,7 @@ update msg model =
                 |> unpack
                     (\err ->
                         ( { model
-                            | online = not <| isNetworkError err
-                            , inProgress =
+                            | inProgress =
                                 model.inProgress
                                     |> (\p -> { p | tag = False })
                           }
@@ -740,7 +719,9 @@ update msg model =
                     (\err ->
                         ( { model
                             | errors = parseErrors err
-                            , online = not <| isNetworkError err
+                            , inProgress =
+                                model.inProgress
+                                    |> (\p -> { p | login = False })
                           }
                         , logGqlError "LoginCb" err
                         )
@@ -748,7 +729,10 @@ update msg model =
                     (\auth ->
                         ( { model
                             | auth = Just auth
-                            , view = ViewCalendar
+                            , view = Types.ViewCalendar
+                            , inProgress =
+                                model.inProgress
+                                    |> (\p -> { p | login = False })
                           }
                         , Cmd.batch
                             [ fetchCurrent auth
@@ -821,8 +805,7 @@ update msg model =
                 |> unpack
                     (\err ->
                         ( { model
-                            | online = not <| isNetworkError err
-                            , inProgress = inProgress
+                            | inProgress = inProgress
                           }
                         , logGqlError "PostCreateTagCb" err
                         )
@@ -857,11 +840,11 @@ update msg model =
                         model.inProgress
                             |> (\p -> { p | login = True })
                   }
-                  --, Data.nonce email
-                  --|> Task.attempt NonceCb
-                , wait
-                    |> Task.map (always <| Ok "")
-                    |> Task.perform NonceCb
+                , Data.nonce email
+                    |> Task.attempt NonceCb
+                  --, wait
+                  --|> Task.map (always <| Ok "")
+                  --|> Task.perform NonceCb
                 )
 
             else
@@ -919,16 +902,14 @@ update msg model =
                         else
                             ( { model
                                 | errors = parseErrors err
-                                , online = not <| isNetworkError err
                                 , inProgress = model.inProgress |> (\p -> { p | login = False })
                               }
                             , logGqlError "NonceCb" err
                             )
                     )
-                    (\_ ->
+                    (\nonce ->
                         ( { model
-                            --| funnel = Types.WelcomeBack nonce
-                            | funnel = Types.JoinUs
+                            | funnel = Types.WelcomeBack nonce
                             , inProgress = model.inProgress |> (\p -> { p | login = False })
                           }
                         , Cmd.none
@@ -940,13 +921,18 @@ update msg model =
                 email =
                     String.trim model.loginForm.email
             in
-            if String.isEmpty email then
+            if String.isEmpty email || String.isEmpty model.loginForm.password then
                 ( { model | errors = [ "empty field(s)" ] }
                 , Cmd.none
                 )
 
             else
-                ( { model | errors = [] }
+                ( { model
+                    | errors = []
+                    , inProgress =
+                        model.inProgress
+                            |> (\p -> { p | login = True })
+                  }
                 , Crypto.keys model.loginForm.password nonce
                     |> Task.andThen
                         (\keys ->
@@ -986,26 +972,70 @@ update msg model =
                                 }
                            )
               }
-            , Ports.buy
-                { email = model.loginForm.email
-                , annual = annual
-                }
+            , wait
+                |> Task.perform (always PaymentFail)
+              --Ports.buy
+              --{ email = model.loginForm.email
+              --, annual = annual
+              --}
             )
 
-        Boot { key, href } ->
+        Boot { key, href, swActive } ->
             let
                 url =
                     Url.fromString href
 
                 route =
-                    url
-                        |> Maybe.andThen Routing.router
+                    href
+                        |> Routing.router
+                        |> Result.toMaybe
 
                 anon =
                     key == Nothing
+
+                --url_
+                --|> Url.Parser.parse
+                --(s "signup"
+                --</> Url.Parser.string
+                --</> Url.Parser.string
+                --|> Url.Parser.map Tuple.pair
+                --)
+                --|> Maybe.map
+                --(\( iv, ciph ) ->
+                --( { model
+                --| view = ViewMagic
+                --, mg = ( iv, ciph )
+                --}
+                --, Data.check iv ciph
+                --|> Task.attempt CheckCb
+                --)
+                --)
+                --|> orElse
+                --(url_
+                --|> Url.Parser.parse (s "payment-success")
+                --|> Maybe.map
+                --(\_ ->
+                --( { model | view = ViewSuccess }
+                --, Cmd.none
+                --)
+                --)
+                --)
+                signup =
+                    url
+                        |> Maybe.andThen Routing.parseSignup
+
+                signupCmd =
+                    signup
+                        |> unwrap Cmd.none
+                            (\( iv, ciph ) ->
+                                Data.check iv ciph
+                                    |> Task.attempt CheckCb
+                            )
             in
             ( { model
                 | status = Types.Ready
+                , swActive = swActive
+                , mg = signup |> Maybe.withDefault model.mg
                 , current =
                     if anon then
                         model.current
@@ -1022,7 +1052,10 @@ update msg model =
                                             Nothing
                                 )
                 , view =
-                    if anon then
+                    if Maybe.Extra.isJust signup then
+                        Types.ViewMagic
+
+                    else if anon then
                         model.view
 
                     else
@@ -1031,49 +1064,50 @@ update msg model =
                                 (\r ->
                                     case r of
                                         RouteToday ->
-                                            ViewCalendar
+                                            Types.ViewCalendar
 
                                         RouteHome ->
-                                            ViewCalendar
+                                            Types.ViewCalendar
 
                                         RouteTags ->
-                                            ViewTags
+                                            Types.ViewTags
 
                                         RouteTag ->
-                                            ViewTags
-
-                                        RouteStats ->
-                                            ViewStats
+                                            Types.ViewTags
 
                                         RouteSettings ->
-                                            ViewSettings
+                                            Types.ViewSettings
 
                                         RouteCalendar ->
-                                            ViewCalendar
+                                            Types.ViewCalendar
 
                                         RouteDay _ ->
-                                            ViewCalendar
+                                            Types.ViewCalendar
 
                                         RouteDayDetail _ ->
-                                            ViewCalendar
+                                            Types.ViewCalendar
                                 )
               }
-            , key
-                |> Maybe.andThen
-                    (JD.decodeString JD.value
-                        >> Result.toMaybe
-                    )
-                |> unwrap Cmd.none
-                    (\key_ ->
-                        Data.refresh
-                            |> Task.map
-                                (Maybe.map
-                                    (\token ->
-                                        { token = token, key = key_ }
+            , if Maybe.Extra.isJust signup then
+                signupCmd
+
+              else
+                key
+                    |> Maybe.andThen
+                        (JD.decodeString JD.value
+                            >> Result.toMaybe
+                        )
+                    |> unwrap Cmd.none
+                        (\key_ ->
+                            Data.refresh
+                                |> Task.map
+                                    (Maybe.map
+                                        (\token ->
+                                            { token = token, key = key_ }
+                                        )
                                     )
-                                )
-                            |> Task.attempt (InitCb route)
-                    )
+                                |> Task.attempt (InitCb route)
+                        )
             )
 
         SignupSubmit ->
@@ -1153,7 +1187,7 @@ update msg model =
             res
                 |> unpack
                     (\err ->
-                        ( { model | online = not <| isNetworkError err }
+                        ( model
                         , logGqlError "TagUpdateCb" err
                         )
                     )
@@ -1174,7 +1208,7 @@ update msg model =
             res
                 |> unpack
                     (\err ->
-                        ( { model | online = not <| isNetworkError err }
+                        ( model
                         , logGqlError "TagUpdateCb" err
                         )
                     )
@@ -1281,11 +1315,11 @@ update msg model =
         Force ->
             ( { model
                 | view =
-                    if model.view == ViewHome then
-                        ViewCalendar
+                    if model.view == Types.ViewHome then
+                        Types.ViewCalendar
 
                     else
-                        ViewHome
+                        Types.ViewHome
                 , def = Nothing
                 , funnel = Types.Hello
                 , current = Nothing
@@ -1382,15 +1416,13 @@ update msg model =
                     }
             in
             r_
-                |> unwrap
-                    ( model_
-                    , Ports.log "Missing route"
+                |> unpack
+                    (\err ->
+                        ( model_
+                        , Ports.log err
+                        )
                     )
-                    (model.auth
-                        |> unwrap
-                            (routeDemo model_)
-                            (routeLive model_)
-                    )
+                    (routeDemo model_)
 
         Bad mm ->
             ( model
@@ -1415,6 +1447,10 @@ randomTask gen =
 
 routeDemo : Model -> Route -> ( Model, Cmd Msg )
 routeDemo model route =
+    let
+        anon =
+            isNothing model.auth
+    in
     case route of
         RouteToday ->
             ( model
@@ -1424,17 +1460,17 @@ routeDemo model route =
 
         RouteHome ->
             ( { model
-                | view = ViewHome
+                | view = Types.ViewHome
               }
             , Cmd.none
             )
 
         RouteTag ->
-            ( { model | view = ViewTags }, Cmd.none )
+            ( { model | view = Types.ViewTags }, Cmd.none )
 
         RouteTags ->
             ( { model
-                | view = ViewTags
+                | view = Types.ViewTags
                 , tag =
                     if isWide model.screen then
                         model.tag
@@ -1442,43 +1478,45 @@ routeDemo model route =
                     else
                         Nothing
                 , tags =
-                    model.tags
-                        |> UD.values
-                        |> List.map
-                            (\t ->
-                                { t
-                                    | count =
-                                        model.posts
-                                            |> Day.values
-                                            |> List.filter
-                                                (.tags >> List.member t.id)
-                                            |> List.length
-                                }
-                            )
-                        |> UD.fromList
+                    if anon then
+                        model.tags
+                            |> UD.values
+                            |> List.map
+                                (\t ->
+                                    { t
+                                        | count =
+                                            model.posts
+                                                |> Day.values
+                                                |> List.filter
+                                                    (.tags >> List.member t.id)
+                                                |> List.length
+                                    }
+                                )
+                            |> UD.fromList
+
+                    else
+                        model.tags
               }
-            , Cmd.none
+            , model.auth
+                |> unwrap Cmd.none
+                    (trip
+                        Data.tags
+                        TagsCb
+                    )
             )
 
         RouteSettings ->
             ( { model
-                | view = ViewSettings
+                | view = Types.ViewSettings
               }
             , Cmd.none
             )
 
         RouteCalendar ->
             ( { model
-                | view = ViewCalendar
+                | view = Types.ViewCalendar
                 , postView = False
                 , tagView = False
-              }
-            , Cmd.none
-            )
-
-        RouteStats ->
-            ( { model
-                | view = ViewStats
               }
             , Cmd.none
             )
@@ -1495,94 +1533,41 @@ routeDemo model route =
             )
 
         RouteDay d ->
-            model.posts
-                |> Day.get d
-                |> (\data ->
-                        let
-                            shouldFocusOnEditor =
-                                if data == Nothing then
-                                    isWide model.screen
+            model.auth
+                |> unwrap
+                    (model.posts
+                        |> Day.get d
+                        |> (\data ->
+                                let
+                                    shouldFocusOnEditor =
+                                        if data == Nothing then
+                                            isWide model.screen
 
-                                else
-                                    isWide model.screen && model.postBeingEdited
+                                        else
+                                            isWide model.screen && model.postBeingEdited
 
-                            editorText =
-                                data |> Maybe.andThen .body |> Maybe.withDefault ""
-                        in
-                        ( { model
-                            | postEditorBody = editorText
-                            , postCreateTags = []
-                            , postBeingEdited = shouldFocusOnEditor
-                            , current = Just d
-                            , month = Calendar.getMonth d
-                            , year = Calendar.getYear d
-                            , view = ViewCalendar
-                            , postView = False
-                          }
-                        , if False then
-                            focusOnEditor
+                                    editorText =
+                                        data |> Maybe.andThen .body |> Maybe.withDefault ""
+                                in
+                                ( { model
+                                    | postEditorBody = editorText
+                                    , postCreateTags = []
+                                    , postBeingEdited = shouldFocusOnEditor
+                                    , current = Just d
+                                    , month = Calendar.getMonth d
+                                    , year = Calendar.getYear d
+                                    , view = Types.ViewCalendar
+                                    , postView = False
+                                  }
+                                , if False then
+                                    focusOnEditor
 
-                          else
-                            Cmd.none
-                        )
-                   )
-
-
-routeLive : Model -> Auth -> Route -> ( Model, Cmd Msg )
-routeLive model auth route =
-    case route of
-        RouteToday ->
-            ( model
-            , Helpers.today
-                |> Task.perform (RouteDay >> NavigateTo)
-            )
-
-        RouteHome ->
-            ( { model
-                | view = ViewHome
-              }
-            , Cmd.none
-            )
-
-        RouteTag ->
-            ( model, Cmd.none )
-
-        RouteTags ->
-            ( { model
-                | view = ViewTags
-              }
-            , trip
-                Data.tags
-                TagsCb
-                auth
-            )
-
-        RouteSettings ->
-            ( { model
-                | view = ViewSettings
-              }
-            , Cmd.none
-            )
-
-        RouteCalendar ->
-            ( { model
-                | view = ViewCalendar
-              }
-            , Cmd.none
-            )
-
-        RouteStats ->
-            ( { model
-                | view = ViewStats
-              }
-            , Cmd.none
-            )
-
-        RouteDayDetail _ ->
-            ( model, Cmd.none )
-
-        RouteDay d ->
-            routeLiveDay model d auth
+                                  else
+                                    Cmd.none
+                                )
+                           )
+                    )
+                    (routeLiveDay model d)
 
 
 routeLiveDay : Model -> Date -> Auth -> ( Model, Cmd Msg )
@@ -1624,16 +1609,6 @@ routeLiveDay model d auth =
                     ]
                 )
            )
-
-
-isNetworkError : Graphql.Http.Error () -> Bool
-isNetworkError err =
-    case err of
-        Graphql.Http.HttpError httpErr ->
-            httpErr == Graphql.Http.NetworkError
-
-        Graphql.Http.GraphqlError _ _ ->
-            False
 
 
 parseErrors : Graphql.Http.Error a -> List String

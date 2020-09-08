@@ -39,8 +39,7 @@ const asyncEnabled = (() => {
 
 const swEnabled = Boolean(
   window.navigator.serviceWorker &&
-    isFn(window.navigator.serviceWorker.register) &&
-    asyncEnabled
+    isFn(window.navigator.serviceWorker.register)
 );
 
 const cryptoEnabled = Boolean(
@@ -61,14 +60,11 @@ const now = new Date();
 const flags = {
   month: now.getMonth(),
   year: now.getFullYear(),
-  online: navigator.onLine,
   screen: {
     width: window.innerWidth,
     height: window.innerHeight,
   },
   isMobile,
-  swEnabled,
-  cryptoEnabled,
 };
 
 const app = Elm.Main.init({
@@ -85,48 +81,44 @@ app.ports.pushUrl.subscribe((url) => {
   app.ports.onUrlChange.send(location.href);
 });
 
-const updateOnlineStatus = (event) => {
-  switch (event.type) {
-    case "online":
-      return app.ports.online.send(true);
-    case "offline":
-      return app.ports.online.send(false);
-  }
-};
-
 app.ports.log.subscribe(console.log);
 
-app.ports.clearAuth.subscribe(() => localStorage.removeItem("authed"));
+app.ports.clearAuth.subscribe(() => localStorage.removeItem(CRYPTO_KEY));
 
-app.ports.buy.subscribe(({ email, annual }) =>
-  loadStripe(stripeProjectId)
-    .then((stripe) =>
-      stripe.redirectToCheckout({
-        items: [{ plan: annual ? stripeAnnual : stripeMonthly, quantity: 1 }],
-        customerEmail: email,
-        successUrl: location.origin + "/payment-success",
-        cancelUrl: location.origin,
+const x = () =>
+  app.ports.buy.subscribe(({ email, annual }) =>
+    loadStripe(stripeProjectId)
+      .then((stripe) =>
+        stripe.redirectToCheckout({
+          items: [{ plan: annual ? stripeAnnual : stripeMonthly, quantity: 1 }],
+          customerEmail: email,
+          successUrl: location.origin + "/payment-success",
+          cancelUrl: location.origin,
+        })
+      )
+      .then(console.log)
+      .catch((e) => {
+        console.error(e);
+        app.ports.paymentFail.send(null);
       })
-    )
-    .then(console.log)
-    .catch((e) => {
-      console.error(e);
-      app.ports.paymentFail.send(null);
-    })
-);
+  );
 
 app.ports.saveAuth.subscribe((key) =>
   localStorage.setItem(CRYPTO_KEY, JSON.stringify(key))
 );
 
-window.addEventListener("online", updateOnlineStatus);
-window.addEventListener("offline", updateOnlineStatus);
+const boot = (swActive) =>
+  app.ports.boot.send({
+    href: location.href,
+    key: localStorage.getItem(CRYPTO_KEY),
+    swActive,
+  });
 
-if (swEnabled) {
-  window.navigator.serviceWorker.register("/sw.js").then(() =>
-    app.ports.boot.send({
-      href: location.href,
-      key: localStorage.getItem(CRYPTO_KEY),
-    })
+if (swEnabled && cryptoEnabled && asyncEnabled) {
+  window.navigator.serviceWorker.register("/sw.js").then(
+    () => boot(true),
+    () => /* registration failure */ boot(false)
   );
+} else {
+  boot(false);
 }

@@ -1,10 +1,10 @@
 module Crypto exposing (decrypt, encrypt, keys, nonce)
 
-import Graphql.Http exposing (HttpError(..), RawError(..))
+import Graphql.Http
 import Http
 import Json.Decode as Decode exposing (Decoder, Value)
 import Json.Encode as Encode
-import Types exposing (Cipher, GqlTask, Keys, Msg(..), Route(..), Sort(..), Status(..), View(..))
+import Types exposing (Cipher, GqlTask, Keys)
 
 
 nonce : GqlTask String
@@ -65,7 +65,7 @@ serviceWorkerRequest key body decoder =
     Http.task
         { method = "CRYPTO"
         , headers = []
-        , url = "/" ++ key
+        , url = "http://" ++ key
         , body = Http.jsonBody body
         , resolver =
             Http.stringResolver
@@ -73,22 +73,22 @@ serviceWorkerRequest key body decoder =
                     case response of
                         Http.BadUrl_ url_ ->
                             Graphql.Http.BadUrl url_
-                                |> HttpError
+                                |> Graphql.Http.HttpError
                                 |> Err
 
                         Http.Timeout_ ->
                             Graphql.Http.Timeout
-                                |> HttpError
+                                |> Graphql.Http.HttpError
                                 |> Err
 
                         Http.NetworkError_ ->
                             Graphql.Http.NetworkError
-                                |> HttpError
+                                |> Graphql.Http.HttpError
                                 |> Err
 
                         Http.BadStatus_ metadata body_ ->
                             Graphql.Http.BadStatus metadata body_
-                                |> HttpError
+                                |> Graphql.Http.HttpError
                                 |> Err
 
                         Http.GoodStatus_ _ body_ ->
@@ -96,7 +96,7 @@ serviceWorkerRequest key body decoder =
                                 |> Decode.decodeString decoder
                                 |> Result.mapError
                                     (Graphql.Http.BadPayload
-                                        >> HttpError
+                                        >> Graphql.Http.HttpError
                                     )
                 )
         , timeout = Nothing
