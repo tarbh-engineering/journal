@@ -1,4 +1,4 @@
-module Data exposing (check, fetchDay, fetchPostsByTag, graphqlEndpoint, ignoreParsedErrorData, login, logout, mutate, nonce, postCreate, postCreateWithTag, postDelete, postSelection, postUpdateBody, query, range, refresh, signup, tagAttach, tagCreate, tagDelete, tagDetach, tagSelection, tagUpdate, tags)
+module Data exposing (check, fetchDay, fetchPostsByTag, graphqlEndpoint, ignoreParsedErrorData, login, logout, makeGqlCode, mutate, nonce, postCreate, postCreateWithTag, postDelete, postSelection, postUpdateBody, query, range, refresh, signup, tagAttach, tagCreate, tagDelete, tagDetach, tagSelection, tagUpdate, tags)
 
 import Api.InputObject
 import Api.Mutation
@@ -206,12 +206,10 @@ refresh =
         |> Task.mapError ignoreParsedErrorData
 
 
-check : String -> String -> GqlTask Bool
-check iv ciph =
+check : String -> GqlTask Bool
+check ciph =
     Api.Query.check
-        { iv = iv
-        , ciph = ciph
-        }
+        { ciph = ciph }
         |> Graphql.Http.queryRequest graphqlEndpoint
         |> Graphql.Http.toTask
         |> Task.mapError ignoreParsedErrorData
@@ -238,12 +236,11 @@ tags { key, token } =
             )
 
 
-signup : String -> String -> String -> String -> GqlTask Jwt
-signup pw nonce_ iv ciph =
+signup : String -> String -> String -> GqlTask Jwt
+signup pw nonce_ ciph =
     Api.Mutation.signup
         { nonce = nonce_
         , password = pw
-        , iv = iv
         , ciph = ciph
         }
         |> Graphql.Http.mutationRequest graphqlEndpoint
@@ -342,6 +339,23 @@ makeGqlError str =
         [ { message = str
           , locations = Nothing
           , details = Dict.empty
+          }
+        ]
+
+
+makeGqlCode : String -> Graphql.Http.Error ()
+makeGqlCode str =
+    Graphql.Http.GraphqlError
+        (Graphql.Http.GraphqlError.UnparsedData JE.null)
+        [ { message = "err"
+          , locations = Nothing
+          , details =
+                [ ( "err"
+                  , [ ( "code", JE.string str ) ]
+                        |> JE.object
+                  )
+                ]
+                    |> Dict.fromList
           }
         ]
 

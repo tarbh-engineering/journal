@@ -293,22 +293,8 @@ logoutAll =
     Object.selectionForField "Bool" "logoutAll" [] Decode.bool
 
 
-type alias ResendRequiredArguments =
-    { ciph : String
-    , iv : String
-    }
-
-
-resend :
-    ResendRequiredArguments
-    -> SelectionSet Bool RootMutation
-resend requiredArgs =
-    Object.selectionForField "Bool" "resend" [ Argument.required "ciph" requiredArgs.ciph Encode.string, Argument.required "iv" requiredArgs.iv Encode.string ] Decode.bool
-
-
 type alias SignupRequiredArguments =
     { ciph : String
-    , iv : String
     , nonce : String
     , password : String
     }
@@ -318,7 +304,7 @@ signup :
     SignupRequiredArguments
     -> SelectionSet CustomScalars.Jwt RootMutation
 signup requiredArgs =
-    Object.selectionForField "CustomScalars.Jwt" "signup" [ Argument.required "ciph" requiredArgs.ciph Encode.string, Argument.required "iv" requiredArgs.iv Encode.string, Argument.required "nonce" requiredArgs.nonce Encode.string, Argument.required "password" requiredArgs.password Encode.string ] (CustomScalars.codecs |> Api.Scalar.unwrapCodecs |> .codecJwt |> .decoder)
+    Object.selectionForField "CustomScalars.Jwt" "signup" [ Argument.required "ciph" requiredArgs.ciph Encode.string, Argument.required "nonce" requiredArgs.nonce Encode.string, Argument.required "password" requiredArgs.password Encode.string ] (CustomScalars.codecs |> Api.Scalar.unwrapCodecs |> .codecJwt |> .decoder)
 
 
 type alias UpdatePostOptionalArguments =

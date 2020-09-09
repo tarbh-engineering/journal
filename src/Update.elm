@@ -840,11 +840,11 @@ update msg model =
                         model.inProgress
                             |> (\p -> { p | login = True })
                   }
-                , Data.nonce email
-                    |> Task.attempt NonceCb
-                  --, wait
-                  --|> Task.map (always <| Ok "")
-                  --|> Task.perform NonceCb
+                  --, Data.nonce email
+                  --|> Task.attempt NonceCb
+                , wait
+                    |> Task.map (always <| Err <| Data.makeGqlCode "no-purchase")
+                    |> Task.perform NonceCb
                 )
 
             else
@@ -880,21 +880,25 @@ update msg model =
                     )
 
         NonceCb res ->
+            let
+                inProgress =
+                    model.inProgress |> (\p -> { p | login = False })
+            in
             res
                 |> unpack
                     (\err ->
-                        if check "no-user" err then
+                        if codeCheck "no-user" err then
                             ( { model
                                 | funnel = Types.CheckEmail
-                                , inProgress = model.inProgress |> (\p -> { p | login = False })
+                                , inProgress = inProgress
                               }
                             , Cmd.none
                             )
 
-                        else if check "no-purchase" err then
+                        else if codeCheck "no-purchase" err then
                             ( { model
                                 | funnel = Types.JoinUs
-                                , inProgress = model.inProgress |> (\p -> { p | login = False })
+                                , inProgress = inProgress
                               }
                             , Cmd.none
                             )
@@ -902,7 +906,7 @@ update msg model =
                         else
                             ( { model
                                 | errors = parseErrors err
-                                , inProgress = model.inProgress |> (\p -> { p | login = False })
+                                , inProgress = inProgress
                               }
                             , logGqlError "NonceCb" err
                             )
@@ -910,7 +914,7 @@ update msg model =
                     (\nonce ->
                         ( { model
                             | funnel = Types.WelcomeBack nonce
-                            , inProgress = model.inProgress |> (\p -> { p | login = False })
+                            , inProgress = inProgress
                           }
                         , Cmd.none
                         )
@@ -1003,7 +1007,7 @@ update msg model =
                 --|> Maybe.map
                 --(\( iv, ciph ) ->
                 --( { model
-                --| view = ViewMagic
+                --| view = ViewSignup
                 --, mg = ( iv, ciph )
                 --}
                 --, Data.check iv ciph
@@ -1027,15 +1031,13 @@ update msg model =
                 signupCmd =
                     signup
                         |> unwrap Cmd.none
-                            (\( iv, ciph ) ->
-                                Data.check iv ciph
-                                    |> Task.attempt CheckCb
+                            (Data.check
+                                >> Task.attempt CheckCb
                             )
             in
             ( { model
                 | status = Types.Ready
                 , swActive = swActive
-                , mg = signup |> Maybe.withDefault model.mg
                 , current =
                     if anon then
                         model.current
@@ -1053,7 +1055,9 @@ update msg model =
                                 )
                 , view =
                     if Maybe.Extra.isJust signup then
-                        Types.ViewMagic
+                        signup
+                            |> Maybe.withDefault ""
+                            |> Types.ViewSignup
 
                     else if anon then
                         model.view
@@ -1110,11 +1114,7 @@ update msg model =
                         )
             )
 
-        SignupSubmit ->
-            let
-                ( iv, ciph ) =
-                    model.mg
-            in
+        SignupSubmit ciph ->
             if String.isEmpty model.loginForm.password then
                 ( { model | errors = [ "empty field(s)" ] }
                 , Cmd.none
@@ -1128,7 +1128,7 @@ update msg model =
                             Crypto.keys model.loginForm.password nonce
                                 |> Task.andThen
                                     (\keys ->
-                                        Data.signup keys.serverKey nonce iv ciph
+                                        Data.signup keys.serverKey nonce ciph
                                             |> Task.map
                                                 (\token ->
                                                     { key = keys.encryptionKey
@@ -1641,7 +1641,7 @@ trip task msg =
         >> Task.attempt
             (unpack
                 (\err ->
-                    if check "invalid-jwt" err then
+                    if codeCheck "invalid-jwt" err then
                         Bad
                             (task
                                 >> Task.attempt msg
@@ -1675,8 +1675,8 @@ fetchCurrent auth =
             )
 
 
-check : String -> Graphql.Http.Error () -> Bool
-check code err =
+codeCheck : String -> Graphql.Http.Error () -> Bool
+codeCheck code err =
     case err of
         Graphql.Http.GraphqlError _ es ->
             es

@@ -23,16 +23,14 @@ import Json.Decode as Decode exposing (Decoder)
 
 
 type alias CheckRequiredArguments =
-    { ciph : String
-    , iv : String
-    }
+    { ciph : String }
 
 
 check :
     CheckRequiredArguments
     -> SelectionSet Bool RootQuery
 check requiredArgs =
-    Object.selectionForField "Bool" "check" [ Argument.required "ciph" requiredArgs.ciph Encode.string, Argument.required "iv" requiredArgs.iv Encode.string ] Decode.bool
+    Object.selectionForField "Bool" "check" [ Argument.required "ciph" requiredArgs.ciph Encode.string ] Decode.bool
 
 
 type alias NonceRequiredArguments =

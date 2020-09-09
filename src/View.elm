@@ -382,7 +382,7 @@ view model =
             else
                 viewHomeMobile model
 
-        ViewMagic ->
+        ViewSignup ciph ->
             model.magic
                 |> whenJust
                     (\b ->
@@ -405,7 +405,7 @@ view model =
                                         |> Just
                                 , text = model.loginForm.password
                                 }
-                            , btn "Submit" <| SignupSubmit
+                            , btn "Submit" <| SignupSubmit ciph
                             ]
                                 |> column
                                     [ cappedWidth 450

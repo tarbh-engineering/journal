@@ -52,7 +52,6 @@ type alias Model =
     , tag : Maybe Uuid
     , def : Maybe Def
     , magic : Maybe Bool
-    , mg : ( String, String )
     , thanks : Bool
     , status : App
     , swActive : Bool
@@ -84,7 +83,7 @@ type Msg
     | LoginCb (GqlResult Auth)
     | EmailSubmit
     | LoginSubmit String
-    | SignupSubmit
+    | SignupSubmit String
     | Buy Bool
     | PaymentFail
     | LoginFormEmailUpdate String
@@ -168,7 +167,7 @@ type View
     | ViewSettings
     | ViewSuccess
     | ViewTags
-    | ViewMagic
+    | ViewSignup String
 
 
 type alias GqlResult a =

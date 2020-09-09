@@ -83,7 +83,6 @@ emptyModel =
     , tag = Nothing
     , def = Nothing
     , magic = Nothing
-    , mg = ( "", "" )
     , inProgress =
         { logout = False
         , login = False

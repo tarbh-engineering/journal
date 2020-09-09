@@ -53,14 +53,10 @@ routes =
     ]
 
 
-parseSignup : Url -> Maybe ( String, String )
+parseSignup : Url -> Maybe String
 parseSignup =
     Url.Parser.parse
-        (s "signup"
-            </> Url.Parser.string
-            </> Url.Parser.string
-            |> Url.Parser.map Tuple.pair
-        )
+        (s "signup" </> Url.Parser.string)
 
 
 parseDay : (Date -> Route) -> String -> Maybe Route
