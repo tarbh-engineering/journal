@@ -1,4 +1,4 @@
-module View.Misc exposing (btn, btn2, btn3, formatDateTime, formatDay, icon, isTall, isWide, lnk, spinner)
+module View.Misc exposing (btn, btn2, btn3, formatDateTime, formatDay, iBtn, icon, isTall, isWide, lnk, spinner)
 
 import Calendar exposing (Date)
 import DateTime exposing (DateTime)
@@ -73,6 +73,25 @@ lnk txt msg =
         { onPress = Just msg
         , label = text txt
         }
+
+
+iBtn : Icon msg -> msg -> Element msg
+iBtn icn msg =
+    { onPress = Just msg
+    , label = icon icn 30
+    }
+        |> Input.button
+            [ Font.color black
+            , Border.shadow
+                { offset = ( 2, 2 )
+                , blur = 3
+                , size = 1
+                , color = Element.rgb255 150 150 150
+                }
+            , Background.color sand
+            , Border.rounded 25
+            , padding 10
+            ]
 
 
 btn2 : Bool -> Icon msg -> String -> msg -> Element msg

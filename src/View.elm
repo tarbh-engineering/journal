@@ -23,7 +23,7 @@ import Time.Format.I18n.I_en_us exposing (monthName)
 import Types exposing (Def(..), Funnel(..), Model, Msg(..), Post, Route, Tag, View(..))
 import Validate exposing (isValidEmail)
 import View.Img
-import View.Misc exposing (btn, btn2, btn3, formatDateTime, formatDay, icon, isWide, lnk, spinner)
+import View.Misc exposing (btn, btn2, btn3, formatDateTime, formatDay, iBtn, icon, isWide, lnk, spinner)
 import View.Style exposing (abel, black, blue, ebg, fadeIn, rotate, sand, varela, white, yellow)
 
 
@@ -123,12 +123,7 @@ viewCalendar model =
             else
                 px ht
     in
-    [ [ { onPress = Just PrevMonth
-        , label =
-            icon Icons.chevron_left 30
-                |> el [ centerX, centerY ]
-        }
-            |> rBtn
+    [ [ iBtn Icons.chevron_left PrevMonth
       , [ model.month |> monthName |> text
         , model.year |> String.fromInt |> text
         ]
@@ -138,12 +133,7 @@ viewCalendar model =
                 , Background.color white
                 , padding 10
                 ]
-      , { onPress = Just NextMonth
-        , label =
-            icon Icons.chevron_right 30
-                |> el [ centerX, centerY ]
-        }
-            |> rBtn
+      , iBtn Icons.chevron_right NextMonth
       ]
         |> row [ width fill, spaceEvenly, padding 5 ]
     , Element.table
@@ -439,11 +429,12 @@ view model =
                 |> unwrap
                     ([ [ text "You're a guest, you don't have settings!" ]
                         |> paragraph [ varela, Font.center ]
-                     , btn "Sign up now" (NavigateTo Types.RouteHome)
+                     , btn3 False Icons.attach_money "Sign up now" (NavigateTo Types.RouteHome)
                         |> el [ centerX ]
-                     , hairline
-                     , btn "Load example data" FakeData
-                        |> el [ centerX ]
+
+                     --, hairline
+                     --, btn "Load example data" FakeData
+                     --|> el [ centerX ]
                      ]
                         |> column [ spacing 20, padding 20, centerX ]
                     )
@@ -683,18 +674,8 @@ viewTagsMobile model =
                             |> column [ spacing 10, width fill ]
 
                     Types.TagsView ->
-                        [ { onPress = Just <| TagsViewSet Types.TagsSort
-                          , label =
-                                icon Icons.tune 30
-                                    |> el [ centerX, centerY ]
-                          }
-                            |> rBtn
-                        , { onPress = Just <| TagsViewSet Types.TagsCreate
-                          , label =
-                                icon Icons.add 30
-                                    |> el [ centerX, centerY ]
-                          }
-                            |> rBtn
+                        [ iBtn Icons.tune <| TagsViewSet Types.TagsSort
+                        , iBtn Icons.add <| TagsViewSet Types.TagsCreate
                         ]
                             |> row [ Element.alignBottom, width fill, spaceEvenly ]
 
@@ -783,18 +764,8 @@ viewTag model t =
             , placeholder = Nothing
             , text = model.tagUpdate
             }
-        , { onPress = Just <| TagUpdateSet Nothing
-          , label =
-                icon Icons.close 30
-                    |> el [ centerX, centerY ]
-          }
-            |> rBtn
-        , { onPress = Just <| TagUpdateSubmit t
-          , label =
-                icon Icons.send 30
-                    |> el [ centerX, centerY ]
-          }
-            |> rBtn
+        , iBtn Icons.close <| TagUpdateSet Nothing
+        , iBtn Icons.send <| TagUpdateSubmit t
         ]
             |> row [ width fill, spacing 10 ]
 
@@ -810,7 +781,9 @@ viewTag model t =
     , if List.isEmpty ts then
         [ text "No days with this tag."
             |> el [ centerX ]
-        , btn
+        , btn3
+            False
+            Icons.calendar_today
             "Go to calendar"
             (NavigateTo Types.RouteCalendar)
             |> el [ centerX ]
@@ -849,12 +822,7 @@ viewTag model t =
                 , height fill
                 ]
     , [ btn2 False Icons.delete "Delete" <| TagDelete t
-      , { onPress = Just TagDeselect
-        , label =
-            icon Icons.undo 30
-                |> el [ centerX, centerY ]
-        }
-            |> rBtn
+      , iBtn Icons.undo TagDeselect
       ]
         |> row [ spacing 20, Element.alignBottom, Element.alignRight ]
     ]
@@ -1900,21 +1868,6 @@ viewPage model =
         |> row [ width fill, height fill, spacing wd, paddingXY 20 wd ]
 
 
-rBtn =
-    Input.button
-        [ Font.color black
-        , Border.shadow
-            { offset = ( 2, 2 )
-            , blur = 3
-            , size = 1
-            , color = Element.rgb255 150 150 150
-            }
-        , Background.color sand
-        , Border.rounded 25
-        , padding 5
-        ]
-
-
 viewPageMobile : Model -> Element Msg
 viewPageMobile model =
     [ if model.postView then
@@ -2054,7 +2007,7 @@ viewBarMobile model day =
             [ btn2 False Icons.edit "Write" PostUpdateStart
 
             --, btn2 False Icons.close "Close" TagViewToggle
-            , btn "X" <| NavigateTo Types.RouteCalendar
+            , iBtn Icons.close <| NavigateTo Types.RouteCalendar
             ]
                 |> row [ width fill, spaceEvenly, alignBottom, width fill ]
 
@@ -2081,17 +2034,12 @@ viewBarMobile model day =
             , btn2 False Icons.edit "Edit" PostUpdateStart
 
             --, btn2 False Icons.close "Close" PostViewToggle
-            , btn "X" <| NavigateTo Types.RouteCalendar
+            , iBtn Icons.close <| NavigateTo Types.RouteCalendar
             ]
                 |> row [ width fill, spaceEvenly, alignBottom, width fill ]
 
     else
-        [ { onPress = Just GoToToday
-          , label =
-                icon Icons.brightness_5 30
-                    |> el [ centerX, centerY ]
-          }
-            |> rBtn
+        [ iBtn Icons.brightness_5 GoToToday
         , btn2 False Icons.label "Tags" PostViewTagStart
         , pst
             |> unwrap
@@ -2378,7 +2326,9 @@ viewPostTags model d pst =
     if List.isEmpty xs then
         [ [ text "You don't have any tags." ]
             |> paragraph []
-        , btn
+        , btn3
+            False
+            Icons.label
             "Go to tags"
             (NavigateTo Types.RouteTags)
             |> el [ centerX ]
