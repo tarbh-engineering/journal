@@ -855,14 +855,15 @@ viewTag model t =
             |> el [ Font.italic ]
         ]
             |> row [ spacing 10 ]
+            |> when (not <| List.isEmpty ts)
       , [ btn2 False Icons.delete "Delete" <| TagDelete t
         , iBtn Icons.undo TagDeselect
         ]
-            |> row [ spacing 20 ]
+            |> row [ spacing 20, Element.alignRight ]
       ]
         |> row [ width fill, spaceEvenly, Element.alignBottom ]
     ]
-        |> column [ height fill, width fill, spacing 20 ]
+        |> column [ height fill, width fill, spacing 10 ]
 
 
 viewTags : Model -> Element Msg
