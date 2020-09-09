@@ -794,7 +794,18 @@ viewTag model t =
         ts
             |> List.map
                 (\p ->
-                    Input.button [ Font.size 25 ]
+                    Input.button
+                        [ Font.size 25
+                        , Border.rounded 15
+                        , width fill
+                        , Background.color sand
+                        , Border.shadow
+                            { offset = ( 3, 3 )
+                            , blur = 3
+                            , size = 1
+                            , color = Element.rgb255 150 150 150
+                            }
+                        ]
                         { onPress =
                             Types.RouteDay p.date
                                 |> NavigateTo
@@ -806,20 +817,21 @@ viewTag model t =
                                     |> text
                               ]
                                 |> paragraph []
+                                |> when False
                             ]
                                 |> column
                                     [ spacing 10
-                                    , Border.width 1
                                     , padding 10
                                     , width fill
                                     ]
                         }
                 )
             |> column
-                [ spacing 10
+                [ spacing 20
                 , width fill
                 , Element.scrollbarY
                 , height fill
+                , padding 10
                 ]
     , [ btn2 False Icons.delete "Delete" <| TagDelete t
       , iBtn Icons.undo TagDeselect

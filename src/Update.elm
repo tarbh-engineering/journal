@@ -186,7 +186,7 @@ update msg model =
                     )
                     (unwrap
                         ( model
-                        , Ports.clearAuth ()
+                        , Ports.clearState ()
                         )
                         (\auth ->
                             ( { model
@@ -197,7 +197,7 @@ update msg model =
                                     |> Task.attempt PostsCb
                                 , Data.tags auth
                                     |> Task.attempt TagsCb
-                                , Ports.saveAuth auth.key
+                                , Ports.saveState auth.key
                                 , route
                                     |> unwrap Cmd.none
                                         (\route_ ->
@@ -739,7 +739,7 @@ update msg model =
                                 |> Task.attempt PostsCb
                             , Data.tags auth
                                 |> Task.attempt TagsCb
-                            , Ports.saveAuth auth.key
+                            , Ports.saveState auth.key
                             ]
                         )
                     )
@@ -959,7 +959,7 @@ update msg model =
                 | inProgress = model.inProgress |> (\p -> { p | logout = True })
               }
             , Cmd.batch
-                [ Ports.clearAuth ()
+                [ Ports.clearState ()
                 , Data.logout
                     |> Task.attempt LogoutCb
                 ]
@@ -978,7 +978,7 @@ update msg model =
               }
             , wait
                 |> Task.perform (always PaymentFail)
-              --Ports.buy
+              --, Ports.buy
               --{ email = model.loginForm.email
               --, annual = annual
               --}
@@ -1215,7 +1215,7 @@ update msg model =
                     (unwrap
                         ( { model | auth = Nothing }
                         , Cmd.batch
-                            [ Ports.clearAuth ()
+                            [ Ports.clearState ()
                             , goTo RouteHome
                             ]
                         )

@@ -1,21 +1,9 @@
-const { Elm } = require("./Main.elm");
-
-const { loadStripe } = require("@stripe/stripe-js/pure");
-loadStripe.setLoadParameters({ advancedFraudSignals: false });
-
-const MobileDetect = require("mobile-detect");
-
-const md = new MobileDetect(window.navigator.userAgent);
-
-const isNewIpad = Boolean(
-  window.navigator.userAgent.match(/Mac/) &&
-    window.navigator.maxTouchPoints &&
-    window.navigator.maxTouchPoints > 2
-);
-
-const isMobile = Boolean(md.mobile()) || isNewIpad;
-
 require("./index.css");
+const { Elm } = require("./Main.elm");
+const MobileDetect = require("mobile-detect");
+const { loadStripe } = require("@stripe/stripe-js/pure");
+
+loadStripe.setLoadParameters({ advancedFraudSignals: false });
 
 /* eslint-disable no-undef */
 const stripeProjectId = STRIPE_PROJECT_ID;
@@ -23,7 +11,17 @@ const stripeAnnual = STRIPE_ANNUAL;
 const stripeMonthly = STRIPE_MONTHLY;
 /* eslint-enable no-undef */
 
-const CRYPTO_KEY = "KEY_A";
+const LS_KEY = "KEY_A";
+
+const mobileDetect = new MobileDetect(window.navigator.userAgent);
+
+const isNewIpad = Boolean(
+  window.navigator.userAgent.match(/Mac/) &&
+    window.navigator.maxTouchPoints &&
+    window.navigator.maxTouchPoints > 2
+);
+
+const isMobile = Boolean(mobileDetect.mobile()) || isNewIpad;
 
 const isFn = (x) => typeof x === "function";
 
@@ -83,7 +81,7 @@ app.ports.pushUrl.subscribe((url) => {
 
 app.ports.log.subscribe(console.log);
 
-app.ports.clearAuth.subscribe(() => localStorage.removeItem(CRYPTO_KEY));
+app.ports.clearState.subscribe(() => localStorage.removeItem(LS_KEY));
 
 const x = () =>
   app.ports.buy.subscribe(({ email, annual }) =>
@@ -103,14 +101,14 @@ const x = () =>
       })
   );
 
-app.ports.saveAuth.subscribe((key) =>
-  localStorage.setItem(CRYPTO_KEY, JSON.stringify(key))
+app.ports.saveState.subscribe((state) =>
+  localStorage.setItem(LS_KEY, JSON.stringify(state))
 );
 
 const boot = (swActive) =>
   app.ports.boot.send({
     href: location.href,
-    key: localStorage.getItem(CRYPTO_KEY),
+    key: localStorage.getItem(LS_KEY),
     swActive,
   });
 
