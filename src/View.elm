@@ -19,7 +19,7 @@ import Json.Decode as Decode exposing (Decoder)
 import Material.Icons as Icons
 import Maybe.Extra exposing (isJust, isNothing, unwrap)
 import Time exposing (Month(..))
-import Time.Format.I18n.I_en_us exposing (monthName)
+import Time.Format.I18n.I_en_us exposing (dayShort, monthName)
 import Types exposing (Def(..), Funnel(..), Model, Msg(..), Post, Route, Tag, View(..))
 import Validate exposing (isValidEmail)
 import View.Img
@@ -122,6 +122,29 @@ viewCalendar model =
 
             else
                 px ht
+
+        shift =
+            case model.weekStart of
+                Time.Mon ->
+                    identity
+
+                Time.Tue ->
+                    cycle 1
+
+                Time.Wed ->
+                    cycle 2
+
+                Time.Thu ->
+                    cycle 3
+
+                Time.Fri ->
+                    cycle 4
+
+                Time.Sat ->
+                    cycle 5
+
+                Time.Sun ->
+                    cycle 6
     in
     [ [ iBtn Icons.chevron_left PrevMonth
       , [ model.month |> monthName |> text
@@ -138,7 +161,7 @@ viewCalendar model =
         |> row [ width fill, spaceEvenly, padding 5 ]
     , Element.table
         [ spacing 5 ]
-        { data = CalendarDates.weeks Time.Mon model.month model.year
+        { data = CalendarDates.weeks model.weekStart model.month model.year
         , columns =
             [ { header = weekday "Mon"
               , width = wd
@@ -169,6 +192,7 @@ viewCalendar model =
               , view = .sun >> viewCell model ht
               }
             ]
+                |> shift
         }
     ]
         |> column
@@ -177,6 +201,11 @@ viewCalendar model =
                 |> whenAttr (model.screen.width < 450)
             , centerX
             ]
+
+
+cycle : Int -> List a -> List a
+cycle n xs =
+    List.drop n xs ++ List.take n xs
 
 
 cell2 : Model -> Day -> Element Msg
@@ -427,9 +456,46 @@ view model =
         ViewSettings ->
             model.auth
                 |> unwrap
-                    ([ [ text "You're a guest, you don't have settings!" ]
-                        |> paragraph [ varela, Font.center ]
-                     , btn3 False Icons.attach_money "Sign up now" (NavigateTo Types.RouteHome)
+                    ([ [ text "First day of the week"
+                            |> el [ Font.bold, Font.size 22, abel ]
+                       , [ Time.Mon
+                         , Time.Tue
+                         , Time.Wed
+                         , Time.Thu
+                         , Time.Fri
+                         , Time.Sat
+                         , Time.Sun
+                         ]
+                            |> List.map
+                                (\d ->
+                                    let
+                                        curr =
+                                            d == model.weekStart
+                                    in
+                                    { onPress = Just <| WeekdaySet d
+                                    , label = text <| dayShort d
+                                    }
+                                        |> Input.button
+                                            [ Font.color black
+                                            , Font.size 17
+                                            , Border.shadow
+                                                { offset = ( 2, 2 )
+                                                , blur = 3
+                                                , size = 1
+                                                , color = Element.rgb255 150 150 150
+                                                }
+                                                |> whenAttr curr
+                                            , Background.color sand
+                                                |> whenAttr curr
+                                            , Border.rounded 25
+                                            , padding 10
+                                            ]
+                                )
+                            |> row [ spacing 5 ]
+                       ]
+                        |> column [ width fill, spacing 10 ]
+                     , hairline
+                     , btn3 False Icons.emoji_events "Sign up now" (NavigateTo Types.RouteHome)
                         |> el [ centerX ]
 
                      --, hairline

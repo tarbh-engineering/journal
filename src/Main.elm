@@ -103,4 +103,5 @@ emptyModel =
     , tagsSort = Types.SortName
     , tagsSortReverse = False
     , postSortReverse = False
+    , weekStart = Time.Mon
     }

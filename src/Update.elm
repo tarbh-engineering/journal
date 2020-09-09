@@ -1298,6 +1298,13 @@ update msg model =
                 Cmd.none
             )
 
+        WeekdaySet wd ->
+            ( { model
+                | weekStart = wd
+              }
+            , Cmd.none
+            )
+
         PostSortToggle ->
             ( { model
                 | postSortReverse = not model.postSortReverse

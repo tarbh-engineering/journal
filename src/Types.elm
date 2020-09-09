@@ -12,7 +12,7 @@ import Graphql.Http
 import Helpers.UuidDict exposing (UuidDict)
 import Json.Decode exposing (Value)
 import Task exposing (Task)
-import Time exposing (Month)
+import Time exposing (Month, Weekday)
 
 
 type alias Model =
@@ -62,6 +62,7 @@ type alias Model =
     , tagsSort : TagsSort
     , tagsSortReverse : Bool
     , postSortReverse : Bool
+    , weekStart : Weekday
     }
 
 
@@ -135,6 +136,7 @@ type Msg
     | TagsViewSet TagsView
     | TagsSortSet TagsSort
     | PostSortToggle
+    | WeekdaySet Weekday
 
 
 type alias Flags =
