@@ -61,6 +61,7 @@ type alias Model =
     , tagsView : TagsView
     , tagsSort : TagsSort
     , tagsSortReverse : Bool
+    , postSortReverse : Bool
     }
 
 
@@ -133,6 +134,7 @@ type Msg
     | FakeData
     | TagsViewSet TagsView
     | TagsSortSet TagsSort
+    | PostSortToggle
 
 
 type alias Flags =

@@ -102,4 +102,5 @@ emptyModel =
     , tagsView = Types.TagsView
     , tagsSort = Types.SortName
     , tagsSortReverse = False
+    , postSortReverse = False
     }

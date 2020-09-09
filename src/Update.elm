@@ -1298,6 +1298,13 @@ update msg model =
                 Cmd.none
             )
 
+        PostSortToggle ->
+            ( { model
+                | postSortReverse = not model.postSortReverse
+              }
+            , Cmd.none
+            )
+
         DropdownToggle ->
             ( { model
                 | dropdown = not model.dropdown

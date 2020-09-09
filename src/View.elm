@@ -792,6 +792,16 @@ viewTag model t =
 
       else
         ts
+            |> List.sortWith
+                (\a b ->
+                    Calendar.compare a.date b.date
+                )
+            |> (if model.postSortReverse then
+                    List.reverse
+
+                else
+                    identity
+               )
             |> List.map
                 (\p ->
                     Input.button
@@ -833,10 +843,24 @@ viewTag model t =
                 , height fill
                 , padding 10
                 ]
-    , [ btn2 False Icons.delete "Delete" <| TagDelete t
-      , iBtn Icons.undo TagDeselect
+    , [ [ iBtn
+            (if model.postSortReverse then
+                Icons.north
+
+             else
+                Icons.south
+            )
+            PostSortToggle
+        , text "Sort"
+            |> el [ Font.italic ]
+        ]
+            |> row [ spacing 10 ]
+      , [ btn2 False Icons.delete "Delete" <| TagDelete t
+        , iBtn Icons.undo TagDeselect
+        ]
+            |> row [ spacing 20 ]
       ]
-        |> row [ spacing 20, Element.alignBottom, Element.alignRight ]
+        |> row [ width fill, spaceEvenly, Element.alignBottom ]
     ]
         |> column [ height fill, width fill, spacing 20 ]
 
