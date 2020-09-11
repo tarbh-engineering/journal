@@ -1,4 +1,4 @@
-module View.Misc exposing (btn, btn2, btn3, formatDateTime, formatDay, iBtn, icon, isTall, isWide, lnk, spinner)
+module View.Misc exposing (btn, btn2, btn3, formatDateTime, formatDay, iBtn, icon, isSmall, isTall, isWide, lnk, spinner, tallInt)
 
 import Calendar exposing (Date)
 import DateTime exposing (DateTime)
@@ -16,14 +16,24 @@ import Types exposing (Screen)
 import View.Style exposing (black, blue, rotate, sand, varela, white)
 
 
+tallInt : Int
+tallInt =
+    640
+
+
 isTall : Screen -> Bool
 isTall scr =
-    scr.height >= 660
+    scr.height >= tallInt
 
 
 isWide : Screen -> Bool
 isWide scr =
     scr.width > 768
+
+
+isSmall : Screen -> Bool
+isSmall scr =
+    scr.width < 360
 
 
 formatDateTime : DateTime -> String

@@ -163,31 +163,31 @@ viewCalendar model =
         [ spacing 5 ]
         { data = CalendarDates.weeks model.weekStart model.month model.year
         , columns =
-            [ { header = weekday "Mon"
+            [ { header = weekday <| dayShort Time.Mon
               , width = wd
               , view = .mon >> viewCell model ht
               }
-            , { header = weekday "Tue"
+            , { header = weekday <| dayShort Time.Tue
               , width = wd
               , view = .tue >> viewCell model ht
               }
-            , { header = weekday "Wed"
+            , { header = weekday <| dayShort Time.Wed
               , width = wd
               , view = .wed >> viewCell model ht
               }
-            , { header = weekday "Thu"
+            , { header = weekday <| dayShort Time.Thu
               , width = wd
               , view = .thu >> viewCell model ht
               }
-            , { header = weekday "Fri"
+            , { header = weekday <| dayShort Time.Fri
               , width = wd
               , view = .fri >> viewCell model ht
               }
-            , { header = weekday "Sat"
+            , { header = weekday <| dayShort Time.Sat
               , width = wd
               , view = .sat >> viewCell model ht
               }
-            , { header = weekday "Sun"
+            , { header = weekday <| dayShort Time.Sun
               , width = wd
               , view = .sun >> viewCell model ht
               }
@@ -473,7 +473,15 @@ view model =
                                             d == model.weekStart
                                     in
                                     { onPress = Just <| WeekdaySet d
-                                    , label = text <| dayShort d
+                                    , label =
+                                        dayShort d
+                                            |> (if model.screen.width <= 360 then
+                                                    String.left 1
+
+                                                else
+                                                    identity
+                                               )
+                                            |> text
                                     }
                                         |> Input.button
                                             [ Font.color black
@@ -491,7 +499,14 @@ view model =
                                             , padding 10
                                             ]
                                 )
-                            |> row [ spacing 5 ]
+                            |> row
+                                [ if model.screen.width <= 360 then
+                                    spaceEvenly
+
+                                  else
+                                    spacing 5
+                                , width fill
+                                ]
                        ]
                         |> column [ width fill, spacing 10 ]
                      , hairline
@@ -502,18 +517,15 @@ view model =
                      --, btn "Load example data" FakeData
                      --|> el [ centerX ]
                      ]
-                        |> column [ spacing 20, padding 20, centerX ]
+                        |> column [ spacing 20, centerX, cappedWidth 450 ]
                     )
                     (\_ ->
                         [ btn3 False Icons.save "Export posts" ExportPosts
                         , btn3 model.inProgress.logout Icons.power_off "Logout" Logout
                             |> el [ centerX ]
                         ]
-                            |> column [ spacing 20 ]
+                            |> column [ spacing 20, centerX ]
                     )
-                |> el
-                    [ centerX
-                    ]
                 |> frame
 
         ViewTags ->
@@ -1029,13 +1041,29 @@ viewTags model =
 
 viewHomeMobile : Model -> Element Msg
 viewHomeMobile model =
+    let
+        small =
+            View.Misc.isSmall model.screen
+    in
     [ [ [ text "BOLSTER"
             |> el
-                [ Font.size 65
+                [ (if small then
+                    45
+
+                   else
+                    65
+                  )
+                    |> Font.size
                 , Font.semiBold
                 , abel
                 ]
-        , View.Img.tmp 85
+        , View.Img.tmp
+            (if small then
+                55
+
+             else
+                85
+            )
             |> Element.html
             |> el []
         ]
@@ -1047,7 +1075,7 @@ viewHomeMobile model =
                 , centerX
                 , padding 10
                 ]
-      , viewInfo model.def
+      , viewInfo small model.def
       ]
         |> column
             [ width fill
@@ -1252,8 +1280,8 @@ viewBuy model =
             ]
 
 
-viewInfo : Maybe Def -> Element Msg
-viewInfo mDef =
+viewInfo : Bool -> Maybe Def -> Element Msg
+viewInfo small mDef =
     [ [ text "The"
             |> el
                 [ Element.paddingEach
@@ -1279,7 +1307,13 @@ viewInfo mDef =
         |> row
             [ spacing 5
             , Font.italic
-            , Font.size 20
+            , (if small then
+                17
+
+               else
+                20
+              )
+                |> Font.size
             , varela
             , centerX
             ]
@@ -1453,7 +1487,7 @@ viewHome model =
             }
         ]
             |> column [ spacing 10 ]
-      , [ viewInfo model.def
+      , [ viewInfo False model.def
             |> el
                 [ width <| px 420
                 , Element.alignTop
@@ -1866,7 +1900,7 @@ viewFrameMobile model elem =
                     }
             )
         |> row [ Element.alignBottom, width fill ]
-        |> when (model.tall && model.screen.height >= 660)
+        |> when (model.tall && model.screen.height >= View.Misc.tallInt)
     ]
         |> column
             [ spacing nd

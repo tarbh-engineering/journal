@@ -11,6 +11,7 @@ import Time
 import Types exposing (Flags, Model, Msg, Screen)
 import Update exposing (update)
 import View exposing (view)
+import View.Misc exposing (isTall)
 
 
 main : Program Flags Model Msg
@@ -30,7 +31,7 @@ init flags =
         , isMobile = flags.isMobile
         , month = numberToMonth flags.month |> Maybe.withDefault Time.Jan
         , year = flags.year
-        , tall = flags.screen.height >= 660
+        , tall = isTall flags.screen
       }
     , Cmd.none
     )
