@@ -104,7 +104,10 @@ viewCalendar : Model -> Element Msg
 viewCalendar model =
     let
         ht =
-            if model.screen.height < 700 then
+            if model.screen.height < 550 then
+                35
+
+            else if model.screen.height < 700 then
                 40
 
             else if isWide model.screen then
@@ -145,8 +148,15 @@ viewCalendar model =
 
                 Time.Sun ->
                     cycle 6
+
+        btnSize =
+            if model.screen.width < 412 then
+                20
+
+            else
+                30
     in
-    [ [ iBtn Icons.chevron_left PrevMonth
+    [ [ iBtn btnSize Icons.chevron_left PrevMonth
       , [ model.month |> monthName |> text
         , model.year |> String.fromInt |> text
         ]
@@ -156,7 +166,7 @@ viewCalendar model =
                 , Background.color white
                 , padding 10
                 ]
-      , iBtn Icons.chevron_right NextMonth
+      , iBtn btnSize Icons.chevron_right NextMonth
       ]
         |> row [ width fill, spaceEvenly, padding 5 ]
     , Element.table
@@ -752,8 +762,8 @@ viewTagsMobile model =
                             |> column [ spacing 10, width fill ]
 
                     Types.TagsView ->
-                        [ iBtn Icons.tune <| TagsViewSet Types.TagsSort
-                        , iBtn Icons.add <| TagsViewSet Types.TagsCreate
+                        [ iBtn 30 Icons.tune <| TagsViewSet Types.TagsSort
+                        , iBtn 30 Icons.add <| TagsViewSet Types.TagsCreate
                         ]
                             |> row [ Element.alignBottom, width fill, spaceEvenly ]
 
@@ -842,8 +852,8 @@ viewTag model t =
             , placeholder = Nothing
             , text = model.tagUpdate
             }
-        , iBtn Icons.close <| TagUpdateSet Nothing
-        , iBtn Icons.send <| TagUpdateSubmit t
+        , iBtn 30 Icons.close <| TagUpdateSet Nothing
+        , iBtn 30 Icons.send <| TagUpdateSubmit t
         ]
             |> row [ width fill, spacing 10 ]
 
@@ -921,7 +931,7 @@ viewTag model t =
                 , height fill
                 , padding 10
                 ]
-    , [ [ iBtn
+    , [ [ iBtn 30
             (if model.postSortReverse then
                 Icons.north
 
@@ -935,7 +945,7 @@ viewTag model t =
             |> row [ spacing 10 ]
             |> when (not <| List.isEmpty ts)
       , [ btn2 False Icons.delete "Delete" <| TagDelete t
-        , iBtn Icons.undo TagDeselect
+        , iBtn 30 Icons.undo TagDeselect
         ]
             |> row [ spacing 20, Element.alignRight ]
       ]
@@ -2150,7 +2160,7 @@ viewBarMobile model =
             [ btn2 False Icons.edit "Write" PostUpdateStart
 
             --, btn2 False Icons.close "Close" TagViewToggle
-            , iBtn Icons.close <| NavigateTo Types.RouteCalendar
+            , iBtn 30 Icons.close <| NavigateTo Types.RouteCalendar
             ]
                 |> row [ width fill, spaceEvenly, alignBottom, width fill ]
 
@@ -2177,7 +2187,7 @@ viewBarMobile model =
             , btn2 False Icons.edit "Edit" PostUpdateStart
 
             --, btn2 False Icons.close "Close" PostViewStart
-            , iBtn Icons.close <| NavigateTo Types.RouteCalendar
+            , iBtn 30 Icons.close <| NavigateTo Types.RouteCalendar
             ]
                 |> row [ width fill, spaceEvenly, alignBottom, width fill ]
 
@@ -2217,7 +2227,7 @@ viewBarMobile model =
                             }
 
                       --, btn2 False Icons.label "Tags" PostViewTagStart
-                      , Input.button []
+                      , Input.button [ width fill ]
                             { onPress = Just PostViewTagStart
                             , label =
                                 [ icon Icons.label 20
@@ -2249,7 +2259,12 @@ viewBarMobile model =
                             , height fill
                             ]
                     ]
-                        |> row [ spacing 10, height fill, paddingXY 0 10, width fill ]
+                        |> row
+                            [ spacing 10
+                            , Helpers.View.cappedHeight 175
+                            , paddingXY 0 10
+                            , width fill
+                            ]
                 )
 
 
@@ -2516,9 +2531,7 @@ viewPreview txt =
         , Html.Attributes.value txt
         , Html.Attributes.style "font-size" "inherit"
         , Html.Attributes.style "font-family" "inherit"
-
-        --, Html.Attributes.style "font-color" "black"
-        --, Html.Attributes.style "line-height" "30px"
+        , Html.Attributes.style "font-color" "inherit"
         , Html.Attributes.style "padding" "0px"
         , Html.Attributes.style "flex-grow" "inherit"
         , Html.Attributes.readonly True
@@ -2530,7 +2543,8 @@ viewPreview txt =
             [ width fill
             , height fill
             , Background.color sand
-            , Font.size 16
+            , Font.color black
+            , Font.size 14
             , padding 5
             , ebg
             , el

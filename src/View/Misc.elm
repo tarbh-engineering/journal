@@ -95,10 +95,10 @@ lnk txt msg =
         }
 
 
-iBtn : Icon msg -> msg -> Element msg
-iBtn icn msg =
+iBtn : Int -> Icon msg -> msg -> Element msg
+iBtn n icn msg =
     { onPress = Just msg
-    , label = icon icn 30
+    , label = icon icn n
     }
         |> Input.button
             [ Font.color black
