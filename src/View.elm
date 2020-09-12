@@ -350,7 +350,7 @@ viewCell model n day =
                     PostUpdateStart
 
                 else
-                    PostViewToggle
+                    PostViewStart
 
              else
                 Types.RouteDay day.date
@@ -1602,6 +1602,9 @@ viewFunnel model =
                 , onKeydown [ onEnter ent ]
 
                 --|> whenAttr valid
+                , Font.size 24
+                , ebg
+                , Font.italic
                 ]
                 { onChange = LoginFormEmailUpdate
                 , label = Input.labelHidden ""
@@ -2059,7 +2062,7 @@ viewPageMobile model =
                                 UD.values model.tags
 
                             create =
-                                viewPostEditor (PostCreateSubmit d) model.postEditorBody False fs
+                                viewPostEditor PostCreateSubmit model.postEditorBody False fs
 
                             make post =
                                 viewPostEditor (PostUpdateSubmit post.id) model.postEditorBody (not model.postBeingEdited) fs
@@ -2118,8 +2121,7 @@ viewPageMobile model =
                 --, style "animation-fill-mode" "forwards"
                 --, style "animation" "fadeOut 0.5s"
                 ]
-    , model.current
-        |> whenJust (viewBarMobile model)
+    , viewBarMobile model
     ]
         |> column
             [ width fill
@@ -2132,12 +2134,16 @@ viewPageMobile model =
             ]
 
 
-viewBarMobile : Model -> Date -> Element Msg
-viewBarMobile model day =
+viewBarMobile : Model -> Element Msg
+viewBarMobile model =
     let
         pst =
-            model.posts
-                |> Day.get day
+            model.current
+                |> Maybe.andThen
+                    (\d ->
+                        model.posts
+                            |> Day.get d
+                    )
     in
     if model.postView then
         if model.tagView then
@@ -2154,7 +2160,7 @@ viewBarMobile model day =
                 Icons.save
                 "Submit"
                 (pst
-                    |> unwrap (PostCreateSubmit day)
+                    |> unwrap PostCreateSubmit
                         (\p ->
                             if model.postEditorBody == "" then
                                 PostClear p
@@ -2170,54 +2176,108 @@ viewBarMobile model day =
             [ btn2 False Icons.label "Tags" TagViewToggle
             , btn2 False Icons.edit "Edit" PostUpdateStart
 
-            --, btn2 False Icons.close "Close" PostViewToggle
+            --, btn2 False Icons.close "Close" PostViewStart
             , iBtn Icons.close <| NavigateTo Types.RouteCalendar
             ]
                 |> row [ width fill, spaceEvenly, alignBottom, width fill ]
 
     else
-        [ iBtn Icons.brightness_5 GoToToday
-        , btn2 False Icons.label "Tags" PostViewTagStart
-        , pst
+        model.current
             |> unwrap
-                (btn2 False Icons.edit "Write" PostUpdateStart)
-                (\p ->
-                    p.body
-                        |> unwrap
-                            (btn2 False Icons.edit "Write" PostUpdateStart)
-                            (\body ->
-                                [ icon Icons.visibility 25
-                                    |> el [ Element.alignTop ]
-                                , [ text body ]
-                                    |> paragraph
-                                        [ Font.size 12
-
-                                        --, style "overflow-y" "auto"
-                                        , height <| px 50
-
-                                        --, style "text-overflow" "ellipsis"
-                                        , style "overflow" "hidden"
-                                        ]
-                                ]
-                                    |> row
-                                        [ spacing 10
-                                        , Background.color sand
-                                        , padding 10
-
-                                        --, Border.shadow
-                                        --{ offset = ( 2, 2 )
-                                        --, blur = 0
-                                        --, size = 1
-                                        --, color = Element.rgb255 150 150 150
-                                        --}
-                                        , Border.width 1
-                                        , Border.rounded 20
-                                        ]
-                            )
-                 --btn2 False Icons.visibility "View" PostViewToggle
+                (viewTodayBtn
+                    |> el [ centerX, centerY ]
                 )
+                (\day ->
+                    let
+                        body =
+                            pst
+                                |> Maybe.andThen .body
+                    in
+                    [ viewTodayBtn
+                        |> el [ centerX, Element.alignBottom ]
+                        |> when (day /= model.today)
+                        |> el [ width fill, height fill ]
+                    , [ Input.button [ height fill, width fill ]
+                            { onPress =
+                                (if isNothing body then
+                                    PostUpdateStart
+
+                                 else
+                                    PostViewStart
+                                )
+                                    |> Just
+                            , label =
+                                [ icon Icons.edit 20
+                                    |> el [ Element.alignTop ]
+                                , body
+                                    |> Maybe.withDefault ""
+                                    |> viewPreview
+                                ]
+                                    |> row [ spacing 10, height fill, width fill ]
+                            }
+
+                      --, btn2 False Icons.label "Tags" PostViewTagStart
+                      , Input.button []
+                            { onPress = Just PostViewTagStart
+                            , label =
+                                [ icon Icons.label 20
+                                , pst
+                                    |> unwrap 0
+                                        (.tags >> List.length)
+                                    |> String.fromInt
+                                    |> text
+                                ]
+                                    |> row [ spacing 10 ]
+                            }
+
+                      --, View.Misc.dayParts day
+                      --|> List.map (text >> el [ centerX ] >> el [ width fill ])
+                      --|> row [ width fill, spaceEvenly, Font.size 16 ]
+                      , formatDay day
+                            |> text
+                            |> el [ Font.size 16, Font.italic ]
+                      ]
+                        |> column
+                            [ height fill
+                            , width fill
+                            , spacing 10
+                            ]
+                        |> el
+                            [ Border.widthEach { bottom = 0, top = 0, left = 1, right = 0 }
+                            , paddingXY 5 0
+                            , width fill
+                            , height fill
+                            ]
+                    ]
+                        |> row [ spacing 10, height fill, paddingXY 0 10, width fill ]
+                )
+
+
+viewTodayBtn : Element Msg
+viewTodayBtn =
+    Input.button
+        [ Element.paddingXY 15 0
+        , Font.color black
+        , height <| px 50
+        , Border.rounded 25
+        , Background.color sand
+        , varela
+        , Border.shadow
+            { offset = ( 3, 3 )
+            , blur = 3
+            , size = 0
+            , color = Element.rgb255 150 150 150
+            }
+        , Font.size 17
+        , View.Style.popIn
         ]
-            |> row [ Element.alignRight, spacing 10 ]
+        { onPress = Just GoToToday
+        , label =
+            [ icon Icons.brightness_5 20
+            , text "Go to today"
+            ]
+                |> row [ spacing 10 ]
+        }
 
 
 viewBar : Model -> Date -> Element Msg
@@ -2226,7 +2286,7 @@ viewBar model day =
         |> Day.get day
         |> unwrap
             (if model.postBeingEdited then
-                [ btn2 model.inProgress.post Icons.save "Submit" (PostCreateSubmit day)
+                [ btn2 model.inProgress.post Icons.save "Submit" PostCreateSubmit
                 , lnk "Cancel" PostUpdateCancel
                 ]
 
@@ -2257,7 +2317,7 @@ viewBar model day =
                             btn2 False Icons.close "Cancel" PostUpdateCancel
 
                         else
-                            btn2 False Icons.close "Close" PostViewToggle
+                            btn2 False Icons.close "Close" PostViewCancel
                       ]
                         |> row [ spacing 10, Element.alignRight ]
                     ]
@@ -2271,7 +2331,7 @@ viewBar model day =
                       , btn2 False
                             Icons.visibility
                             "View"
-                            PostViewToggle
+                            PostViewStart
                       ]
                         |> row [ spacing 10, Element.alignRight ]
                     ]
@@ -2318,7 +2378,7 @@ viewPost model d =
                 |> Day.get d
 
         create =
-            viewPostEditor (PostCreateSubmit d) model.postEditorBody False fs
+            viewPostEditor PostCreateSubmit model.postEditorBody False fs
 
         make post =
             viewPostEditor (PostUpdateSubmit post.id) model.postEditorBody (not model.postBeingEdited) fs
@@ -2352,7 +2412,7 @@ viewPost model d =
                             Icons.save
                             "Submit"
                             (pst
-                                |> unwrap (PostCreateSubmit d)
+                                |> unwrap PostCreateSubmit
                                     (\p ->
                                         if model.postEditorBody == "" then
                                             PostClear p
@@ -2446,6 +2506,50 @@ viewPostEditor msg txt disable fontSize =
             , ebg
 
             --, Element.Events.onDoubleClick PostUpdateStart
+            ]
+
+
+viewPreview : String -> Element Msg
+viewPreview txt =
+    Html.textarea
+        [ Html.Attributes.id "editor"
+        , Html.Attributes.value txt
+        , Html.Attributes.style "font-size" "inherit"
+        , Html.Attributes.style "font-family" "inherit"
+
+        --, Html.Attributes.style "font-color" "black"
+        --, Html.Attributes.style "line-height" "30px"
+        , Html.Attributes.style "padding" "0px"
+        , Html.Attributes.style "flex-grow" "inherit"
+        , Html.Attributes.readonly True
+        , Html.Attributes.style "overflow" "hidden"
+        ]
+        []
+        |> Element.html
+        |> el
+            [ width fill
+            , height fill
+            , Background.color sand
+            , Font.size 16
+            , padding 5
+            , ebg
+            , el
+                [ Helpers.View.cappedHeight 35
+                , width fill
+                , Element.alignBottom
+                , Background.gradient
+                    { angle = degrees 0
+                    , steps =
+                        [ Element.rgba255 255 245 235 1
+                        , Element.rgba255 255 245 235 0.8
+                        , Element.rgba255 255 245 235 0.7
+                        , Element.rgba255 255 245 235 0.5
+                        , Element.rgba255 255 245 235 0.4
+                        ]
+                    }
+                ]
+                none
+                |> Element.inFront
             ]
 
 

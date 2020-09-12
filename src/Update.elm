@@ -61,6 +61,11 @@ update msg model =
             , Cmd.none
             )
 
+        TodaySet d ->
+            ( { model | today = d }
+            , Cmd.none
+            )
+
         GoToToday ->
             ( model
             , Helpers.today
@@ -253,45 +258,49 @@ update msg model =
                         )
                     )
 
-        PostCreateSubmit d ->
-            if String.isEmpty model.postEditorBody then
-                ( { model | postView = False, postBeingEdited = False }, Cmd.none )
+        PostCreateSubmit ->
+            model.current
+                |> unwrap ( model, Cmd.none )
+                    (\d ->
+                        if String.isEmpty model.postEditorBody then
+                            ( { model | postView = False, postBeingEdited = False }, Cmd.none )
 
-            else if model.auth == Nothing then
-                ( { model
-                    | inProgress = model.inProgress |> (\p -> { p | post = True })
-                  }
-                , wait
-                    |> Task.andThen (always Time.now)
-                    |> Task.map
-                        (Time.posixToMillis
-                            >> Random.initialSeed
-                            >> Random.step Uuid.uuidGenerator
-                            >> Tuple.first
-                            >> (\uuid ->
-                                    { id = uuid
-                                    , body = Just model.postEditorBody
-                                    , tags = []
-                                    , date = d
-                                    }
-                                        |> Ok
-                               )
-                        )
-                    |> Task.perform PostMutateCb
-                )
-
-            else
-                ( { model | inProgress = model.inProgress |> (\p -> { p | post = True }) }
-                , model.auth
-                    |> unwrap Cmd.none
-                        (trip
-                            (Data.postCreate model.postEditorBody
-                                model.postCreateTags
-                                d
+                        else if model.auth == Nothing then
+                            ( { model
+                                | inProgress = model.inProgress |> (\p -> { p | post = True })
+                              }
+                            , wait
+                                |> Task.andThen (always Time.now)
+                                |> Task.map
+                                    (Time.posixToMillis
+                                        >> Random.initialSeed
+                                        >> Random.step Uuid.uuidGenerator
+                                        >> Tuple.first
+                                        >> (\uuid ->
+                                                { id = uuid
+                                                , body = Just model.postEditorBody
+                                                , tags = []
+                                                , date = d
+                                                }
+                                                    |> Ok
+                                           )
+                                    )
+                                |> Task.perform PostMutateCb
                             )
-                            PostMutateCb
-                        )
-                )
+
+                        else
+                            ( { model | inProgress = model.inProgress |> (\p -> { p | post = True }) }
+                            , model.auth
+                                |> unwrap Cmd.none
+                                    (trip
+                                        (Data.postCreate model.postEditorBody
+                                            model.postCreateTags
+                                            d
+                                        )
+                                        PostMutateCb
+                                    )
+                            )
+                    )
 
         PostDelete id date ->
             ( { model
@@ -315,6 +324,11 @@ update msg model =
         PostUpdateCancel ->
             ( { model
                 | postBeingEdited = False
+                , postView =
+                    model.current
+                        |> Maybe.andThen (\d -> Day.get d model.posts)
+                        |> Maybe.andThen .body
+                        |> Maybe.Extra.isJust
               }
             , Cmd.none
             )
@@ -333,10 +347,8 @@ update msg model =
                         (RouteDayDetail >> goTo)
             )
 
-        PostViewToggle ->
-            ( { model
-                | tagView = True
-              }
+        PostViewStart ->
+            ( model
             , if isWide model.screen then
                 Cmd.none
 
@@ -1436,7 +1448,7 @@ update msg model =
                         , Ports.log err
                         )
                     )
-                    (routeDemo model_)
+                    (handleRoute model_)
 
         Bad mm ->
             ( model
@@ -1459,8 +1471,8 @@ randomTask gen =
             )
 
 
-routeDemo : Model -> Route -> ( Model, Cmd Msg )
-routeDemo model route =
+handleRoute : Model -> Route -> ( Model, Cmd Msg )
+handleRoute model route =
     let
         anon =
             isNothing model.auth

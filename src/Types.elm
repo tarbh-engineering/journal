@@ -63,6 +63,7 @@ type alias Model =
     , tagsSortReverse : Bool
     , postSortReverse : Bool
     , weekStart : Weekday
+    , today : Date
     }
 
 
@@ -74,7 +75,7 @@ type Msg
     | PostDeleteCb (GqlResult Date)
     | TagsCb (GqlResult (List Tag))
     | PostViewCancel
-    | PostCreateSubmit Date
+    | PostCreateSubmit
     | PostDelete Uuid Date
     | PostUpdateStart
     | PostUpdateCancel
@@ -114,7 +115,7 @@ type Msg
     | GoToToday
     | SetSelectedResult Uuid
     | PostClear Post
-    | PostViewToggle
+    | PostViewStart
     | TagViewToggle
     | VisibilityChange Visibility
     | Resize Screen
@@ -137,6 +138,7 @@ type Msg
     | TagsSortSet TagsSort
     | PostSortToggle
     | WeekdaySet Weekday
+    | TodaySet Date
 
 
 type alias Flags =

@@ -1,8 +1,13 @@
-module View.Style exposing (abel, black, blue, ebg, fadeIn, grey, purple, rotate, sand, serif, varela, white, yellow)
+module View.Style exposing (abel, black, blue, ebg, fadeIn, grey, popIn, purple, rotate, sand, serif, varela, white, yellow)
 
 import Element exposing (Attribute, Color, rgb255)
 import Element.Font as Font
 import Helpers.View exposing (style)
+
+
+popIn : Attribute msg
+popIn =
+    style "animation" "enter 0.5s"
 
 
 fadeIn : Attribute msg

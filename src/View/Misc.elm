@@ -1,4 +1,4 @@
-module View.Misc exposing (btn, btn2, btn3, formatDateTime, formatDay, iBtn, icon, isSmall, isTall, isWide, lnk, spinner, tallInt)
+module View.Misc exposing (btn, btn2, btn3, dayParts, formatDateTime, formatDay, iBtn, icon, isSmall, isTall, isWide, lnk, spinner, tallInt)
 
 import Calendar exposing (Date)
 import DateTime exposing (DateTime)
@@ -61,6 +61,16 @@ formatDay d =
     , d |> Calendar.getYear |> String.fromInt
     ]
         |> String.join " "
+
+
+dayParts : Date -> List String
+dayParts d =
+    [ d |> Calendar.getDay |> Ordinal.ordinal
+    , d
+        |> Calendar.getMonth
+        |> monthName
+    , d |> Calendar.getYear |> String.fromInt
+    ]
 
 
 icon : Icon msg -> Int -> Element msg

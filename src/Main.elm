@@ -2,11 +2,14 @@ module Main exposing (main)
 
 import Browser
 import Browser.Events
+import Calendar
 import Day
 import Derberos.Date.Utils exposing (numberToMonth)
+import Helpers
 import Helpers.UuidDict as UD
 import Ports
 import Routing
+import Task
 import Time
 import Types exposing (Flags, Model, Msg, Screen)
 import Update exposing (update)
@@ -33,7 +36,8 @@ init flags =
         , year = flags.year
         , tall = isTall flags.screen
       }
-    , Cmd.none
+    , Helpers.today
+        |> Task.perform Types.TodaySet
     )
 
 
@@ -105,4 +109,5 @@ emptyModel =
     , tagsSortReverse = False
     , postSortReverse = False
     , weekStart = Time.Mon
+    , today = 0 |> Time.millisToPosix |> Calendar.fromPosix
     }
