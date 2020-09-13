@@ -150,7 +150,7 @@ viewCalendar model =
                     cycle 6
 
         btnSize =
-            if model.screen.width < 412 then
+            if model.screen.height < 700 then
                 20
 
             else
@@ -329,7 +329,7 @@ viewCell model n day =
                 , height fill
                 , Background.color blue
                 , style "transform-origin" "center"
-                , style "animation" "enter 0.3s"
+                , View.Style.popIn
                     |> whenAttr (not model.postBeingEdited)
                 ]
             |> Element.inFront
@@ -1267,7 +1267,7 @@ viewBuy model =
             [ height <| px 35
 
             --, fadeIn
-            , style "animation" "enter 1s"
+            , View.Style.popIn
             , style "transform-origin" "center"
             ]
             { src = "/stripe1.png", description = "" }
@@ -1282,8 +1282,7 @@ viewBuy model =
             , padding 20
             , Element.alignBottom
             , Background.color sand
-
-            --, style "animation" "enter 1s"
+            , View.Style.popIn
             , style "transform-origin" "center"
             , shadow2
             , Border.rounded 20
@@ -1801,8 +1800,18 @@ viewFrame model elem =
 viewFrameMobile : Model -> Element Msg -> Element Msg
 viewFrameMobile model elem =
     let
+        iconSize =
+            if model.screen.height > 575 then
+                40
+
+            else if model.screen.height > 550 then
+                30
+
+            else
+                20
+
         nd =
-            if model.tall then
+            if model.screen.width > 412 && model.tall then
                 20
 
             else
@@ -1890,33 +1899,75 @@ viewFrameMobile model elem =
       ]
         |> List.map
             (\( n, r, v ) ->
+                let
+                    curr =
+                        v == model.view
+
+                    col =
+                        case r of
+                            Types.RouteSettings ->
+                                View.Style.gold
+
+                            Types.RouteCalendar ->
+                                blue
+
+                            Types.RouteTags ->
+                                View.Style.red
+
+                            _ ->
+                                View.Style.garish
+                in
                 Input.button
-                    [ Font.underline |> whenAttr (v == model.view)
+                    [ Font.underline |> whenAttr curr
                     , width fill
-                    , (if v == model.view then
-                        blue
+                    , (if curr then
+                        white
 
                        else
                         black
                       )
                         |> Font.color
+                    , height <| px <| iconSize + 15
                     ]
                     { onPress =
-                        if v == model.view then
+                        if curr then
                             Nothing
 
                         else
                             Just <| NavigateTo r
                     , label =
-                        icon n 40
-                            |> el [ centerX, height fill ]
+                        none
+                            |> el
+                                [ icon n iconSize
+                                    |> el
+                                        [ centerX
+                                        , centerY
+                                        ]
+                                    |> Element.inFront
+                                , none
+                                    |> el
+                                        [ width <| px <| iconSize + 15
+                                        , height <| px <| iconSize + 15
+                                        , Background.color col
+                                        , style "transform-origin" "center"
+                                        , View.Style.popIn
+                                        , Border.rounded 50
+                                        , centerX
+                                        , centerY
+                                        ]
+                                    |> Element.behindContent
+                                    |> whenAttr curr
+                                , centerX
+                                , height fill
+                                ]
                     }
             )
         |> row [ Element.alignBottom, width fill ]
-        |> when (model.tall && model.screen.height >= View.Misc.tallInt)
+        |> when (model.screen.height >= View.Misc.tallInt)
     ]
         |> column
-            [ spacing nd
+            --[ spacing nd
+            [ spaceEvenly
             , height fill
             , width fill
 
@@ -2158,9 +2209,7 @@ viewBarMobile model =
     if model.postView then
         if model.tagView then
             [ btn2 False Icons.edit "Write" PostUpdateStart
-
-            --, btn2 False Icons.close "Close" TagViewToggle
-            , iBtn 30 Icons.close <| NavigateTo Types.RouteCalendar
+            , iBtn 30 Icons.expand_more <| NavigateTo Types.RouteCalendar
             ]
                 |> row [ width fill, spaceEvenly, alignBottom, width fill ]
 
@@ -2185,9 +2234,7 @@ viewBarMobile model =
         else
             [ btn2 False Icons.label "Tags" TagViewToggle
             , btn2 False Icons.edit "Edit" PostUpdateStart
-
-            --, btn2 False Icons.close "Close" PostViewStart
-            , iBtn 30 Icons.close <| NavigateTo Types.RouteCalendar
+            , iBtn 30 Icons.expand_more <| NavigateTo Types.RouteCalendar
             ]
                 |> row [ width fill, spaceEvenly, alignBottom, width fill ]
 
@@ -2205,7 +2252,7 @@ viewBarMobile model =
                     in
                     [ viewTodayBtn
                         |> el [ centerX, Element.alignBottom ]
-                        |> when (day /= model.today)
+                        |> when (day /= model.today || model.month /= Calendar.getMonth day)
                         |> el [ width fill, height fill ]
                     , [ Input.button [ height fill, width fill ]
                             { onPress =
@@ -2534,6 +2581,8 @@ viewPreview txt =
         , Html.Attributes.style "font-color" "inherit"
         , Html.Attributes.style "padding" "0px"
         , Html.Attributes.style "flex-grow" "inherit"
+        , Html.Attributes.style "height" "inherit"
+        , Html.Attributes.style "min-height" "auto"
         , Html.Attributes.readonly True
         , Html.Attributes.style "overflow" "hidden"
         ]
@@ -2588,7 +2637,7 @@ viewPostTags model d pst =
             (NavigateTo Types.RouteTags)
             |> el [ centerX ]
         ]
-            |> column [ spacing 20, padding 20, centerX ]
+            |> column [ spacing 20, padding 20, centerX, centerY ]
 
     else
         xs

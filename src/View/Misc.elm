@@ -18,7 +18,7 @@ import View.Style exposing (black, blue, rotate, sand, varela, white)
 
 tallInt : Int
 tallInt =
-    640
+    512
 
 
 isTall : Screen -> Bool

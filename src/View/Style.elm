@@ -1,4 +1,4 @@
-module View.Style exposing (abel, black, blue, ebg, fadeIn, grey, popIn, purple, rotate, sand, serif, varela, white, yellow)
+module View.Style exposing (abel, black, blue, ebg, fadeIn, garish, gold, grey, popIn, purple, red, rotate, sand, serif, varela, white, yellow)
 
 import Element exposing (Attribute, Color, rgb255)
 import Element.Font as Font
@@ -7,7 +7,7 @@ import Helpers.View exposing (style)
 
 popIn : Attribute msg
 popIn =
-    style "animation" "enter 0.5s"
+    style "animation" "enter 0.3s"
 
 
 fadeIn : Attribute msg
@@ -50,8 +50,23 @@ rotate =
         "rotation 0.7s infinite linear"
 
 
+gold : Color
+gold =
+    rgb255 212 196 78
+
+
 blue : Color
 blue =
+    rgb255 51 103 211
+
+
+red : Color
+red =
+    rgb255 206 68 40
+
+
+garish : Color
+garish =
     rgb255 112 237 204
 
 
