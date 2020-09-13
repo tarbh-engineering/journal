@@ -105,6 +105,9 @@ viewCalendar model =
     let
         ht =
             if model.screen.height < 550 then
+                30
+
+            else if model.screen.height < 600 then
                 35
 
             else if model.screen.height < 700 then
@@ -344,7 +347,7 @@ viewCell model n day =
                     , Font.size (n // 2)
                     , abel
                     ]
-          , [ icon Icons.label 15
+          , [ icon Icons.assignment_turned_in 15
                 |> when (pst |> unwrap False (\p -> not <| List.isEmpty p.tags))
             , icon Icons.edit 15
                 |> when (pst |> unwrap False (\p -> isJust p.body))
@@ -2000,7 +2003,7 @@ viewRoute r v =
                     Icons.calendar_today
 
                 Types.RouteTags ->
-                    Icons.label
+                    Icons.assignment_turned_in
 
                 Types.RouteSettings ->
                     Icons.settings
@@ -2232,7 +2235,7 @@ viewBarMobile model =
                 |> row [ spacing 20, Element.alignRight ]
 
         else
-            [ btn2 False Icons.label "Tags" TagViewToggle
+            [ btn2 False Icons.assignment_turned_in "Tags" TagViewToggle
             , btn2 False Icons.edit "Edit" PostUpdateStart
             , iBtn 30 Icons.expand_more <| NavigateTo Types.RouteCalendar
             ]
@@ -2241,7 +2244,7 @@ viewBarMobile model =
     else
         model.current
             |> unwrap
-                (viewTodayBtn
+                (viewTodayBtn model.screen
                     |> el [ centerX, centerY ]
                 )
                 (\day ->
@@ -2250,7 +2253,7 @@ viewBarMobile model =
                             pst
                                 |> Maybe.andThen .body
                     in
-                    [ viewTodayBtn
+                    [ viewTodayBtn model.screen
                         |> el [ centerX, Element.alignBottom ]
                         |> when (day /= model.today || model.month /= Calendar.getMonth day)
                         |> el [ width fill, height fill ]
@@ -2264,27 +2267,25 @@ viewBarMobile model =
                                 )
                                     |> Just
                             , label =
-                                [ icon Icons.edit 20
-                                    |> el [ Element.alignTop ]
-                                , body
+                                [ body
                                     |> Maybe.withDefault ""
                                     |> viewPreview
+                                , icon Icons.edit 20
+                                    |> el [ Element.alignTop ]
                                 ]
                                     |> row [ spacing 10, height fill, width fill ]
                             }
-
-                      --, btn2 False Icons.label "Tags" PostViewTagStart
                       , Input.button [ width fill ]
                             { onPress = Just PostViewTagStart
                             , label =
-                                [ icon Icons.label 20
-                                , pst
+                                [ pst
                                     |> unwrap 0
                                         (.tags >> List.length)
                                     |> String.fromInt
                                     |> text
+                                , icon Icons.assignment_turned_in 20
                                 ]
-                                    |> row [ spacing 10 ]
+                                    |> row [ spacing 10, Element.alignRight ]
                             }
 
                       --, View.Misc.dayParts day
@@ -2292,7 +2293,17 @@ viewBarMobile model =
                       --|> row [ width fill, spaceEvenly, Font.size 16 ]
                       , formatDay day
                             |> text
-                            |> el [ Font.size 16, Font.italic ]
+                            |> el
+                                [ (if model.screen.width < 360 then
+                                    14
+
+                                   else
+                                    16
+                                  )
+                                    |> Font.size
+                                , Font.italic
+                                , Element.alignRight
+                                ]
                       ]
                         |> column
                             [ height fill
@@ -2315,8 +2326,8 @@ viewBarMobile model =
                 )
 
 
-viewTodayBtn : Element Msg
-viewTodayBtn =
+viewTodayBtn : Types.Screen -> Element Msg
+viewTodayBtn screen =
     Input.button
         [ Element.paddingXY 15 0
         , Font.color black
@@ -2336,7 +2347,13 @@ viewTodayBtn =
         { onPress = Just GoToToday
         , label =
             [ icon Icons.brightness_5 20
-            , text "Go to today"
+            , (if screen.width < 360 then
+                "Today"
+
+               else
+                "Go to today"
+              )
+                |> text
             ]
                 |> row [ spacing 10 ]
         }
@@ -2353,7 +2370,7 @@ viewBar model day =
                 ]
 
              else
-                [ btn2 False Icons.label "Tags" TagViewToggle
+                [ btn2 False Icons.assignment_turned_in "Tags" TagViewToggle
                 , btn2 False Icons.edit "Write" PostUpdateStart
                 ]
             )
@@ -2632,7 +2649,7 @@ viewPostTags model d pst =
             |> paragraph []
         , btn3
             False
-            Icons.label
+            Icons.assignment_turned_in
             "Go to tags"
             (NavigateTo Types.RouteTags)
             |> el [ centerX ]
