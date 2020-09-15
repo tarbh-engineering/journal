@@ -28,7 +28,7 @@ isTall scr =
 
 isWide : Screen -> Bool
 isWide scr =
-    scr.width > 768
+    scr.width > 768 || scr.width > scr.height
 
 
 isSmall : Screen -> Bool

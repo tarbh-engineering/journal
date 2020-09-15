@@ -21,22 +21,6 @@ type Post_tag
     = Post_tag
 
 
-type Post_tag_aggregate
-    = Post_tag_aggregate
-
-
-type Post_tag_aggregate_fields
-    = Post_tag_aggregate_fields
-
-
-type Post_tag_max_fields
-    = Post_tag_max_fields
-
-
-type Post_tag_min_fields
-    = Post_tag_min_fields
-
-
 type Post_tag_mutation_response
     = Post_tag_mutation_response
 

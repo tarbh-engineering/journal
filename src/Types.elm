@@ -1,4 +1,4 @@
-module Types exposing (App(..), Auth, BootFlags, Cipher, Def(..), Flags, Funnel(..), GqlResult, GqlTask, Keys, Model, Msg(..), Post, PostRaw, Route(..), Screen, Tag, TagRaw, TagsSort(..), TagsView(..), View(..))
+module Types exposing (App(..), Auth, BootFlags, Cipher, Def(..), Flags, Funnel(..), GqlResult, GqlTask, Keys, Model, Msg(..), Post, PostRaw, PostTag, Route(..), Screen, Tag, TagRaw, TagsSort(..), TagsView(..), View(..))
 
 import Array exposing (Array)
 import Browser exposing (UrlRequest)
@@ -29,6 +29,7 @@ type alias Model =
         , monthlyPlan : Bool
         , annualPlan : Bool
         , tags : List Uuid
+        , postTags : List ( Date, Uuid )
         }
     , postEditorBody : String
     , postBeingEdited : Bool
@@ -70,7 +71,7 @@ type alias Model =
 type Msg
     = PostsCb (GqlResult (List Post))
     | PostCb Date (GqlResult (Maybe Post))
-    | PostTagCb Uuid (GqlResult Post)
+    | PostTagCb ( Date, Uuid ) (GqlResult Post)
     | PostMutateCb (GqlResult Post)
     | PostDeleteCb (GqlResult Date)
     | TagsCb (GqlResult (List Tag))
@@ -105,9 +106,6 @@ type Msg
     | TagCreateNameUpdate String
     | TagCreateSubmit
     | TagCreateCb (GqlResult Tag)
-    | PostTagToggle Post Tag
-    | PostCreateWithTag Date Tag
-    | PostCreateWithTagCb Uuid (GqlResult Post)
     | FocusCb (Result Browser.Dom.Error ())
     | UrlChange (Result String Route)
     | UrlRequest UrlRequest
@@ -139,6 +137,8 @@ type Msg
     | PostSortToggle
     | WeekdaySet Weekday
     | TodaySet Date
+    | PostTagAttach Date Uuid
+    | PostTagDetach Date Uuid
 
 
 type alias Flags =
@@ -244,7 +244,13 @@ type alias Post =
     { date : Date
     , body : Maybe String
     , id : Uuid
-    , tags : List Uuid
+    , tags : List PostTag
+    }
+
+
+type alias PostTag =
+    { id : Uuid
+    , tag : Uuid
     }
 
 
@@ -252,7 +258,7 @@ type alias PostRaw =
     { date : Date
     , cipher : Maybe Cipher
     , id : Uuid
-    , tags : List Uuid
+    , tags : List PostTag
     }
 
 
@@ -265,7 +271,7 @@ type alias Cipher =
 type alias Tag =
     { name : String
     , id : Uuid
-    , count : Int
+    , posts : List Date
     , created : DateTime
     }
 
@@ -273,6 +279,6 @@ type alias Tag =
 type alias TagRaw =
     { cipher : Cipher
     , id : Uuid
-    , count : Int
+    , posts : List Date
     , created : DateTime
     }

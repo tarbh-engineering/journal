@@ -320,9 +320,9 @@ buildPost_order_by fillOptionals =
     let
         optionals =
             fillOptionals
-                { ciphertext = Absent, date = Absent, id = Absent, iv = Absent, post_tags_aggregate = Absent }
+                { ciphertext = Absent, date = Absent, id = Absent, iv = Absent }
     in
-    { ciphertext = optionals.ciphertext, date = optionals.date, id = optionals.id, iv = optionals.iv, post_tags_aggregate = optionals.post_tags_aggregate }
+    { ciphertext = optionals.ciphertext, date = optionals.date, id = optionals.id, iv = optionals.iv }
 
 
 type alias Post_order_byOptionalFields =
@@ -330,7 +330,6 @@ type alias Post_order_byOptionalFields =
     , date : OptionalArgument Api.Enum.Order_by.Order_by
     , id : OptionalArgument Api.Enum.Order_by.Order_by
     , iv : OptionalArgument Api.Enum.Order_by.Order_by
-    , post_tags_aggregate : OptionalArgument Post_tag_aggregate_order_by
     }
 
 
@@ -341,7 +340,6 @@ type alias Post_order_by =
     , date : OptionalArgument Api.Enum.Order_by.Order_by
     , id : OptionalArgument Api.Enum.Order_by.Order_by
     , iv : OptionalArgument Api.Enum.Order_by.Order_by
-    , post_tags_aggregate : OptionalArgument Post_tag_aggregate_order_by
     }
 
 
@@ -350,7 +348,7 @@ type alias Post_order_by =
 encodePost_order_by : Post_order_by -> Value
 encodePost_order_by input =
     Encode.maybeObject
-        [ ( "ciphertext", Encode.enum Api.Enum.Order_by.toString |> Encode.optional input.ciphertext ), ( "date", Encode.enum Api.Enum.Order_by.toString |> Encode.optional input.date ), ( "id", Encode.enum Api.Enum.Order_by.toString |> Encode.optional input.id ), ( "iv", Encode.enum Api.Enum.Order_by.toString |> Encode.optional input.iv ), ( "post_tags_aggregate", encodePost_tag_aggregate_order_by |> Encode.optional input.post_tags_aggregate ) ]
+        [ ( "ciphertext", Encode.enum Api.Enum.Order_by.toString |> Encode.optional input.ciphertext ), ( "date", Encode.enum Api.Enum.Order_by.toString |> Encode.optional input.date ), ( "id", Encode.enum Api.Enum.Order_by.toString |> Encode.optional input.id ), ( "iv", Encode.enum Api.Enum.Order_by.toString |> Encode.optional input.iv ) ]
 
 
 buildPost_pk_columns_input :
@@ -412,42 +410,6 @@ encodePost_set_input input =
         [ ( "ciphertext", Encode.string |> Encode.optional input.ciphertext ), ( "iv", Encode.string |> Encode.optional input.iv ) ]
 
 
-buildPost_tag_aggregate_order_by :
-    (Post_tag_aggregate_order_byOptionalFields -> Post_tag_aggregate_order_byOptionalFields)
-    -> Post_tag_aggregate_order_by
-buildPost_tag_aggregate_order_by fillOptionals =
-    let
-        optionals =
-            fillOptionals
-                { count = Absent, max = Absent, min = Absent }
-    in
-    { count = optionals.count, max = optionals.max, min = optionals.min }
-
-
-type alias Post_tag_aggregate_order_byOptionalFields =
-    { count : OptionalArgument Api.Enum.Order_by.Order_by
-    , max : OptionalArgument Post_tag_max_order_by
-    , min : OptionalArgument Post_tag_min_order_by
-    }
-
-
-{-| Type for the Post\_tag\_aggregate\_order\_by input object.
--}
-type alias Post_tag_aggregate_order_by =
-    { count : OptionalArgument Api.Enum.Order_by.Order_by
-    , max : OptionalArgument Post_tag_max_order_by
-    , min : OptionalArgument Post_tag_min_order_by
-    }
-
-
-{-| Encode a Post\_tag\_aggregate\_order\_by into a value that can be used as an argument.
--}
-encodePost_tag_aggregate_order_by : Post_tag_aggregate_order_by -> Value
-encodePost_tag_aggregate_order_by input =
-    Encode.maybeObject
-        [ ( "count", Encode.enum Api.Enum.Order_by.toString |> Encode.optional input.count ), ( "max", encodePost_tag_max_order_by |> Encode.optional input.max ), ( "min", encodePost_tag_min_order_by |> Encode.optional input.min ) ]
-
-
 buildPost_tag_arr_rel_insert_input :
     Post_tag_arr_rel_insert_inputRequiredFields
     -> Post_tag_arr_rel_insert_input
@@ -489,15 +451,16 @@ buildPost_tag_bool_exp fillOptionals =
     let
         optionals =
             fillOptionals
-                { and_ = Absent, not_ = Absent, or_ = Absent, post = Absent, post_id = Absent, tag = Absent, tag_id = Absent }
+                { and_ = Absent, not_ = Absent, or_ = Absent, id = Absent, post = Absent, post_id = Absent, tag = Absent, tag_id = Absent }
     in
-    Post_tag_bool_exp { and_ = optionals.and_, not_ = optionals.not_, or_ = optionals.or_, post = optionals.post, post_id = optionals.post_id, tag = optionals.tag, tag_id = optionals.tag_id }
+    Post_tag_bool_exp { and_ = optionals.and_, not_ = optionals.not_, or_ = optionals.or_, id = optionals.id, post = optionals.post, post_id = optionals.post_id, tag = optionals.tag, tag_id = optionals.tag_id }
 
 
 type alias Post_tag_bool_expOptionalFields =
     { and_ : OptionalArgument (List (Maybe Post_tag_bool_exp))
     , not_ : OptionalArgument Post_tag_bool_exp
     , or_ : OptionalArgument (List (Maybe Post_tag_bool_exp))
+    , id : OptionalArgument Uuid_comparison_exp
     , post : OptionalArgument Post_bool_exp
     , post_id : OptionalArgument Uuid_comparison_exp
     , tag : OptionalArgument Tag_bool_exp
@@ -514,6 +477,7 @@ type alias Post_tag_bool_expRaw =
     { and_ : OptionalArgument (List (Maybe Post_tag_bool_exp))
     , not_ : OptionalArgument Post_tag_bool_exp
     , or_ : OptionalArgument (List (Maybe Post_tag_bool_exp))
+    , id : OptionalArgument Uuid_comparison_exp
     , post : OptionalArgument Post_bool_exp
     , post_id : OptionalArgument Uuid_comparison_exp
     , tag : OptionalArgument Tag_bool_exp
@@ -532,7 +496,7 @@ type Post_tag_bool_exp
 encodePost_tag_bool_exp : Post_tag_bool_exp -> Value
 encodePost_tag_bool_exp (Post_tag_bool_exp input) =
     Encode.maybeObject
-        [ ( "_and", (encodePost_tag_bool_exp |> Encode.maybe |> Encode.list) |> Encode.optional input.and_ ), ( "_not", encodePost_tag_bool_exp |> Encode.optional input.not_ ), ( "_or", (encodePost_tag_bool_exp |> Encode.maybe |> Encode.list) |> Encode.optional input.or_ ), ( "post", encodePost_bool_exp |> Encode.optional input.post ), ( "post_id", encodeUuid_comparison_exp |> Encode.optional input.post_id ), ( "tag", encodeTag_bool_exp |> Encode.optional input.tag ), ( "tag_id", encodeUuid_comparison_exp |> Encode.optional input.tag_id ) ]
+        [ ( "_and", (encodePost_tag_bool_exp |> Encode.maybe |> Encode.list) |> Encode.optional input.and_ ), ( "_not", encodePost_tag_bool_exp |> Encode.optional input.not_ ), ( "_or", (encodePost_tag_bool_exp |> Encode.maybe |> Encode.list) |> Encode.optional input.or_ ), ( "id", encodeUuid_comparison_exp |> Encode.optional input.id ), ( "post", encodePost_bool_exp |> Encode.optional input.post ), ( "post_id", encodeUuid_comparison_exp |> Encode.optional input.post_id ), ( "tag", encodeTag_bool_exp |> Encode.optional input.tag ), ( "tag_id", encodeUuid_comparison_exp |> Encode.optional input.tag_id ) ]
 
 
 buildPost_tag_insert_input :
@@ -582,74 +546,6 @@ encodePost_tag_insert_input (Post_tag_insert_input input) =
         [ ( "post", encodePost_obj_rel_insert_input |> Encode.optional input.post ), ( "post_id", (CustomScalars.codecs |> Api.Scalar.unwrapEncoder .codecUuid) |> Encode.optional input.post_id ), ( "tag", encodeTag_obj_rel_insert_input |> Encode.optional input.tag ), ( "tag_id", (CustomScalars.codecs |> Api.Scalar.unwrapEncoder .codecUuid) |> Encode.optional input.tag_id ) ]
 
 
-buildPost_tag_max_order_by :
-    (Post_tag_max_order_byOptionalFields -> Post_tag_max_order_byOptionalFields)
-    -> Post_tag_max_order_by
-buildPost_tag_max_order_by fillOptionals =
-    let
-        optionals =
-            fillOptionals
-                { post_id = Absent, tag_id = Absent }
-    in
-    { post_id = optionals.post_id, tag_id = optionals.tag_id }
-
-
-type alias Post_tag_max_order_byOptionalFields =
-    { post_id : OptionalArgument Api.Enum.Order_by.Order_by
-    , tag_id : OptionalArgument Api.Enum.Order_by.Order_by
-    }
-
-
-{-| Type for the Post\_tag\_max\_order\_by input object.
--}
-type alias Post_tag_max_order_by =
-    { post_id : OptionalArgument Api.Enum.Order_by.Order_by
-    , tag_id : OptionalArgument Api.Enum.Order_by.Order_by
-    }
-
-
-{-| Encode a Post\_tag\_max\_order\_by into a value that can be used as an argument.
--}
-encodePost_tag_max_order_by : Post_tag_max_order_by -> Value
-encodePost_tag_max_order_by input =
-    Encode.maybeObject
-        [ ( "post_id", Encode.enum Api.Enum.Order_by.toString |> Encode.optional input.post_id ), ( "tag_id", Encode.enum Api.Enum.Order_by.toString |> Encode.optional input.tag_id ) ]
-
-
-buildPost_tag_min_order_by :
-    (Post_tag_min_order_byOptionalFields -> Post_tag_min_order_byOptionalFields)
-    -> Post_tag_min_order_by
-buildPost_tag_min_order_by fillOptionals =
-    let
-        optionals =
-            fillOptionals
-                { post_id = Absent, tag_id = Absent }
-    in
-    { post_id = optionals.post_id, tag_id = optionals.tag_id }
-
-
-type alias Post_tag_min_order_byOptionalFields =
-    { post_id : OptionalArgument Api.Enum.Order_by.Order_by
-    , tag_id : OptionalArgument Api.Enum.Order_by.Order_by
-    }
-
-
-{-| Type for the Post\_tag\_min\_order\_by input object.
--}
-type alias Post_tag_min_order_by =
-    { post_id : OptionalArgument Api.Enum.Order_by.Order_by
-    , tag_id : OptionalArgument Api.Enum.Order_by.Order_by
-    }
-
-
-{-| Encode a Post\_tag\_min\_order\_by into a value that can be used as an argument.
--}
-encodePost_tag_min_order_by : Post_tag_min_order_by -> Value
-encodePost_tag_min_order_by input =
-    Encode.maybeObject
-        [ ( "post_id", Encode.enum Api.Enum.Order_by.toString |> Encode.optional input.post_id ), ( "tag_id", Encode.enum Api.Enum.Order_by.toString |> Encode.optional input.tag_id ) ]
-
-
 buildPost_tag_obj_rel_insert_input :
     Post_tag_obj_rel_insert_inputRequiredFields
     -> Post_tag_obj_rel_insert_input
@@ -691,26 +587,14 @@ buildPost_tag_order_by fillOptionals =
     let
         optionals =
             fillOptionals
-                { post = Absent, post_id = Absent, tag = Absent, tag_id = Absent }
+                { id = Absent, post = Absent, post_id = Absent, tag = Absent, tag_id = Absent }
     in
-    Post_tag_order_by { post = optionals.post, post_id = optionals.post_id, tag = optionals.tag, tag_id = optionals.tag_id }
+    { id = optionals.id, post = optionals.post, post_id = optionals.post_id, tag = optionals.tag, tag_id = optionals.tag_id }
 
 
 type alias Post_tag_order_byOptionalFields =
-    { post : OptionalArgument Post_order_by
-    , post_id : OptionalArgument Api.Enum.Order_by.Order_by
-    , tag : OptionalArgument Tag_order_by
-    , tag_id : OptionalArgument Api.Enum.Order_by.Order_by
-    }
-
-
-{-| Type alias for the `Post_tag_order_by` attributes. Note that this type
-needs to use the `Post_tag_order_by` type (not just a plain type alias) because it has
-references to itself either directly (recursive) or indirectly (circular). See
-<https://github.com/dillonkearns/elm-graphql/issues/33>.
--}
-type alias Post_tag_order_byRaw =
-    { post : OptionalArgument Post_order_by
+    { id : OptionalArgument Api.Enum.Order_by.Order_by
+    , post : OptionalArgument Post_order_by
     , post_id : OptionalArgument Api.Enum.Order_by.Order_by
     , tag : OptionalArgument Tag_order_by
     , tag_id : OptionalArgument Api.Enum.Order_by.Order_by
@@ -719,16 +603,21 @@ type alias Post_tag_order_byRaw =
 
 {-| Type for the Post\_tag\_order\_by input object.
 -}
-type Post_tag_order_by
-    = Post_tag_order_by Post_tag_order_byRaw
+type alias Post_tag_order_by =
+    { id : OptionalArgument Api.Enum.Order_by.Order_by
+    , post : OptionalArgument Post_order_by
+    , post_id : OptionalArgument Api.Enum.Order_by.Order_by
+    , tag : OptionalArgument Tag_order_by
+    , tag_id : OptionalArgument Api.Enum.Order_by.Order_by
+    }
 
 
 {-| Encode a Post\_tag\_order\_by into a value that can be used as an argument.
 -}
 encodePost_tag_order_by : Post_tag_order_by -> Value
-encodePost_tag_order_by (Post_tag_order_by input) =
+encodePost_tag_order_by input =
     Encode.maybeObject
-        [ ( "post", encodePost_order_by |> Encode.optional input.post ), ( "post_id", Encode.enum Api.Enum.Order_by.toString |> Encode.optional input.post_id ), ( "tag", encodeTag_order_by |> Encode.optional input.tag ), ( "tag_id", Encode.enum Api.Enum.Order_by.toString |> Encode.optional input.tag_id ) ]
+        [ ( "id", Encode.enum Api.Enum.Order_by.toString |> Encode.optional input.id ), ( "post", encodePost_order_by |> Encode.optional input.post ), ( "post_id", Encode.enum Api.Enum.Order_by.toString |> Encode.optional input.post_id ), ( "tag", encodeTag_order_by |> Encode.optional input.tag ), ( "tag_id", Encode.enum Api.Enum.Order_by.toString |> Encode.optional input.tag_id ) ]
 
 
 buildPost_tag_pk_columns_input :
@@ -1064,9 +953,9 @@ buildTag_order_by fillOptionals =
     let
         optionals =
             fillOptionals
-                { ciphertext = Absent, created_at = Absent, id = Absent, iv = Absent, post_tags_aggregate = Absent }
+                { ciphertext = Absent, created_at = Absent, id = Absent, iv = Absent }
     in
-    { ciphertext = optionals.ciphertext, created_at = optionals.created_at, id = optionals.id, iv = optionals.iv, post_tags_aggregate = optionals.post_tags_aggregate }
+    { ciphertext = optionals.ciphertext, created_at = optionals.created_at, id = optionals.id, iv = optionals.iv }
 
 
 type alias Tag_order_byOptionalFields =
@@ -1074,7 +963,6 @@ type alias Tag_order_byOptionalFields =
     , created_at : OptionalArgument Api.Enum.Order_by.Order_by
     , id : OptionalArgument Api.Enum.Order_by.Order_by
     , iv : OptionalArgument Api.Enum.Order_by.Order_by
-    , post_tags_aggregate : OptionalArgument Post_tag_aggregate_order_by
     }
 
 
@@ -1085,7 +973,6 @@ type alias Tag_order_by =
     , created_at : OptionalArgument Api.Enum.Order_by.Order_by
     , id : OptionalArgument Api.Enum.Order_by.Order_by
     , iv : OptionalArgument Api.Enum.Order_by.Order_by
-    , post_tags_aggregate : OptionalArgument Post_tag_aggregate_order_by
     }
 
 
@@ -1094,7 +981,7 @@ type alias Tag_order_by =
 encodeTag_order_by : Tag_order_by -> Value
 encodeTag_order_by input =
     Encode.maybeObject
-        [ ( "ciphertext", Encode.enum Api.Enum.Order_by.toString |> Encode.optional input.ciphertext ), ( "created_at", Encode.enum Api.Enum.Order_by.toString |> Encode.optional input.created_at ), ( "id", Encode.enum Api.Enum.Order_by.toString |> Encode.optional input.id ), ( "iv", Encode.enum Api.Enum.Order_by.toString |> Encode.optional input.iv ), ( "post_tags_aggregate", encodePost_tag_aggregate_order_by |> Encode.optional input.post_tags_aggregate ) ]
+        [ ( "ciphertext", Encode.enum Api.Enum.Order_by.toString |> Encode.optional input.ciphertext ), ( "created_at", Encode.enum Api.Enum.Order_by.toString |> Encode.optional input.created_at ), ( "id", Encode.enum Api.Enum.Order_by.toString |> Encode.optional input.id ), ( "iv", Encode.enum Api.Enum.Order_by.toString |> Encode.optional input.iv ) ]
 
 
 buildTag_pk_columns_input :

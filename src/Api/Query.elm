@@ -126,40 +126,6 @@ post_tag fillInOptionals object_ =
     Object.selectionForCompositeField "post_tag" optionalArgs object_ (identity >> Decode.list)
 
 
-type alias PostTagAggregateOptionalArguments =
-    { distinct_on : OptionalArgument (List Api.Enum.Post_tag_select_column.Post_tag_select_column)
-    , limit : OptionalArgument Int
-    , offset : OptionalArgument Int
-    , order_by : OptionalArgument (List Api.InputObject.Post_tag_order_by)
-    , where_ : OptionalArgument Api.InputObject.Post_tag_bool_exp
-    }
-
-
-{-| fetch aggregated fields from the table: "post\_tag"
-
-  - distinct\_on - distinct select on columns
-  - limit - limit the number of rows returned
-  - offset - skip the first n rows. Use only with order\_by
-  - order\_by - sort the rows by one or more columns
-  - where\_ - filter the rows returned
-
--}
-post_tag_aggregate :
-    (PostTagAggregateOptionalArguments -> PostTagAggregateOptionalArguments)
-    -> SelectionSet decodesTo Api.Object.Post_tag_aggregate
-    -> SelectionSet decodesTo RootQuery
-post_tag_aggregate fillInOptionals object_ =
-    let
-        filledInOptionals =
-            fillInOptionals { distinct_on = Absent, limit = Absent, offset = Absent, order_by = Absent, where_ = Absent }
-
-        optionalArgs =
-            [ Argument.optional "distinct_on" filledInOptionals.distinct_on (Encode.enum Api.Enum.Post_tag_select_column.toString |> Encode.list), Argument.optional "limit" filledInOptionals.limit Encode.int, Argument.optional "offset" filledInOptionals.offset Encode.int, Argument.optional "order_by" filledInOptionals.order_by (Api.InputObject.encodePost_tag_order_by |> Encode.list), Argument.optional "where" filledInOptionals.where_ Api.InputObject.encodePost_tag_bool_exp ]
-                |> List.filterMap identity
-    in
-    Object.selectionForCompositeField "post_tag_aggregate" optionalArgs object_ identity
-
-
 type alias PostTagByPkRequiredArguments =
     { id : CustomScalars.Uuid }
 

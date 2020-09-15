@@ -9,18 +9,20 @@ import Json.Decode as Decode exposing (Decoder)
 
 {-| select columns of table "post\_tag"
 
+  - Id - column name
   - Post\_id - column name
   - Tag\_id - column name
 
 -}
 type Post_tag_select_column
-    = Post_id
+    = Id
+    | Post_id
     | Tag_id
 
 
 list : List Post_tag_select_column
 list =
-    [ Post_id, Tag_id ]
+    [ Id, Post_id, Tag_id ]
 
 
 decoder : Decoder Post_tag_select_column
@@ -29,6 +31,9 @@ decoder =
         |> Decode.andThen
             (\string ->
                 case string of
+                    "id" ->
+                        Decode.succeed Id
+
                     "post_id" ->
                         Decode.succeed Post_id
 
@@ -45,6 +50,9 @@ decoder =
 toString : Post_tag_select_column -> String
 toString enum =
     case enum of
+        Id ->
+            "id"
+
         Post_id ->
             "post_id"
 
@@ -66,6 +74,9 @@ This can be useful for generating Strings to use for <select> menus to check whi
 fromString : String -> Maybe Post_tag_select_column
 fromString enumString =
     case enumString of
+        "id" ->
+            Just Id
+
         "post_id" ->
             Just Post_id
 

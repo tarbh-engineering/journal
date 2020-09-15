@@ -288,6 +288,13 @@ viewCell model n day =
     in
     Input.button
         [ height <| px n
+        , (if curr then
+            white
+
+           else
+            black
+          )
+            |> Font.color
 
         --, style "transition" "all 0.8s"
         --, Html.Attributes.class "shift"
@@ -317,7 +324,8 @@ viewCell model n day =
             |> whenAttr (not model.isMobile)
         , (if day.month == EQ then
             if hv then
-                yellow
+                --yellow
+                sand
 
             else
                 sand
@@ -688,7 +696,7 @@ viewTagsMobile model =
                                     )
 
                             Types.SortUsage ->
-                                List.sortBy .count
+                                List.sortBy (.posts >> List.length)
                        )
                     |> (if model.tagsSortReverse then
                             List.reverse
@@ -706,7 +714,7 @@ viewTagsMobile model =
                                 { onPress = Just <| TagSelect t.id
                                 , label =
                                     [ [ text t.name
-                                      , text <| String.fromInt t.count
+                                      , text <| String.fromInt <| List.length t.posts
                                       ]
                                         |> row
                                             [ spaceEvenly
@@ -765,7 +773,23 @@ viewTagsMobile model =
                             |> column [ spacing 10, width fill ]
 
                     Types.TagsView ->
-                        [ iBtn 30 Icons.tune <| TagsViewSet Types.TagsSort
+                        [ [ iBtn 30 Icons.tune <| TagsViewSet Types.TagsSort
+                          , [ text "Sorted by"
+                            , (case model.tagsSort of
+                                Types.SortName ->
+                                    "name"
+
+                                Types.SortDate ->
+                                    "date"
+
+                                Types.SortUsage ->
+                                    "count"
+                              )
+                                |> text
+                            ]
+                                |> column [ spacing 5, Font.size 14 ]
+                          ]
+                            |> row [ spacing 10 ]
                         , iBtn 30 Icons.add <| TagsViewSet Types.TagsCreate
                         ]
                             |> row [ Element.alignBottom, width fill, spaceEvenly ]
@@ -833,15 +857,6 @@ viewSortSelect sort curr =
 
 viewTag : Model -> Tag -> Element Msg
 viewTag model t =
-    let
-        ts =
-            model.posts
-                |> Day.values
-                |> List.filter
-                    (\p ->
-                        List.member t.id p.tags
-                    )
-    in
     [ if model.tagBeingEdited == Just t.id then
         [ Input.text
             [ Border.rounded 0
@@ -869,7 +884,7 @@ viewTag model t =
                 ]
                     |> row [ spaceEvenly, width fill ]
             }
-    , if List.isEmpty ts then
+    , if List.isEmpty t.posts then
         [ text "No days with this tag."
             |> el [ centerX ]
         , btn3
@@ -882,11 +897,8 @@ viewTag model t =
             |> column [ spacing 20, padding 20, centerX ]
 
       else
-        ts
-            |> List.sortWith
-                (\a b ->
-                    Calendar.compare a.date b.date
-                )
+        t.posts
+            |> List.sortWith Calendar.compare
             |> (if model.postSortReverse then
                     List.reverse
 
@@ -894,7 +906,7 @@ viewTag model t =
                     identity
                )
             |> List.map
-                (\p ->
+                (\date ->
                     Input.button
                         [ Font.size 25
                         , Border.rounded 15
@@ -908,17 +920,18 @@ viewTag model t =
                             }
                         ]
                         { onPress =
-                            Types.RouteDay p.date
+                            Types.RouteDayDetail date
                                 |> NavigateTo
                                 |> Just
                         , label =
-                            [ p.date |> formatDay |> text
-                            , [ p.body
-                                    |> Maybe.withDefault ""
-                                    |> text
-                              ]
-                                |> paragraph []
-                                |> when False
+                            [ date |> formatDay |> text
+
+                            --, [ p.body
+                            --|> Maybe.withDefault ""
+                            --|> text
+                            --]
+                            --|> paragraph []
+                            --|> when False
                             ]
                                 |> column
                                     [ spacing 10
@@ -946,7 +959,7 @@ viewTag model t =
             |> el [ Font.italic ]
         ]
             |> row [ spacing 10 ]
-            |> when (not <| List.isEmpty ts)
+            |> when (not <| List.isEmpty t.posts)
       , [ btn2 False Icons.delete "Delete" <| TagDelete t
         , iBtn 30 Icons.undo TagDeselect
         ]
@@ -1006,7 +1019,7 @@ viewTags model =
                         --<|
                         --NavigateTo <|
                         --RouteTagPosts t.id
-                        , text <| String.fromInt t.count
+                        , text <| String.fromInt <| List.length t.posts
                         , row []
                             --[ emoji Edit <| TagUpdateSet <| Just t
                             --, emoji Trash <| TagDelete t
@@ -1025,7 +1038,8 @@ viewTags model =
                     |> Day.values
                     |> List.filter
                         (\p ->
-                            List.member t p.tags
+                            --List.member t p.tags
+                            False
                         )
                     |> List.map
                         (\p ->
@@ -1821,7 +1835,7 @@ viewFrameMobile model elem =
                 10
 
         pic =
-            if model.tall then
+            if model.screen.height > 550 then
                 50
 
             else
@@ -2447,11 +2461,6 @@ viewPost model d =
         xs =
             UD.values model.tags
 
-        tMsg =
-            pst
-                |> unwrap (PostCreateWithTag d)
-                    PostTagToggle
-
         data =
             model.posts
                 |> Day.get d
@@ -2636,13 +2645,11 @@ viewPreview txt =
 viewPostTags : Model -> Date -> Maybe Post -> Element Msg
 viewPostTags model d pst =
     let
-        tMsg =
-            pst
-                |> unwrap (PostCreateWithTag d)
-                    PostTagToggle
-
         xs =
             UD.values model.tags
+
+        postTagIds =
+            pst |> unwrap [] (.tags >> List.map .tag)
     in
     if List.isEmpty xs then
         [ [ text "You don't have any tags." ]
@@ -2662,10 +2669,10 @@ viewPostTags model d pst =
                 (\t ->
                     let
                         flip =
-                            pst |> unwrap False (\p -> List.member t.id p.tags)
+                            pst |> unwrap False (\p -> List.member t.id postTagIds)
 
                         prog =
-                            List.member t.id model.inProgress.tags
+                            List.member ( d, t.id ) model.inProgress.postTags
                     in
                     --[ ellipsisText 20 t.name
                     [ Input.button [ width fill ]
@@ -2688,8 +2695,11 @@ viewPostTags model d pst =
                             if prog then
                                 Nothing
 
+                            else if flip then
+                                Just <| PostTagDetach d t.id
+
                             else
-                                Just <| tMsg t
+                                Just <| PostTagAttach d t.id
                         , label =
                             if prog then
                                 spinner

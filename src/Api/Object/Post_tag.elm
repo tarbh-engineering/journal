@@ -19,6 +19,11 @@ import Graphql.SelectionSet exposing (SelectionSet)
 import Json.Decode as Decode
 
 
+id : SelectionSet CustomScalars.Uuid Api.Object.Post_tag
+id =
+    Object.selectionForField "CustomScalars.Uuid" "id" [] (CustomScalars.codecs |> Api.Scalar.unwrapCodecs |> .codecUuid |> .decoder)
+
+
 {-| An object relationship
 -}
 post :

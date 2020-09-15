@@ -5,8 +5,6 @@ import Api.Mutation
 import Api.Object
 import Api.Object.Post
 import Api.Object.Post_tag
-import Api.Object.Post_tag_aggregate
-import Api.Object.Post_tag_aggregate_fields
 import Api.Object.Tag
 import Api.Query
 import Calendar exposing (Date)
@@ -66,7 +64,7 @@ tagDecrypt key tag =
             (\str ->
                 { id = tag.id
                 , name = str
-                , count = tag.count
+                , posts = tag.posts
                 , created = tag.created
                 }
             )
@@ -172,13 +170,8 @@ tagSelection =
             Api.Object.Tag.ciphertext
         )
         Api.Object.Tag.id
-        (Api.Object.Tag.post_tags_aggregate identity
-            (Api.Object.Post_tag_aggregate.aggregate
-                (Api.Object.Post_tag_aggregate_fields.count identity
-                    |> Graphql.SelectionSet.map (Maybe.withDefault 0)
-                )
-                |> Graphql.SelectionSet.map (Maybe.withDefault 0)
-            )
+        (Api.Object.Post_tag.post Api.Object.Post.date
+            |> Api.Object.Tag.post_tags identity
         )
         Api.Object.Tag.created_at
 
@@ -194,7 +187,10 @@ postSelection =
         )
         Api.Object.Post.id
         (Api.Object.Post.post_tags identity
-            Api.Object.Post_tag.tag_id
+            (Graphql.SelectionSet.map2 Types.PostTag
+                Api.Object.Post_tag.id
+                Api.Object.Post_tag.tag_id
+            )
         )
 
 

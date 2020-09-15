@@ -17,6 +17,7 @@ import Helpers.Parse
 import Helpers.UuidDict as UD
 import Json.Decode as JD
 import Json.Encode as JE
+import List.Extra
 import Lorem
 import Maybe.Extra exposing (isNothing, unwrap)
 import Ports
@@ -96,7 +97,8 @@ update msg model =
                         , ( "tags"
                           , p.tags
                                 |> JE.list
-                                    (Uuid.toString
+                                    (.id
+                                        >> Uuid.toString
                                         >> JE.string
                                     )
                           )
@@ -163,7 +165,7 @@ update msg model =
                                 in
                                 { id = id
                                 , name = str
-                                , count = 0
+                                , posts = []
                                 , created =
                                     1599320750750
                                         |> Time.millisToPosix
@@ -270,20 +272,18 @@ update msg model =
                                 | inProgress = model.inProgress |> (\p -> { p | post = True })
                               }
                             , wait
-                                |> Task.andThen (always Time.now)
+                                |> Task.andThen
+                                    (randomTask Uuid.uuidGenerator
+                                        |> always
+                                    )
                                 |> Task.map
-                                    (Time.posixToMillis
-                                        >> Random.initialSeed
-                                        >> Random.step Uuid.uuidGenerator
-                                        >> Tuple.first
-                                        >> (\uuid ->
-                                                { id = uuid
-                                                , body = Just model.postEditorBody
-                                                , tags = []
-                                                , date = d
-                                                }
-                                                    |> Ok
-                                           )
+                                    (\uuid ->
+                                        { id = uuid
+                                        , body = Just model.postEditorBody
+                                        , tags = []
+                                        , date = d
+                                        }
+                                            |> Ok
                                     )
                                 |> Task.perform PostMutateCb
                             )
@@ -539,15 +539,15 @@ update msg model =
                         )
                     )
 
-        PostTagCb id res ->
+        PostTagCb pair res ->
             let
                 inProgress =
                     model.inProgress
                         |> (\p ->
                                 { p
-                                    | tags =
-                                        p.tags
-                                            |> List.filter ((/=) id)
+                                    | postTags =
+                                        p.postTags
+                                            |> List.filter ((/=) pair)
                                 }
                            )
             in
@@ -700,7 +700,7 @@ update msg model =
                         (\t uuid ->
                             { id = uuid
                             , name = model.tagCreateName
-                            , count = 0
+                            , posts = []
                             , created = t
                             }
                                 |> Ok
@@ -771,70 +771,6 @@ update msg model =
             , Cmd.none
             )
 
-        PostCreateWithTag date tag ->
-            ( { model
-                | inProgress =
-                    model.inProgress
-                        |> (\p ->
-                                { p
-                                    | tags =
-                                        tag.id :: p.tags
-                                }
-                           )
-              }
-            , model.auth
-                |> unwrap
-                    (wait
-                        |> Task.andThen
-                            (always <| randomTask Uuid.uuidGenerator)
-                        |> Task.map
-                            (\id ->
-                                { tags = [ tag.id ]
-                                , date = date
-                                , body = Nothing
-                                , id = id
-                                }
-                                    |> Ok
-                            )
-                        |> Task.perform (PostCreateWithTagCb tag.id)
-                    )
-                    (always Cmd.none)
-            )
-
-        PostCreateWithTagCb id res ->
-            let
-                inProgress =
-                    model.inProgress
-                        |> (\p ->
-                                { p
-                                    | tags =
-                                        p.tags
-                                            |> List.filter ((/=) id)
-                                }
-                           )
-            in
-            res
-                |> unpack
-                    (\err ->
-                        ( { model
-                            | inProgress = inProgress
-                          }
-                        , logGqlError "PostCreateTagCb" err
-                        )
-                    )
-                    (\post ->
-                        ( { model
-                            | posts =
-                                model.posts
-                                    |> Day.insert
-                                        post.date
-                                        post
-                            , inProgress = inProgress
-                          }
-                        , Cmd.none
-                        )
-                    )
-
         EmailSubmit ->
             let
                 email =
@@ -852,11 +788,11 @@ update msg model =
                         model.inProgress
                             |> (\p -> { p | login = True })
                   }
-                  --, Data.nonce email
-                  --|> Task.attempt NonceCb
-                , wait
-                    |> Task.map (always <| Err <| Data.makeGqlCode "no-purchase")
-                    |> Task.perform NonceCb
+                , Data.nonce email
+                    |> Task.attempt NonceCb
+                  --, wait
+                  --|> Task.map (always <| Err <| Data.makeGqlCode "no-purchase")
+                  --|> Task.perform NonceCb
                 )
 
             else
@@ -1245,46 +1181,119 @@ update msg model =
                         )
                     )
 
-        PostTagToggle post tag ->
-            ( { model
-                | inProgress =
+        PostTagAttach day tagId ->
+            let
+                pair =
+                    ( day, tagId )
+
+                inProgress =
                     model.inProgress
                         |> (\p ->
                                 { p
-                                    | tags =
-                                        tag.id :: p.tags
+                                    | postTags =
+                                        pair :: p.postTags
                                 }
                            )
-              }
-            , model.auth
+            in
+            Day.get day model.posts
                 |> unwrap
-                    (wait
-                        |> Task.map
-                            ({ post
-                                | tags =
-                                    post.tags
-                                        |> toggle tag.id
-                             }
-                                |> Ok
-                                |> always
+                    ( { model
+                        | inProgress = inProgress
+                      }
+                    , model.auth
+                        |> unwrap
+                            (wait
+                                |> Task.andThen
+                                    (always <| randomTask Uuid.uuidGenerator)
+                                |> Task.map
+                                    (\id ->
+                                        { tags = [ Types.PostTag id tagId ]
+                                        , date = day
+                                        , body = Nothing
+                                        , id = id
+                                        }
+                                            |> Ok
+                                    )
+                                |> Task.perform (PostTagCb pair)
                             )
-                        |> Task.perform (PostTagCb tag.id)
+                            (always Cmd.none)
                     )
-                    (if List.member tag.id post.tags then
-                        trip
-                            (Data.tagDetach tag.id
-                                >> Task.map Just
-                            )
-                            (PostCb post.date)
+                    (\post ->
+                        ( { model
+                            | inProgress = inProgress
+                          }
+                        , model.auth
+                            |> unwrap
+                                (wait
+                                    |> Task.andThen
+                                        (randomTask Uuid.uuidGenerator
+                                            |> always
+                                        )
+                                    |> Task.map
+                                        (\uuid ->
+                                            { post
+                                                | tags =
+                                                    { id = uuid, tag = tagId } :: post.tags
+                                            }
+                                                |> Ok
+                                        )
+                                    |> Task.perform (PostTagCb pair)
+                                )
+                                (trip
+                                    (Data.tagAttach post tagId)
+                                    (PostTagCb pair)
+                                )
+                        )
+                    )
 
-                     else
-                        trip
-                            (Data.tagAttach post tag.id
-                                >> Task.map Just
-                            )
-                            (PostCb post.date)
+        PostTagDetach day tagId ->
+            let
+                pair =
+                    ( day, tagId )
+
+                inProgress =
+                    model.inProgress
+                        |> (\p ->
+                                { p
+                                    | postTags =
+                                        pair :: p.postTags
+                                }
+                           )
+            in
+            Day.get day model.posts
+                |> Maybe.andThen
+                    (\post ->
+                        post.tags
+                            |> List.Extra.find (.tag >> (==) tagId)
+                            |> Maybe.map (\pt -> ( post, pt ))
                     )
-            )
+                |> Maybe.map
+                    (\( post, pt ) ->
+                        ( { model
+                            | inProgress = inProgress
+                          }
+                        , model.auth
+                            |> unwrap
+                                (wait
+                                    |> Task.map
+                                        ({ post
+                                            | tags =
+                                                post.tags
+                                                    |> List.filter
+                                                        (\pt_ -> pt_.id /= pt.id)
+                                         }
+                                            |> Ok
+                                            |> always
+                                        )
+                                    |> Task.perform (PostTagCb pair)
+                                )
+                                (trip
+                                    (Data.tagDetach pt.tag)
+                                    (PostTagCb pair)
+                                )
+                        )
+                    )
+                |> Maybe.withDefault ( model, Cmd.none )
 
         TagsSortSet sort ->
             ( { model
@@ -1505,20 +1514,21 @@ handleRoute model route =
                         Nothing
                 , tags =
                     if anon then
+                        --model.tags
+                        --|> UD.values
+                        --|> List.map
+                        --(\t ->
+                        --{ t
+                        --| count =
+                        --model.posts
+                        --|> Day.values
+                        --|> List.filter
+                        --(.tags >> List.member t.id)
+                        --|> List.length
+                        --}
+                        --)
+                        --|> UD.fromList
                         model.tags
-                            |> UD.values
-                            |> List.map
-                                (\t ->
-                                    { t
-                                        | count =
-                                            model.posts
-                                                |> Day.values
-                                                |> List.filter
-                                                    (.tags >> List.member t.id)
-                                                |> List.length
-                                    }
-                                )
-                            |> UD.fromList
 
                     else
                         model.tags
@@ -1547,9 +1557,11 @@ handleRoute model route =
             , Cmd.none
             )
 
-        RouteDayDetail _ ->
+        RouteDayDetail d ->
             ( { model
                 | postView = True
+                , current = Just d
+                , view = Types.ViewCalendar
               }
             , if model.postBeingEdited && not model.tagView then
                 focusOnEditor
@@ -1650,15 +1662,6 @@ parseErrors err =
 logGqlError : String -> Graphql.Http.Error a -> Cmd msg
 logGqlError tag err =
     Ports.log (tag ++ ":\n" ++ Helpers.Parse.gqlError err)
-
-
-toggle : a -> List a -> List a
-toggle v ls =
-    if List.member v ls then
-        List.filter ((/=) v) ls
-
-    else
-        v :: ls
 
 
 trip : (Auth -> GqlTask a) -> (GqlResult a -> Msg) -> Auth -> Cmd Msg
