@@ -193,7 +193,10 @@ update msg model =
                     )
                     (unwrap
                         ( model
-                        , Ports.clearState ()
+                        , Cmd.batch
+                            [ Ports.clearState ()
+                            , goTo Types.RouteHome
+                            ]
                         )
                         (\auth ->
                             ( { model
@@ -1049,7 +1052,7 @@ update msg model =
                         (JD.decodeString JD.value
                             >> Result.toMaybe
                         )
-                    |> unwrap Cmd.none
+                    |> unwrap (goTo Types.RouteHome)
                         (\key_ ->
                             Data.refresh
                                 |> Task.map
@@ -1216,7 +1219,9 @@ update msg model =
                                     )
                                 |> Task.perform (PostTagCb pair)
                             )
-                            (always Cmd.none)
+                            (Data.postCreateWithTag tagId day
+                                >> Task.attempt (PostTagCb pair)
+                            )
                     )
                     (\post ->
                         ( { model

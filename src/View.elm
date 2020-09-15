@@ -1108,8 +1108,9 @@ viewHomeMobile model =
             [ width fill
             , padding 20
             ]
-    , [ viewFunnel model
-      , Input.button
+    , if isNothing model.auth then
+        [ viewFunnel model
+        , Input.button
             [ centerX
             , centerY
             , Font.size 25
@@ -1139,18 +1140,26 @@ viewHomeMobile model =
             , label = text "Try demo"
             }
             |> el [ padding 20, Element.alignRight, Element.alignBottom ]
-      ]
-        |> column
-            [ width fill
-            ]
+        ]
+            |> column
+                [ width fill
+                ]
+
+      else
+        btn3
+            False
+            Icons.phonelink
+            "Return to app"
+            (NavigateTo Types.RouteCalendar)
+            |> el [ centerX, centerY ]
     ]
         |> column
             [ height fill
-            , viewFaq model
-                |> Element.inFront
             , width fill
             , spaceEvenly
             , fShrink
+            , viewFaq model
+                |> Element.inFront
 
             --, Element.clip
             ]
