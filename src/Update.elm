@@ -791,11 +791,11 @@ update msg model =
                         model.inProgress
                             |> (\p -> { p | login = True })
                   }
-                , Data.nonce email
-                    |> Task.attempt NonceCb
-                  --, wait
-                  --|> Task.map (always <| Err <| Data.makeGqlCode "no-purchase")
-                  --|> Task.perform NonceCb
+                  --, Data.nonce email
+                  --|> Task.attempt NonceCb
+                , wait
+                    |> Task.map (always <| Err <| Data.makeGqlCode "no-purchase")
+                    |> Task.perform NonceCb
                 )
 
             else
