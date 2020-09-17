@@ -1833,18 +1833,18 @@ viewFrameMobile model elem =
                 40
 
         nd =
-            if model.screen.width > 412 && model.tall then
-                20
-
-            else
+            if model.area < 200000 then
                 10
 
+            else
+                20
+
         pic =
-            if model.screen.height > 550 then
-                50
+            if model.area < 200000 then
+                35
 
             else
-                35
+                50
     in
     [ [ Input.button []
             { onPress = Just <| NavigateTo Types.RouteHome
