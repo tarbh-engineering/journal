@@ -35,6 +35,8 @@ init flags =
         , month = numberToMonth flags.month |> Maybe.withDefault Time.Jan
         , year = flags.year
         , tall = isTall flags.screen
+        , landscape = flags.screen.width > flags.screen.height
+        , area = View.Misc.getArea flags.screen
       }
     , Helpers.today
         |> Task.perform Types.TodaySet
@@ -100,7 +102,6 @@ emptyModel =
         , postTags = []
         }
     , thanks = False
-    , status = Types.Waiting
     , swActive = False
     , faq = False
     , dropdown = False
@@ -111,4 +112,6 @@ emptyModel =
     , postSortReverse = False
     , weekStart = Time.Mon
     , today = 0 |> Time.millisToPosix |> Calendar.fromPosix
+    , area = 0
+    , landscape = False
     }

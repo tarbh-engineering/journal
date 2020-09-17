@@ -1,4 +1,4 @@
-module View.Misc exposing (btn, btn2, btn3, dayParts, formatDateTime, formatDay, iBtn, icon, isSmall, isTall, isWide, lnk, spinner, tallInt)
+module View.Misc exposing (btn, btn2, btn3, dayParts, formatDateTime, formatDay, getArea, iBtn, icon, isSmall, isTall, isWide, lnk, spinner, tallInt)
 
 import Calendar exposing (Date)
 import DateTime exposing (DateTime)
@@ -16,6 +16,29 @@ import Types exposing (Screen)
 import View.Style exposing (black, blue, rotate, sand, varela, white)
 
 
+getArea : Screen -> Int
+getArea scr =
+    let
+        area =
+            scr.width * scr.height
+    in
+    if area < 200000 then
+        --0
+        area
+
+    else if area < 300000 then
+        --1
+        area
+
+    else if area < 800000 then
+        --2
+        area
+
+    else
+        --3
+        area
+
+
 tallInt : Int
 tallInt =
     512
@@ -28,7 +51,7 @@ isTall scr =
 
 isWide : Screen -> Bool
 isWide scr =
-    scr.width > 768 || scr.width > scr.height
+    scr.width > scr.height
 
 
 isSmall : Screen -> Bool

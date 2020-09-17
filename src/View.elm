@@ -390,11 +390,8 @@ weekday =
 view : Model -> Html Msg
 view model =
     let
-        wide =
-            isWide model.screen
-
         frame =
-            if wide then
+            if model.landscape then
                 viewFrame model
 
             else
@@ -416,7 +413,7 @@ view model =
         |> when (not model.isMobile)
     , case model.view of
         ViewHome ->
-            if wide then
+            if model.landscape then
                 viewHome model
 
             else
@@ -466,7 +463,7 @@ view model =
                     )
 
         ViewCalendar ->
-            (if wide then
+            (if model.landscape then
                 viewPage model
 
              else
@@ -541,8 +538,7 @@ view model =
                         |> column [ spacing 20, centerX, cappedWidth 450 ]
                     )
                     (\_ ->
-                        [ btn3 False Icons.save "Export posts" ExportPosts
-                        , btn3 model.inProgress.logout Icons.power_off "Logout" Logout
+                        [ btn3 model.inProgress.logout Icons.power_off "Logout" Logout
                             |> el [ centerX ]
                         ]
                             |> column [ spacing 20, centerX ]
@@ -550,7 +546,7 @@ view model =
                 |> frame
 
         ViewTags ->
-            (if wide then
+            (if model.landscape then
                 viewTags model
 
              else
@@ -1827,14 +1823,14 @@ viewFrameMobile : Model -> Element Msg -> Element Msg
 viewFrameMobile model elem =
     let
         iconSize =
-            if model.screen.height > 575 then
-                40
+            if model.area < 200000 then
+                20
 
-            else if model.screen.height > 550 then
+            else if model.area < 300000 then
                 30
 
             else
-                20
+                40
 
         nd =
             if model.screen.width > 412 && model.tall then
@@ -1917,78 +1913,7 @@ viewFrameMobile model elem =
                 |> Element.inFront
             ]
     , elem
-    , [ ( Icons.settings, Types.RouteSettings, ViewSettings )
-      , ( Icons.event, Types.RouteCalendar, ViewCalendar )
-
-      -- note_add
-      , ( Icons.assignment_turned_in, Types.RouteTags, ViewTags )
-      ]
-        |> List.map
-            (\( n, r, v ) ->
-                let
-                    curr =
-                        v == model.view
-
-                    col =
-                        case r of
-                            Types.RouteSettings ->
-                                View.Style.gold
-
-                            Types.RouteCalendar ->
-                                blue
-
-                            Types.RouteTags ->
-                                View.Style.red
-
-                            _ ->
-                                View.Style.garish
-                in
-                Input.button
-                    [ Font.underline |> whenAttr curr
-                    , width fill
-                    , (if curr then
-                        white
-
-                       else
-                        black
-                      )
-                        |> Font.color
-                    , height <| px <| iconSize + 15
-                    ]
-                    { onPress =
-                        if curr then
-                            Nothing
-
-                        else
-                            Just <| NavigateTo r
-                    , label =
-                        none
-                            |> el
-                                [ icon n iconSize
-                                    |> el
-                                        [ centerX
-                                        , centerY
-                                        ]
-                                    |> Element.inFront
-                                , none
-                                    |> el
-                                        [ width <| px <| iconSize + 15
-                                        , height <| px <| iconSize + 15
-                                        , Background.color col
-                                        , style "transform-origin" "center"
-                                        , View.Style.popIn
-                                        , Border.rounded 50
-                                        , centerX
-                                        , centerY
-                                        ]
-                                    |> Element.behindContent
-                                    |> whenAttr curr
-                                , centerX
-                                , height fill
-                                ]
-                    }
-            )
-        |> row [ Element.alignBottom, width fill ]
+    , viewBottomBar model
         |> when (model.screen.height >= View.Misc.tallInt)
     ]
         |> column
@@ -2071,6 +1996,93 @@ viewRoute r v =
             ]
                 |> row [ spacing 10 ]
         }
+
+
+viewBottomBar : Model -> Element Msg
+viewBottomBar model =
+    let
+        iconSize =
+            if model.area < 200000 then
+                30
+
+            else if model.area < 300000 then
+                40
+
+            else
+                50
+    in
+    [ ( Icons.settings, Types.RouteSettings, ViewSettings )
+    , ( Icons.event, Types.RouteCalendar, ViewCalendar )
+
+    -- note_add
+    , ( Icons.assignment_turned_in, Types.RouteTags, ViewTags )
+    ]
+        |> List.map
+            (\( n, r, v ) ->
+                let
+                    curr =
+                        v == model.view
+
+                    col =
+                        case r of
+                            Types.RouteSettings ->
+                                View.Style.gold
+
+                            Types.RouteCalendar ->
+                                blue
+
+                            Types.RouteTags ->
+                                View.Style.red
+
+                            _ ->
+                                View.Style.garish
+                in
+                Input.button
+                    [ Font.underline |> whenAttr curr
+                    , width fill
+                    , (if curr then
+                        white
+
+                       else
+                        black
+                      )
+                        |> Font.color
+                    , height <| px <| iconSize + 15
+                    ]
+                    { onPress =
+                        if curr then
+                            Nothing
+
+                        else
+                            Just <| NavigateTo r
+                    , label =
+                        none
+                            |> el
+                                [ icon n iconSize
+                                    |> el
+                                        [ centerX
+                                        , centerY
+                                        ]
+                                    |> Element.inFront
+                                , none
+                                    |> el
+                                        [ width <| px <| iconSize + 15
+                                        , height <| px <| iconSize + 15
+                                        , Background.color col
+                                        , style "transform-origin" "center"
+                                        , View.Style.popIn
+                                        , Border.rounded 50
+                                        , centerX
+                                        , centerY
+                                        ]
+                                    |> Element.behindContent
+                                    |> whenAttr curr
+                                , centerX
+                                , height fill
+                                ]
+                    }
+            )
+        |> row [ Element.alignBottom, width fill ]
 
 
 viewPage : Model -> Element Msg

@@ -10,13 +10,11 @@ import DateTime
 import Day
 import Derberos.Date.Utils exposing (getNextMonth, getPrevMonth)
 import Dict
-import File.Download
 import Graphql.Http
 import Helpers
 import Helpers.Parse
 import Helpers.UuidDict as UD
 import Json.Decode as JD
-import Json.Encode as JE
 import List.Extra
 import Lorem
 import Maybe.Extra exposing (isNothing, unwrap)
@@ -73,42 +71,6 @@ update msg model =
                 |> Task.perform (RouteDay >> NavigateTo)
             )
 
-        ExportPosts ->
-            ( model
-            , model.posts
-                |> Day.values
-                |> JE.list
-                    (\p ->
-                        [ ( "day"
-                          , p.date
-                                |> Day.toString
-                                |> JE.string
-                          )
-                        , ( "body"
-                          , p.body
-                                |> Maybe.withDefault ""
-                                |> JE.string
-                          )
-                        , ( "id"
-                          , p.id
-                                |> Uuid.toString
-                                |> JE.string
-                          )
-                        , ( "tags"
-                          , p.tags
-                                |> JE.list
-                                    (.id
-                                        >> Uuid.toString
-                                        >> JE.string
-                                    )
-                          )
-                        ]
-                            |> JE.object
-                    )
-                |> JE.encode 2
-                |> File.Download.string "posts.json" "application/json"
-            )
-
         NextMonth ->
             ( { model
                 | year =
@@ -148,7 +110,18 @@ update msg model =
             )
 
         Resize screen ->
-            ( { model | screen = screen }, Cmd.none )
+            ( { model
+                | screen = screen
+                , landscape =
+                    --if Debug.log "!" (View.Misc.getArea screen /= model.area) then
+                    if screen.width == model.screen.width then
+                        model.landscape
+
+                    else
+                        screen.width > screen.height
+              }
+            , Cmd.none
+            )
 
         FakeData ->
             ( { model
@@ -987,8 +960,7 @@ update msg model =
                             )
             in
             ( { model
-                | status = Types.Ready
-                , swActive = swActive
+                | swActive = swActive
                 , current =
                     if anon then
                         model.current

@@ -1,4 +1,4 @@
-module Types exposing (App(..), Auth, BootFlags, Cipher, Def(..), Flags, Funnel(..), GqlResult, GqlTask, Keys, Model, Msg(..), Post, PostRaw, PostTag, Route(..), Screen, Tag, TagRaw, TagsSort(..), TagsView(..), View(..))
+module Types exposing (Auth, BootFlags, Cipher, Def(..), Flags, Funnel(..), GqlResult, GqlTask, Keys, Model, Msg(..), Post, PostRaw, PostTag, Route(..), Screen, Tag, TagRaw, TagsSort(..), TagsView(..), View(..))
 
 import Array exposing (Array)
 import Browser exposing (UrlRequest)
@@ -54,7 +54,6 @@ type alias Model =
     , def : Maybe Def
     , magic : Maybe Bool
     , thanks : Bool
-    , status : App
     , swActive : Bool
     , faq : Bool
     , dropdown : Bool
@@ -65,6 +64,8 @@ type alias Model =
     , postSortReverse : Bool
     , weekStart : Weekday
     , today : Date
+    , area : Int
+    , landscape : Bool
     }
 
 
@@ -127,7 +128,6 @@ type Msg
     | SetDef Def
     | RefreshCb (Auth -> Cmd Msg) (GqlResult (Maybe Jwt))
     | Bad (Auth -> Cmd Msg)
-    | ExportPosts
     | EmailCb
     | Boot BootFlags
     | DropdownToggle
@@ -206,12 +206,6 @@ type TagsView
     = TagsView
     | TagsCreate
     | TagsSort
-
-
-type App
-    = Waiting
-    | SwUnavailable
-    | Ready
 
 
 type Funnel

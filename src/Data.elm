@@ -29,16 +29,6 @@ graphqlEndpoint =
     "/graphql"
 
 
-isNetworkError : Graphql.Http.Error () -> Bool
-isNetworkError err =
-    case err of
-        Graphql.Http.HttpError httpErr ->
-            httpErr == Graphql.Http.NetworkError
-
-        Graphql.Http.GraphqlError _ _ ->
-            False
-
-
 postDecrypt : Value -> PostRaw -> GqlTask Post
 postDecrypt key post =
     post.cipher
