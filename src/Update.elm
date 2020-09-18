@@ -1,12 +1,9 @@
 module Update exposing (update)
 
-import Browser
 import Browser.Dom
-import Browser.Navigation as Navigation
 import Calendar exposing (Date)
 import Crypto
 import Data
-import DateTime
 import Day
 import Derberos.Date.Utils exposing (getNextMonth, getPrevMonth)
 import Dict
@@ -16,7 +13,6 @@ import Helpers.Parse
 import Helpers.UuidDict as UD
 import Json.Decode as JD
 import List.Extra
-import Lorem
 import Maybe.Extra exposing (isNothing, unwrap)
 import Ports
 import Process
@@ -97,18 +93,6 @@ update msg model =
             , Cmd.none
             )
 
-        SetSelectedResult id ->
-            ( { model
-                | selectedResult =
-                    if model.selectedResult == Just id then
-                        Nothing
-
-                    else
-                        Just id
-              }
-            , Cmd.none
-            )
-
         Resize screen ->
             ( { model
                 | screen = screen
@@ -119,39 +103,6 @@ update msg model =
 
                     else
                         screen.width > screen.height
-              }
-            , Cmd.none
-            )
-
-        FakeData ->
-            ( { model
-                | tags =
-                    Lorem.words 20
-                        |> List.indexedMap
-                            (\n str ->
-                                let
-                                    id =
-                                        n
-                                            |> Random.initialSeed
-                                            |> Random.step Uuid.uuidGenerator
-                                            |> Tuple.first
-                                in
-                                { id = id
-                                , name = str
-                                , posts = []
-                                , created =
-                                    1599320750750
-                                        |> Time.millisToPosix
-                                        |> DateTime.fromPosix
-                                        |> (\d ->
-                                                d
-                                                    |> DateTime.setDay (modBy 28 n)
-                                                    |> Maybe.andThen (DateTime.setHours (modBy 24 n))
-                                                    |> Maybe.withDefault d
-                                           )
-                                }
-                            )
-                        |> UD.fromList
               }
             , Cmd.none
             )
@@ -776,19 +727,6 @@ update msg model =
                 , Cmd.none
                 )
 
-        EmailCb ->
-            ( { model
-                | inProgress =
-                    model.inProgress
-                        |> (\p -> { p | login = False })
-                , thanks = True
-                , loginForm =
-                    model.loginForm
-                        |> (\f -> { f | email = "" })
-              }
-            , Cmd.none
-            )
-
         CheckCb res ->
             res
                 |> unpack
@@ -1324,24 +1262,6 @@ update msg model =
             , Cmd.none
             )
 
-        Force ->
-            ( { model
-                | view =
-                    if model.view == Types.ViewHome then
-                        Types.ViewCalendar
-
-                    else
-                        Types.ViewHome
-                , def = Nothing
-                , funnel = Types.Hello
-                , current = Nothing
-                , loginForm =
-                    model.loginForm
-                        |> (\f -> { f | email = "" })
-              }
-            , Cmd.none
-            )
-
         LoginFormEmailUpdate str ->
             ( { model
                 | loginForm =
@@ -1367,18 +1287,6 @@ update msg model =
                         |> (\f -> { f | passwordVisible = not f.passwordVisible })
               }
             , Cmd.none
-            )
-
-        UrlRequest req ->
-            ( model
-            , (case req of
-                Browser.Internal url ->
-                    Url.toString url
-
-                Browser.External str ->
-                    str
-              )
-                |> Navigation.load
             )
 
         VisibilityChange _ ->

@@ -14,7 +14,7 @@ import Dict
 import Graphql.Http
 import Graphql.Http.GraphqlError
 import Graphql.Operation
-import Graphql.OptionalArgument as Opt exposing (OptionalArgument)
+import Graphql.OptionalArgument as Opt
 import Graphql.SelectionSet exposing (SelectionSet)
 import Json.Decode exposing (Value)
 import Json.Encode as JE
@@ -255,15 +255,6 @@ nonce email =
         |> Task.mapError ignoreParsedErrorData
 
 
-equalToId : Uuid -> OptionalArgument Api.InputObject.Uuid_comparison_exp
-equalToId id =
-    Opt.Present <|
-        Api.InputObject.buildUuid_comparison_exp
-            (\r ->
-                { r | eq_ = Opt.Present id }
-            )
-
-
 fetchPostsByTag : Uuid -> Auth -> GqlTask (List Post)
 fetchPostsByTag id { key, token } =
     Api.Query.post_tag
@@ -273,7 +264,12 @@ fetchPostsByTag id { key, token } =
                     Api.InputObject.buildPost_tag_bool_exp
                         (\r2 ->
                             { r2
-                                | tag_id = equalToId id
+                                | tag_id =
+                                    Api.InputObject.buildUuid_comparison_exp
+                                        (\r3 ->
+                                            { r3 | eq_ = Opt.Present id }
+                                        )
+                                        |> Opt.Present
                             }
                         )
                         |> Opt.Present

@@ -1,7 +1,6 @@
 module Types exposing (Auth, BootFlags, Cipher, Def(..), Flags, Funnel(..), GqlResult, GqlTask, Keys, Model, Msg(..), Post, PostRaw, PostTag, Route(..), Screen, Tag, TagRaw, TagsSort(..), TagsView(..), View(..))
 
 import Array exposing (Array)
-import Browser exposing (UrlRequest)
 import Browser.Dom
 import Browser.Events exposing (Visibility)
 import Calendar exposing (Date)
@@ -43,7 +42,6 @@ type alias Model =
     , flash : Maybe ( Array ( Bool, String ), List ( Int, String ) )
     , loginForm : LoginForm
     , searchString : String
-    , selectedResult : Maybe Uuid
     , screen : Screen
     , isMobile : Bool
     , month : Month
@@ -109,10 +107,8 @@ type Msg
     | TagCreateCb (GqlResult Tag)
     | FocusCb (Result Browser.Dom.Error ())
     | UrlChange (Result String Route)
-    | UrlRequest UrlRequest
     | NavigateTo Route
     | GoToToday
-    | SetSelectedResult Uuid
     | PostClear Post
     | PostViewStart
     | TagViewToggle
@@ -121,17 +117,14 @@ type Msg
     | PrevMonth
     | NextMonth
     | FaqToggle
-    | Force
     | Change
     | TagSelect Uuid
     | TagDeselect
     | SetDef Def
     | RefreshCb (Auth -> Cmd Msg) (GqlResult (Maybe Jwt))
     | Bad (Auth -> Cmd Msg)
-    | EmailCb
     | Boot BootFlags
     | DropdownToggle
-    | FakeData
     | TagsViewSet TagsView
     | TagsSortSet TagsSort
     | PostSortToggle

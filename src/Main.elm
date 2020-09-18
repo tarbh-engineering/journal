@@ -81,7 +81,6 @@ emptyModel =
         , passwordVisible = False
         }
     , searchString = ""
-    , selectedResult = Nothing
     , screen = { height = 0, width = 0 }
     , month = Time.Jan
     , year = 2020

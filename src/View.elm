@@ -4,9 +4,10 @@ import Calendar exposing (Date)
 import CalendarDates exposing (Day)
 import DateTime
 import Day
-import Element exposing (Attribute, Color, Element, alignBottom, centerX, centerY, column, el, fill, height, html, none, padding, paddingXY, paragraph, px, rgb255, row, scrollbarY, spaceEvenly, spacing, text, width)
+import Element exposing (Attribute, Element, alignBottom, centerX, centerY, column, el, fill, height, html, none, padding, paddingXY, paragraph, px, rgb255, row, scrollbarY, spaceEvenly, spacing, text, width)
 import Element.Background as Background
 import Element.Border as Border
+import Element.Events
 import Element.Font as Font
 import Element.Input as Input exposing (button)
 import Helpers
@@ -24,7 +25,7 @@ import Types exposing (Def(..), Funnel(..), Model, Msg(..), Post, Route, Tag, Vi
 import Validate exposing (isValidEmail)
 import View.Img
 import View.Misc exposing (btn, btn2, btn3, formatDateTime, formatDay, iBtn, icon, isWide, lnk, spinner)
-import View.Style exposing (abel, black, blue, ebg, fadeIn, rotate, sand, varela, white, yellow)
+import View.Style exposing (abel, black, blue, ebg, fadeIn, rotate, sand, varela, white)
 
 
 onCtrlEnter : msg -> Decoder msg
@@ -221,57 +222,6 @@ cycle n xs =
     List.drop n xs ++ List.take n xs
 
 
-cell2 : Model -> Day -> Element Msg
-cell2 model day =
-    let
-        hv =
-            model.posts
-                |> Day.get day.date
-                |> unwrap False (always True)
-
-        curr =
-            Just day.date == model.current && day.month == EQ
-    in
-    Input.button
-        [ Background.color sand
-        , width fill
-        , height <| px 50
-        , style "transition" "all 0.4s"
-        , shiftShadow
-            |> whenAttr curr
-        , Element.moveUp 5
-            |> whenAttr curr
-        , Element.moveRight 5
-            |> whenAttr curr
-        , (if day.month == EQ then
-            if curr then
-                blue
-
-            else if hv then
-                yellow
-
-            else
-                sand
-
-           else
-            Element.rgb255 190 165 140
-          )
-            |> Background.color
-        , padding 5
-        , Font.bold
-        ]
-        { onPress =
-            Types.RouteDay day.date
-                |> NavigateTo
-                |> Just
-        , label =
-            Calendar.getDay day.date
-                |> String.fromInt
-                |> text
-                |> el [ Element.alignTop ]
-        }
-
-
 viewCell : Model -> Int -> Day -> Element Msg
 viewCell model n day =
     let
@@ -341,7 +291,8 @@ viewCell model n day =
                 , Background.color blue
                 , style "transform-origin" "center"
                 , View.Style.popIn
-                    |> whenAttr (not model.postBeingEdited)
+
+                --|> whenAttr (not model.postBeingEdited)
                 ]
             |> Element.inFront
             |> whenAttr curr
@@ -643,41 +594,7 @@ viewTagsMobile model =
             )
         |> unwrap
             (if List.isEmpty tags then
-                [ Input.text
-                    [ Border.rounded 0
-                    , width fill
-                    , paddingXY 0 10
-                    , onKeydown [ onEnter TagCreateSubmit ]
-                    , Border.widthEach { bottom = 1, top = 0, left = 0, right = 0 }
-                    , Background.gradient
-                        { angle = degrees 0
-                        , steps =
-                            [ Element.rgb255 245 220 235
-                            , Element.rgb255 255 255 255
-                            ]
-                        }
-                    ]
-                    { onChange = TagCreateNameUpdate
-                    , label = Input.labelHidden ""
-                    , placeholder =
-                        text "Create your first tag"
-                            |> Input.placeholder []
-                            |> Just
-                    , text = model.tagCreateName
-                    }
-                , [ [ "Gym"
-                    , "Nice food"
-                    , "Flight"
-                    , "etc."
-                    ]
-                        |> List.map (text >> el [ Font.italic ])
-                        |> column [ spacing 5 ]
-                  , btn3 model.inProgress.tag Icons.send "Submit" TagCreateSubmit
-                        |> el [ Element.alignTop ]
-                  ]
-                    |> row [ spaceEvenly, width fill ]
-                ]
-                    |> column [ width fill, spacing 10, centerY ]
+                viewNoTags model
 
              else
                 [ tags
@@ -807,6 +724,45 @@ viewTagsMobile model =
                         ]
             )
             (viewTag model)
+
+
+viewNoTags : Model -> Element Msg
+viewNoTags model =
+    [ Input.text
+        [ Border.rounded 0
+        , width fill
+        , paddingXY 0 10
+        , onKeydown [ onEnter TagCreateSubmit ]
+        , Border.widthEach { bottom = 1, top = 0, left = 0, right = 0 }
+        , Background.gradient
+            { angle = degrees 0
+            , steps =
+                [ Element.rgb255 245 220 235
+                , Element.rgb255 255 255 255
+                ]
+            }
+        ]
+        { onChange = TagCreateNameUpdate
+        , label = Input.labelHidden ""
+        , placeholder =
+            text "Create your first tag"
+                |> Input.placeholder []
+                |> Just
+        , text = model.tagCreateName
+        }
+    , [ [ "Gym"
+        , "Nice food"
+        , "Flight"
+        , "etc."
+        ]
+            |> List.map (text >> el [ Font.italic ])
+            |> column [ spacing 5 ]
+      , btn3 model.inProgress.tag Icons.send "Submit" TagCreateSubmit
+            |> el [ Element.alignTop ]
+      ]
+        |> row [ spaceEvenly, width fill ]
+    ]
+        |> column [ width fill, spacing 10, centerY ]
 
 
 viewSortSelect : Types.TagsSort -> Types.TagsSort -> Element Msg
@@ -968,98 +924,106 @@ viewTag model t =
 
 viewTags : Model -> Element Msg
 viewTags model =
-    [ [ [ Input.text
-            [ Border.rounded 0
-            , Border.width 1
-            , width fill
-            , padding 10
-            , onKeydown [ onEnter TagCreateSubmit ]
+    let
+        tags =
+            model.tags
+                |> UD.values
+    in
+    if List.isEmpty tags then
+        viewNoTags model
+            |> el [ cappedWidth 500, centerX, paddingXY 0 20 ]
+
+    else
+        [ [ [ Input.text
+                [ Border.rounded 0
+                , Border.width 1
+                , width fill
+                , padding 10
+                , onKeydown [ onEnter TagCreateSubmit ]
+                ]
+                { onChange = TagCreateNameUpdate
+                , label = Input.labelHidden ""
+                , placeholder =
+                    text "New tag"
+                        |> Input.placeholder []
+                        |> Just
+                , text = model.tagCreateName
+                }
+            , btn "Submit" TagCreateSubmit
             ]
-            { onChange = TagCreateNameUpdate
-            , label = Input.labelHidden ""
-            , placeholder =
-                text "New tag"
-                    |> Input.placeholder []
-                    |> Just
-            , text = model.tagCreateName
-            }
-        , btn "Submit" TagCreateSubmit
-        ]
-            |> row [ spacing 20 ]
-      , model.tags
-            |> UD.values
-            |> List.map
-                (\t ->
-                    if model.tagBeingEdited == Just t.id then
-                        Input.text
-                            [ Border.rounded 0, shadow ]
-                            { label =
-                                Input.labelRight [] <|
-                                    row []
-                                        --[ emoji Tick <| TagUpdateSubmit { t | name = model.tagUpdate }
-                                        --, emoji X <| TagUpdateSet Nothing
-                                        --]
-                                        []
-                            , onChange = TagUpdate
-                            , placeholder = Nothing
-                            , text = model.tagUpdate
-                            }
+                |> row [ spacing 20 ]
+          , tags
+                |> List.map
+                    (\t ->
+                        if model.tagBeingEdited == Just t.id then
+                            Input.text
+                                [ Border.rounded 0, shadow ]
+                                { label =
+                                    Input.labelRight [] <|
+                                        row []
+                                            --[ emoji Tick <| TagUpdateSubmit { t | name = model.tagUpdate }
+                                            --, emoji X <| TagUpdateSet Nothing
+                                            --]
+                                            []
+                                , onChange = TagUpdate
+                                , placeholder = Nothing
+                                , text = model.tagUpdate
+                                }
 
-                    else
-                        [ Input.button []
-                            { onPress = Just <| TagSelect t.id
-                            , label = text t.name
-                            }
+                        else
+                            [ Input.button []
+                                { onPress = Just <| TagSelect t.id
+                                , label = text t.name
+                                }
 
-                        --(t.name ++ " [" ++  ++ "]")
-                        --<|
-                        --NavigateTo <|
-                        --RouteTagPosts t.id
-                        , text <| String.fromInt <| List.length t.posts
-                        , row []
-                            --[ emoji Edit <| TagUpdateSet <| Just t
-                            --, emoji Trash <| TagDelete t
-                            --]
-                            []
-                        ]
-                            |> row [ spacing 20, width fill ]
-                )
-            |> column []
-      ]
-        |> column [ cappedWidth 450, centerX, Element.alignTop ]
-    , model.tag
-        |> whenJust
-            (\t ->
-                model.posts
-                    |> Day.values
-                    |> List.filter
-                        (\p ->
-                            --List.member t p.tags
-                            False
-                        )
-                    |> List.map
-                        (\p ->
-                            [ p.date |> formatDay |> text
-                            , [ p.body
-                                    |> Maybe.withDefault ""
-                                    |> text
-                              ]
-                                |> paragraph []
+                            --(t.name ++ " [" ++  ++ "]")
+                            --<|
+                            --NavigateTo <|
+                            --RouteTagPosts t.id
+                            , text <| String.fromInt <| List.length t.posts
+                            , row []
+                                --[ emoji Edit <| TagUpdateSet <| Just t
+                                --, emoji Trash <| TagDelete t
+                                --]
+                                []
                             ]
-                                |> column [ spacing 10, Border.width 1, padding 10 ]
-                        )
-                    |> column
-                        [ spacing 10
-                        , cappedWidth 600
-                        , Element.scrollbarY
-                        , Element.alignTop
+                                |> row [ spacing 20, width fill ]
+                    )
+                |> column []
+          ]
+            |> column [ cappedWidth 450, centerX, Element.alignTop ]
+        , model.tag
+            |> Maybe.andThen
+                (\t ->
+                    UD.get t model.tags
+                )
+            |> whenJust
+                (\t ->
+                    t.posts
+                        |> List.map
+                            (\date ->
+                                [ date |> formatDay |> text
 
-                        --, height fill
-                        , height <| px 700
-                        ]
-            )
-    ]
-        |> row [ centerX, spacing 50, height fill ]
+                                --, [ p.body
+                                --|> Maybe.withDefault ""
+                                --|> text
+                                --]
+                                --|> paragraph []
+                                ]
+                                    |> column [ spacing 10, Border.width 1, padding 10 ]
+                            )
+                        |> column
+                            [ spacing 10
+                            , cappedWidth 600
+                            , Element.scrollbarY
+                            , Element.alignTop
+
+                            --, height fill
+                            , height <| px 700
+                            ]
+                )
+        ]
+            |> row [ centerX, spacing 50, height fill ]
 
 
 viewHomeMobile : Model -> Element Msg
@@ -1558,52 +1522,6 @@ viewDef curr def str =
         }
 
 
-viewEmail : Model -> Element Msg
-viewEmail model =
-    let
-        valid =
-            isValidEmail model.loginForm.email
-    in
-    [ [ Input.email
-            [ Border.rounded 0
-            , Border.width 0
-            , height <| px 50
-            , width <| px 275
-            , style "cursor" "wait"
-                |> whenAttr model.inProgress.login
-            , Html.Attributes.disabled model.inProgress.login
-                |> Element.htmlAttribute
-            , (if model.funnel /= Types.Hello then
-                sand
-
-               else
-                white
-              )
-                |> Background.color
-            , onKeydown [ onEnter EmailSubmit ]
-                |> whenAttr valid
-            , Border.widthEach { bottom = 1, top = 1, left = 1, right = 0 }
-            , Border.color black
-            ]
-            { onChange = LoginFormEmailUpdate
-            , label = Input.labelHidden ""
-            , placeholder =
-                text "Your email address"
-                    |> Input.placeholder [ varela ]
-                    |> Just
-            , text = model.loginForm.email
-            }
-      , btn2 model.inProgress.login Icons.send "Submit" EmailSubmit
-      ]
-        |> row
-            [ centerX
-            ]
-    ]
-        |> column
-            [ spacing 20
-            ]
-
-
 viewFunnel : Model -> Element Msg
 viewFunnel model =
     let
@@ -1783,7 +1701,10 @@ viewFrame model elem =
             ]
             { onPress = Just <| NavigateTo Types.RouteHome
             , label =
-                [ text "BOLSTER" |> el [ abel, Font.size 30 ]
+                [ View.Img.tmp 40
+                    |> Element.html
+                    |> el []
+                , text "BOLSTER" |> el [ abel, Font.size 30 ]
                 , text "DEMO"
                     |> el [ Font.light, varela ]
                     |> when (model.auth == Nothing)
@@ -1822,16 +1743,6 @@ viewFrame model elem =
 viewFrameMobile : Model -> Element Msg -> Element Msg
 viewFrameMobile model elem =
     let
-        iconSize =
-            if model.area < 200000 then
-                20
-
-            else if model.area < 300000 then
-                30
-
-            else
-                40
-
         nd =
             if model.area < 200000 then
                 10
@@ -2157,9 +2068,6 @@ viewPageMobile model =
                                 model.posts
                                     |> Day.get d
 
-                            xs =
-                                UD.values model.tags
-
                             create =
                                 viewPostEditor PostCreateSubmit model.postEditorBody False fs
 
@@ -2394,65 +2302,6 @@ viewTodayBtn screen =
         }
 
 
-viewBar : Model -> Date -> Element Msg
-viewBar model day =
-    model.posts
-        |> Day.get day
-        |> unwrap
-            (if model.postBeingEdited then
-                [ btn2 model.inProgress.post Icons.save "Submit" PostCreateSubmit
-                , lnk "Cancel" PostUpdateCancel
-                ]
-
-             else
-                [ btn2 False Icons.assignment_turned_in "Tags" TagViewToggle
-                , btn2 False Icons.edit "Write" PostUpdateStart
-                ]
-            )
-            (\post ->
-                if model.postBeingEdited || model.postView || model.tagView then
-                    [ if model.postBeingEdited then
-                        btn2
-                            model.inProgress.post
-                            Icons.save
-                            "Submit"
-                            (PostUpdateSubmit post.id)
-                            |> when (Just model.postEditorBody /= post.body && model.postEditorBody /= "")
-
-                      else
-                        btn2
-                            model.inProgress.post
-                            Icons.edit
-                            "Edit"
-                            PostUpdateStart
-                    , [ btn2 False Icons.delete "Delete" (PostDelete post.id post.date)
-                            |> when False
-                      , if model.postBeingEdited then
-                            btn2 False Icons.close "Cancel" PostUpdateCancel
-
-                        else
-                            btn2 False Icons.close "Close" PostViewCancel
-                      ]
-                        |> row [ spacing 10, Element.alignRight ]
-                    ]
-
-                else
-                    [ -- ellipsisText 15 post.body
-                      [ btn2 False
-                            Icons.edit
-                            "Edit"
-                            PostUpdateStart
-                      , btn2 False
-                            Icons.visibility
-                            "View"
-                            PostViewStart
-                      ]
-                        |> row [ spacing 10, Element.alignRight ]
-                    ]
-            )
-        |> row [ width fill, spaceEvenly, alignBottom, width fill ]
-
-
 viewReady : Element Msg
 viewReady =
     Input.button
@@ -2479,9 +2328,6 @@ viewPost model d =
             model.posts
                 |> Day.get d
 
-        xs =
-            UD.values model.tags
-
         data =
             model.posts
                 |> Day.get d
@@ -2492,73 +2338,40 @@ viewPost model d =
         make post =
             viewPostEditor (PostUpdateSubmit post.id) model.postEditorBody (not model.postBeingEdited) fs
 
-        txt =
-            if model.tagView then
-                Just "Tags"
-
-            else
-                pst
-                    |> unwrap
-                        (Just "Creating new entry")
-                        (always
-                            (if model.postBeingEdited then
-                                Just "Updating entry"
-
-                             else
-                                Nothing
-                            )
-                        )
-
         topBar =
-            if isWide model.screen then
-                [ formatDay d
-                    |> text
-                    |> el [ width fill ]
-                , [ lnk "Cancel" PostUpdateCancel
-                        |> when (model.postBeingEdited && pst /= Nothing)
-                  , if model.postBeingEdited then
-                        btn2 model.inProgress.post
-                            Icons.save
-                            "Submit"
-                            (pst
-                                |> unwrap PostCreateSubmit
-                                    (\p ->
-                                        if model.postEditorBody == "" then
-                                            PostClear p
+            [ formatDay d
+                |> text
+                |> el [ width fill ]
+            , [ lnk "Cancel" PostUpdateCancel
+                    |> when (model.postBeingEdited && pst /= Nothing)
+              , if model.postBeingEdited then
+                    btn2 model.inProgress.post
+                        Icons.save
+                        "Submit"
+                        (pst
+                            |> unwrap PostCreateSubmit
+                                (\p ->
+                                    if model.postEditorBody == "" then
+                                        PostClear p
 
-                                        else
-                                            PostUpdateSubmit p.id
-                                    )
-                            )
-
-                    else
-                        btn2 False
-                            Icons.edit
-                            "Update"
-                            PostUpdateStart
-                  ]
-                    |> row [ spacing 20 ]
-                ]
-                    |> row
-                        [ spaceEvenly
-                        , Font.size 17
-                        , width fill
-                        ]
-
-            else
-                [ formatDay d
-                    |> text
-                    |> el [ width fill ]
-                , text "|"
-                    |> when (txt /= Nothing)
-                , txt
-                    |> whenJust
-                        (text
-                            >> el [ Element.alignRight ]
-                            >> el [ Font.italic, width fill ]
+                                    else
+                                        PostUpdateSubmit p.id
+                                )
                         )
-                ]
-                    |> row [ spaceEvenly, Font.size 17, width fill ]
+
+                else
+                    btn2 False
+                        Icons.edit
+                        "Update"
+                        PostUpdateStart
+              ]
+                |> row [ spacing 20 ]
+            ]
+                |> row
+                    [ spaceEvenly
+                    , Font.size 17
+                    , width fill
+                    ]
     in
     [ topBar
     , if model.tagView then
@@ -2587,8 +2400,6 @@ viewPostEditor msg txt disable fontSize =
         , Html.Attributes.value txt
         , Html.Attributes.style "font-size" "inherit"
         , Html.Attributes.style "font-family" "inherit"
-
-        --, Html.Attributes.style "font-color" "black"
         , Html.Attributes.style "cursor" "inherit"
         , Html.Attributes.style "line-height" "30px"
         , Html.Attributes.style "padding" "0px"
@@ -2613,8 +2424,9 @@ viewPostEditor msg txt disable fontSize =
             , Font.size fontSize
             , padding 10
             , ebg
-
-            --, Element.Events.onDoubleClick PostUpdateStart
+            , Element.Events.onClick PostUpdateStart
+                |> whenAttr disable
+            , onKeydown [ onCtrlEnter msg ]
             ]
 
 
@@ -2690,7 +2502,7 @@ viewPostTags model d pst =
                 (\t ->
                     let
                         flip =
-                            pst |> unwrap False (\p -> List.member t.id postTagIds)
+                            List.member t.id postTagIds
 
                         prog =
                             List.member ( d, t.id ) model.inProgress.postTags
@@ -2747,25 +2559,6 @@ viewPostTags model d pst =
                 ]
 
 
-shiftShadow : Attribute msg
-shiftShadow =
-    let
-        color =
-            rgb255 153 153 153
-                |> colString
-    in
-    List.range 1 5
-        |> List.map
-            (String.fromInt
-                >> (\n -> n ++ "px")
-                >> (\n ->
-                        "-" ++ n ++ " " ++ n ++ " 0px " ++ color
-                   )
-            )
-        |> String.join ", "
-        |> style "box-shadow"
-
-
 {-| To handle scrollbarY problems.
 <https://github.com/mdgriffith/elm-ui/issues/149>
 -}
@@ -2775,41 +2568,6 @@ fShrink =
         |> whenAttr False
 
 
-ellipsisText : Int -> String -> Element msg
-ellipsisText n txt =
-    Html.div
-        [ Html.Attributes.style "overflow" "hidden"
-        , Html.Attributes.style "text-overflow" "ellipsis"
-        , Html.Attributes.style "white-space" "nowrap"
-        , Html.Attributes.style "height" <| String.fromInt n ++ "px"
-        , Html.Attributes.style "display" "table-cell"
-        , Html.Attributes.title txt
-        ]
-        [ Html.text txt
-        ]
-        |> Element.html
-        |> el
-            [ width fill
-            , style "width" "100%"
-            , style "table-layout" "fixed"
-            , style "display" "table"
-            ]
-
-
 hairline : Element msg
 hairline =
     el [ height <| px 1, width fill, Background.color black ] none
-
-
-colString : Color -> String
-colString =
-    Element.toRgb
-        >> (\{ red, green, blue } ->
-                [ red * 255, green * 255, blue * 255 ]
-           )
-        >> List.map
-            (round
-                >> String.fromInt
-            )
-        >> String.join ", "
-        >> (\str -> "rgb(" ++ str ++ ")")
