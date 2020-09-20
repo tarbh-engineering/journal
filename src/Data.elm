@@ -21,7 +21,7 @@ import Json.Encode as JE
 import JwtScalar exposing (useToken)
 import Maybe.Extra exposing (unwrap)
 import Task
-import Types exposing (Auth, Cipher, GqlTask, Post, PostRaw, Tag, TagRaw)
+import Types exposing (Auth, Cipher, GqlTask, Post, PostRaw, PostTagRes, Tag, TagRaw)
 
 
 graphqlEndpoint : String
@@ -181,6 +181,64 @@ postSelection =
                 Api.Object.Post_tag.id
                 Api.Object.Post_tag.tag_id
             )
+        )
+
+
+postTagSelection : SelectionSet Types.PostTagRes Api.Object.Post_tag
+postTagSelection =
+    Graphql.SelectionSet.map4 PostTagRes
+        (Api.Object.Post_tag.post Api.Object.Post.date)
+        (Api.Object.Post.post_tags identity
+            (Graphql.SelectionSet.map2 Types.PostTag
+                Api.Object.Post_tag.id
+                Api.Object.Post_tag.tag_id
+            )
+            |> Api.Object.Post_tag.post
+        )
+        (Api.Object.Post_tag.tag Api.Object.Tag.id)
+        (Api.Object.Post.date
+            |> Api.Object.Post_tag.post
+            |> Api.Object.Tag.post_tags identity
+            |> Api.Object.Post_tag.tag
+        )
+
+
+postTagNewSelection : Uuid -> SelectionSet { post : Types.PostRaw, tagId : Uuid, tagPosts : List Date } Api.Object.Post
+postTagNewSelection tagId =
+    Graphql.SelectionSet.map2
+        (\post ( id, tagPosts ) ->
+            { post = post
+            , tagId = id
+            , tagPosts = tagPosts
+            }
+        )
+        postSelection
+        (Graphql.SelectionSet.map2 Tuple.pair
+            Api.Object.Tag.id
+            (Api.Object.Post.date
+                |> Api.Object.Post_tag.post
+                |> Api.Object.Tag.post_tags identity
+            )
+            |> Api.Object.Post_tag.tag
+            |> Api.Object.Post.post_tags
+                (\r ->
+                    { r
+                        | where_ =
+                            Api.InputObject.buildPost_tag_bool_exp
+                                (\r2 ->
+                                    { r2
+                                        | tag_id =
+                                            Api.InputObject.buildUuid_comparison_exp
+                                                (\r3 ->
+                                                    { r3 | eq_ = Opt.Present tagId }
+                                                )
+                                                |> Opt.Present
+                                    }
+                                )
+                                |> Opt.Present
+                    }
+                )
+            |> Graphql.SelectionSet.mapOrFail (List.head >> Result.fromMaybe "no tag")
         )
 
 
@@ -372,8 +430,8 @@ postDelete id { token } =
             )
 
 
-tagAttach : Post -> Uuid -> Auth -> GqlTask Post
-tagAttach post tagId { token, key } =
+tagAttach : Post -> Uuid -> Auth -> GqlTask PostTagRes
+tagAttach post tagId { token } =
     Api.Mutation.insert_post_tag_one
         { object =
             Api.InputObject.buildPost_tag_insert_input
@@ -384,20 +442,18 @@ tagAttach post tagId { token, key } =
                     }
                 )
         }
-        (Api.Object.Post_tag.post postSelection)
+        postTagSelection
         |> Graphql.SelectionSet.nonNullOrFail
         |> mutate token
-        |> Task.andThen (postDecrypt key)
 
 
-tagDetach : Uuid -> Auth -> GqlTask Post
-tagDetach tagId { token, key } =
+tagDetach : Uuid -> Auth -> GqlTask PostTagRes
+tagDetach tagId { token } =
     Api.Mutation.delete_post_tag_by_pk
         { id = tagId }
-        (Api.Object.Post_tag.post postSelection)
+        postTagSelection
         |> Graphql.SelectionSet.nonNullOrFail
         |> mutate token
-        |> Task.andThen (postDecrypt key)
 
 
 postUpdateBody : Uuid -> String -> Auth -> GqlTask Post
@@ -516,7 +572,7 @@ postCreate body tags_ d { key, token } =
             )
 
 
-postCreateWithTag : Uuid -> Date -> Auth -> GqlTask Post
+postCreateWithTag : Uuid -> Date -> Auth -> GqlTask Types.PostTagNewRes
 postCreateWithTag tag d { key, token } =
     Api.Mutation.insert_post_one
         identity
@@ -542,14 +598,23 @@ postCreateWithTag tag d { key, token } =
                     }
                 )
         }
-        postSelection
+        (postTagNewSelection tag)
         |> mutate token
         |> Task.andThen
             (unwrap
                 (makeGqlError "post doesn't exist"
                     |> Task.fail
                 )
-                (postDecrypt key)
+                (\data ->
+                    postDecrypt key data.post
+                        |> Task.map
+                            (\p ->
+                                { post = p
+                                , tagId = data.tagId
+                                , tagPosts = data.tagPosts
+                                }
+                            )
+                )
             )
 
 

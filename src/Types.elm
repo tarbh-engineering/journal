@@ -1,4 +1,4 @@
-module Types exposing (Auth, BootFlags, Cipher, Def(..), Flags, Funnel(..), GqlResult, GqlTask, Keys, Model, Msg(..), Post, PostRaw, PostTag, Route(..), Screen, Tag, TagRaw, TagsSort(..), TagsView(..), View(..))
+module Types exposing (Auth, BootFlags, Cipher, Def(..), Flags, Funnel(..), GqlResult, GqlTask, Keys, Model, Msg(..), Post, PostRaw, PostTag, PostTagNewRes, PostTagRes, Route(..), Screen, Tag, TagRaw, TagsSort(..), TagsView(..), View(..))
 
 import Array exposing (Array)
 import Browser.Dom
@@ -70,7 +70,8 @@ type alias Model =
 type Msg
     = PostsCb (GqlResult (List Post))
     | PostCb Date (GqlResult (Maybe Post))
-    | PostTagCb ( Date, Uuid ) (GqlResult Post)
+    | PostTagCb ( Date, Uuid ) (GqlResult PostTagRes)
+    | PostTagNewCb ( Date, Uuid ) (GqlResult PostTagNewRes)
     | PostMutateCb (GqlResult Post)
     | PostDeleteCb (GqlResult Date)
     | TagsCb (GqlResult (List Tag))
@@ -79,7 +80,7 @@ type Msg
     | PostDelete Uuid Date
     | PostUpdateStart
     | PostUpdateCancel
-    | PostUpdateSubmit Uuid
+    | PostUpdateSubmit
     | BodyUpdate String
     | CheckCb (GqlResult Bool)
     | NonceCb (GqlResult String)
@@ -109,7 +110,7 @@ type Msg
     | UrlChange (Result String Route)
     | NavigateTo Route
     | GoToToday
-    | PostClear Post
+    | PostClear
     | PostViewStart
     | TagViewToggle
     | VisibilityChange Visibility
@@ -238,6 +239,21 @@ type alias Post =
 type alias PostTag =
     { id : Uuid
     , tag : Uuid
+    }
+
+
+type alias PostTagRes =
+    { postDate : Date
+    , postTags : List PostTag
+    , tagId : Uuid
+    , tagPosts : List Date
+    }
+
+
+type alias PostTagNewRes =
+    { post : Post
+    , tagId : Uuid
+    , tagPosts : List Date
     }
 
 

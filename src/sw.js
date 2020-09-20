@@ -6,9 +6,9 @@ const make400 = (txt) =>
   new Response(JSON.stringify({ errors: [txt] }), { status: 400 });
 
 const handlers = async (request) => {
-  const action = new URL(request.url).host;
-
   try {
+    const action = new URL(request.url).host;
+
     switch (action) {
       case "nonce": {
         return jsonResponse(await crypto.nonce());

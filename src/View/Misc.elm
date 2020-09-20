@@ -147,7 +147,9 @@ btn2 inProg ic str msg =
             [ Font.color white
             , Background.color black
             ]
-        , Border.rounded 15
+
+        --, Border.rounded 15
+        , Border.roundEach { topLeft = 0, bottomRight = 0, topRight = 25, bottomLeft = 25 }
         , Background.color sand
         , style "cursor" "wait"
             |> whenAttr inProg
@@ -193,7 +195,7 @@ btn3 inProg ic str msg =
             |> whenAttr inProg
         , Font.color black
         , height <| px 50
-        , Border.rounded 25
+        , Border.roundEach { topLeft = 0, bottomRight = 0, topRight = 25, bottomLeft = 25 }
         , Background.color sand
         , varela
         , Border.shadow

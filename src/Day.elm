@@ -1,4 +1,4 @@
-module Day exposing (DayDict, get, insert, newDayDict, remove, toString)
+module Day exposing (DayDict, get, insert, newDayDict, remove, toString, update)
 
 import Calendar exposing (Date)
 import Derberos.Date.Utils exposing (monthToNumber1)
@@ -17,12 +17,20 @@ get k (DayDict dd) =
 
 insert : Date -> a -> DayDict a -> DayDict a
 insert k v =
-    apply <| Dict.insert (Calendar.toMillis k) v
+    Dict.insert (Calendar.toMillis k) v
+        |> apply
 
 
 remove : Date -> DayDict a -> DayDict a
 remove k =
-    apply <| Dict.remove (Calendar.toMillis k)
+    Dict.remove (Calendar.toMillis k)
+        |> apply
+
+
+update : Date -> (a -> a) -> DayDict a -> DayDict a
+update d fn =
+    Dict.update (Calendar.toMillis d) (Maybe.map fn)
+        |> apply
 
 
 newDayDict : DayDict a

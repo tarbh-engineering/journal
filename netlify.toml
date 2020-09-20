@@ -4,12 +4,6 @@ to = "VAR_A/v1/graphql"
 status = 200
 
 [[redirects]]
-from = "/call-me-maybe"
-to = "https://api.buttondown.email/v1/subscribers"
-status = 200
-headers = { Authorization = "Token VAR_B" }
-
-[[redirects]]
 from = "/*"
 to = "/index.html"
 status = 200
