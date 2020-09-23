@@ -1,4 +1,4 @@
-module View.Misc exposing (btn, btn2, btn3, dayParts, formatDateTime, formatDay, getArea, iBtn, icon, isSmall, isTall, isWide, lnk, spinner, tallInt)
+module View.Misc exposing (btn, btn2, btn3, dayParts, formatDateTime, formatDay, getArea, iBtn, icon, isSmall, isTall, lnk, spinner, tallInt)
 
 import Calendar exposing (Date)
 import DateTime exposing (DateTime)
@@ -46,11 +46,6 @@ tallInt =
 isTall : Screen -> Bool
 isTall scr =
     scr.height >= tallInt
-
-
-isWide : Screen -> Bool
-isWide scr =
-    scr.width > scr.height
 
 
 isSmall : Screen -> Bool

@@ -25,7 +25,7 @@ import Time.Format.I18n.I_en_us exposing (dayShort, monthName)
 import Types exposing (Def(..), Funnel(..), Model, Msg(..), Post, Route, Tag, View(..))
 import Validate exposing (isValidEmail)
 import View.Img
-import View.Misc exposing (btn, btn2, btn3, formatDateTime, formatDay, iBtn, icon, isWide, lnk, spinner)
+import View.Misc exposing (btn, btn2, btn3, formatDateTime, formatDay, iBtn, icon, lnk, spinner)
 import View.Style exposing (abel, black, blue, ebg, fadeIn, rotate, sand, varela, white)
 
 
@@ -228,10 +228,6 @@ viewCell model n day =
             model.posts
                 |> Day.get day.date
 
-        hv =
-            pst
-                |> unwrap False (always True)
-
         curr =
             Just day.date == model.current
     in
@@ -256,7 +252,7 @@ viewCell model n day =
         --, Element.moveRight 5
         --|> whenAttr (Just day.date == model.current)
         , Element.mouseOver
-            [ Border.color black
+            [ Font.color View.Style.grey
 
             --, Element.moveUp 5
             --, Element.moveRight 5
@@ -272,12 +268,7 @@ viewCell model n day =
             ]
             |> whenAttr (not model.isMobile)
         , (if day.month == EQ then
-            if hv then
-                --yellow
-                sand
-
-            else
-                sand
+            sand
 
            else
             Element.rgb255 190 165 140
@@ -1679,13 +1670,7 @@ viewHome model =
             , padding 40
             ]
     , [ Input.button
-            [ Font.underline
-            , Element.mouseOver
-                [ Font.color blue
-                ]
-            , centerX
-            , Font.size 25
-            , varela
+            [ centerX
             ]
             { onPress = Just <| NavigateTo Types.RouteCalendar
             , label =
@@ -1697,13 +1682,16 @@ viewHome model =
                     { src = "/phone.png"
                     , description = ""
                     }
-                , (if isNothing model.auth then
-                    "Try demo"
+                , btn3
+                    False
+                    Icons.phonelink
+                    (if isNothing model.auth then
+                        "Try demo"
 
-                   else
-                    "Return to app"
-                  )
-                    |> text
+                     else
+                        "Return to app"
+                    )
+                    (NavigateTo Types.RouteCalendar)
                     |> el [ centerX ]
                 ]
                     |> column [ spacing 10 ]
@@ -2492,10 +2480,7 @@ viewReady =
         , Background.color sand
         , style "cursor" View.Img.pencil
         ]
-        { onPress =
-            Types.RouteToday
-                |> NavigateTo
-                |> Just
+        { onPress = Just <| ReadyStart Nothing
         , label = none
         }
 
@@ -2525,7 +2510,7 @@ viewPost model d =
         topBar =
             [ formatDay d
                 |> text
-                |> el [ width fill ]
+                |> el [ Font.size 30, abel, Font.color white, Background.color black, padding 10 ]
             , [ lnk "Cancel" PostUpdateCancel
                     |> when model.postBeingEdited
               , if model.postBeingEdited then

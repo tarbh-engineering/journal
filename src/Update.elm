@@ -25,7 +25,6 @@ import Types exposing (Auth, GqlResult, GqlTask, Model, Msg(..), Post, Route(..)
 import Url
 import Uuid
 import Validate exposing (isValidEmail)
-import View.Misc exposing (isWide)
 
 
 wait : Task Never ()
@@ -70,6 +69,23 @@ update msg model =
                     )
                     (\d ->
                         ( { model | today = d }
+                        , goTo <| RouteDay d
+                        )
+                    )
+
+        ReadyStart md ->
+            md
+                |> unwrap
+                    ( model
+                    , Helpers.today
+                        |> Task.perform (Just >> ReadyStart)
+                    )
+                    (\d ->
+                        ( { model
+                            | today = d
+                            , current = Just d
+                            , postBeingEdited = True
+                          }
                         , goTo <| RouteDay d
                         )
                     )
@@ -652,9 +668,6 @@ update msg model =
                   }
                 , Data.nonce email
                     |> Task.attempt NonceCb
-                  --, wait
-                  --|> Task.map (always <| Err <| Data.makeGqlCode "no-purchase")
-                  --|> Task.perform NonceCb
                 )
 
             else
@@ -773,12 +786,12 @@ update msg model =
                                 }
                            )
               }
-              --, wait
-              --|> Task.perform (always PaymentFail)
-            , Ports.buy
-                { email = model.loginForm.email
-                , annual = annual
-                }
+            , wait
+                |> Task.perform (always PaymentFail)
+              --, Ports.buy
+              --{ email = model.loginForm.email
+              --, annual = annual
+              --}
             )
 
         Boot { key, href, swActive } ->
@@ -1275,7 +1288,7 @@ update msg model =
             ( { model
                 | tag = Nothing
               }
-            , if isWide model.screen then
+            , if model.landscape then
                 Cmd.none
 
               else
@@ -1374,7 +1387,7 @@ handleRoute model route =
             ( { model
                 | view = Types.ViewTags
                 , tag =
-                    if isWide model.screen then
+                    if model.landscape then
                         model.tag
 
                     else

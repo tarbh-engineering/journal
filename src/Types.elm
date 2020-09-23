@@ -106,6 +106,7 @@ type Msg
     | UrlChange (Result String Route)
     | NavigateTo Route
     | GoToToday (Maybe Date)
+    | ReadyStart (Maybe Date)
     | VisibilityChange Visibility
     | Resize Screen
     | PrevMonth
