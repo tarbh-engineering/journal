@@ -153,7 +153,7 @@ viewCalendar model =
                     cycle 6
 
         btnSize =
-            if model.screen.height < 700 then
+            if model.area < 200000 then
                 20
 
             else
@@ -336,7 +336,7 @@ view model =
                 viewFrameMobile model
 
         wd =
-            if model.screen.height <= 768 then
+            if model.area < 200000 then
                 10
 
             else
@@ -1917,7 +1917,7 @@ viewFrame : Model -> Element Msg -> Element Msg
 viewFrame model elem =
     let
         wd =
-            if model.screen.height <= 768 then
+            if model.area < 200000 then
                 10
 
             else
@@ -2227,7 +2227,7 @@ viewPage : Model -> Element Msg
 viewPage model =
     let
         wd =
-            if model.screen.height <= 768 then
+            if model.area < 200000 then
                 10
 
             else
