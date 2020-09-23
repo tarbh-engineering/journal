@@ -1,4 +1,4 @@
-module Data exposing (check, fetchDay, fetchPostsByTag, graphqlEndpoint, ignoreParsedErrorData, login, logout, makeGqlCode, mutate, nonce, postCreate, postCreateWithTag, postDelete, postSelection, postUpdateBody, query, range, refresh, signup, tagAttach, tagCreate, tagDelete, tagDetach, tagSelection, tagUpdate, tags)
+module Data exposing (check, fetchDay, fetchPostsByTag, graphqlEndpoint, ignoreParsedErrorData, login, logout, mutate, nonce, postCreate, postCreateWithTag, postSelection, postUpdateBody, query, range, refresh, signup, tagAttach, tagCreate, tagDelete, tagDetach, tagSelection, tagUpdate, tags)
 
 import Api.InputObject
 import Api.Mutation
@@ -383,23 +383,6 @@ makeGqlError str =
         ]
 
 
-makeGqlCode : String -> Graphql.Http.Error ()
-makeGqlCode str =
-    Graphql.Http.GraphqlError
-        (Graphql.Http.GraphqlError.UnparsedData JE.null)
-        [ { message = "err"
-          , locations = Nothing
-          , details =
-                [ ( "err"
-                  , [ ( "code", JE.string str ) ]
-                        |> JE.object
-                  )
-                ]
-                    |> Dict.fromList
-          }
-        ]
-
-
 tagDelete : Tag -> Auth -> GqlTask Uuid
 tagDelete { id } { token } =
     Api.Mutation.delete_tag_by_pk
@@ -409,21 +392,6 @@ tagDelete { id } { token } =
         |> Task.andThen
             (unwrap
                 (makeGqlError "tag doesn't exist"
-                    |> Task.fail
-                )
-                Task.succeed
-            )
-
-
-postDelete : Uuid -> Auth -> GqlTask Date
-postDelete id { token } =
-    Api.Mutation.delete_post_by_pk
-        { id = id }
-        Api.Object.Post.date
-        |> mutate token
-        |> Task.andThen
-            (unwrap
-                (makeGqlError "post doesn't exist"
                     |> Task.fail
                 )
                 Task.succeed
@@ -458,7 +426,13 @@ tagDetach tagId { token } =
 
 postUpdateBody : Uuid -> String -> Auth -> GqlTask Post
 postUpdateBody id body { key, token } =
-    Crypto.encrypt key body
+    (if body == "" then
+        Task.succeed Nothing
+
+     else
+        Crypto.encrypt key body
+            |> Task.map Just
+    )
         |> Task.andThen
             (\res ->
                 Api.Mutation.update_post_by_pk
@@ -469,9 +443,17 @@ postUpdateBody id body { key, token } =
                                     (\a ->
                                         { a
                                             | ciphertext =
-                                                Opt.Present res.ciphertext
+                                                res
+                                                    |> unwrap Opt.Null
+                                                        (.ciphertext
+                                                            >> Opt.Present
+                                                        )
                                             , iv =
-                                                Opt.Present res.iv
+                                                res
+                                                    |> unwrap Opt.Null
+                                                        (.iv
+                                                            >> Opt.Present
+                                                        )
                                         }
                                     )
                                     |> Opt.Present

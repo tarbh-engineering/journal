@@ -7,7 +7,6 @@ import Element.Background as Background
 import Element.Border as Border
 import Element.Font as Font
 import Element.Input as Input exposing (button)
-import Helpers
 import Helpers.View exposing (style, whenAttr)
 import Material.Icons.Types exposing (Icon)
 import Ordinal
@@ -66,11 +65,12 @@ formatDateTime d =
         |> DateTime.getMonth
         |> monthName
     , d |> DateTime.getYear |> String.fromInt
-    , [ d |> DateTime.getHours |> Helpers.padNum
-      , ":"
-      , d |> DateTime.getMinutes |> Helpers.padNum
-      ]
-        |> String.join ""
+
+    --, [ d |> DateTime.getHours |> Helpers.padNum
+    --, ":"
+    --, d |> DateTime.getMinutes |> Helpers.padNum
+    --]
+    --|> String.join ""
     ]
         |> String.join " "
 

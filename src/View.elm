@@ -106,20 +106,18 @@ viewCalendar : Model -> Element Msg
 viewCalendar model =
     let
         ht =
-            if model.screen.height < 550 then
+            if model.landscape then
+                if model.screen.width < 800 then
+                    40
+
+                else
+                    60
+
+            else if model.area < 200000 then
                 30
 
-            else if model.screen.height < 600 then
-                35
-
-            else if model.screen.height < 700 then
+            else if model.area < 300000 then
                 40
-
-            else if isWide model.screen then
-                60
-
-            else if model.screen.width > 700 then
-                80
 
             else
                 50
@@ -317,19 +315,7 @@ viewCell model n day =
             |> column [ height fill, width fill ]
             |> Element.inFront
         ]
-        { onPress =
-            (if curr then
-                if pst |> unwrap True (.body >> isNothing) then
-                    PostUpdateStart
-
-                else
-                    PostViewStart
-
-             else
-                Types.RouteDay day.date
-                    |> NavigateTo
-            )
-                |> Just
+        { onPress = Just <| CellSelect day.date
         , label = none
         }
 
@@ -697,7 +683,28 @@ viewTagsCol2 model d tags tagIds =
                 Input.button
                     [ Font.size 25
                     , width fill
-                    , padding 5
+                    , padding 15
+                    , Border.rounded 15
+                    , (if curr then
+                        white
+
+                       else
+                        black
+                      )
+                        |> Font.color
+                    , (if curr then
+                        blue
+
+                       else
+                        sand
+                      )
+                        |> Background.color
+                    , Border.shadow
+                        { offset = ( 3, 3 )
+                        , blur = 3
+                        , size = 1
+                        , color = Element.rgb255 150 150 150
+                        }
                     ]
                     { onPress =
                         (if curr then
@@ -707,39 +714,12 @@ viewTagsCol2 model d tags tagIds =
                             PostTagAttach d t.id
                         )
                             |> Just
-                    , label =
-                        [ text t.name
-                        ]
-                            |> column
-                                [ spacing 10
-                                , width fill
-                                , padding 15
-                                , Border.rounded 15
-                                , (if curr then
-                                    white
-
-                                   else
-                                    black
-                                  )
-                                    |> Font.color
-                                , (if curr then
-                                    blue
-
-                                   else
-                                    sand
-                                  )
-                                    |> Background.color
-                                , Border.shadow
-                                    { offset = ( 3, 3 )
-                                    , blur = 3
-                                    , size = 1
-                                    , color = Element.rgb255 150 150 150
-                                    }
-                                ]
+                    , label = ellipsisText 26 t.name
                     }
             )
         |> column
             [ spacing 10
+            , paddingXY 5 0
             , scrollbarY
             , style "min-height" "auto"
             , width fill
@@ -867,6 +847,66 @@ viewNoTags model =
         |> row [ spaceEvenly, width fill ]
     ]
         |> column [ width fill, spacing 10, centerY ]
+
+
+viewSortIcon : Bool -> Types.TagsSort -> Types.TagsSort -> Element Msg
+viewSortIcon rev sort active =
+    let
+        icn =
+            case sort of
+                Types.SortName ->
+                    Icons.sort_by_alpha
+
+                Types.SortDate ->
+                    Icons.date_range
+
+                Types.SortUsage ->
+                    Icons.insert_chart_outlined
+
+        curr =
+            sort == active
+    in
+    Input.button
+        [ (if curr then
+            --blue
+            black
+
+           else
+            black
+          )
+            |> Font.color
+        , Element.mouseOver [ Font.color blue ]
+        ]
+        { onPress = Just <| TagsSortSet sort
+        , label =
+            if curr then
+                icon
+                    (if rev then
+                        Icons.north
+
+                     else
+                        Icons.south
+                    )
+                    30
+                    |> el
+                        [ Background.color sand
+                        , padding 5
+                        , Border.rounded 20
+                        , Border.shadow
+                            { offset = ( 3, 3 )
+                            , blur = 3
+                            , size = 1
+                            , color = Element.rgb255 150 150 150
+                            }
+                        ]
+
+            else
+                icon icn 30
+                    |> el
+                        [ spacing 10
+                        , padding 5
+                        ]
+        }
 
 
 viewSortSelect : Types.TagsSort -> Types.TagsSort -> Element Msg
@@ -1043,11 +1083,28 @@ viewTags model =
             |> el [ cappedWidth 500, centerX, paddingXY 0 20 ]
 
     else
-        [ [ [ viewSortSelect Types.SortName model.tagsSort
-            , viewSortSelect Types.SortDate model.tagsSort
-            , viewSortSelect Types.SortUsage model.tagsSort
+        [ [ [ [ viewSortIcon model.tagsSortReverse Types.SortName model.tagsSort
+              , viewSortIcon model.tagsSortReverse Types.SortDate model.tagsSort
+              , viewSortIcon model.tagsSortReverse Types.SortUsage model.tagsSort
+              ]
+                |> row [ spacing 10 ]
+            , (case model.tagsSort of
+                Types.SortName ->
+                    "name"
+
+                Types.SortDate ->
+                    "date created"
+
+                Types.SortUsage ->
+                    "count"
+              )
+                |> (\x ->
+                        "Sorted by " ++ x
+                   )
+                |> text
+                |> el [ Font.italic, Font.size 16 ]
             ]
-                |> column [ spacing 10 ]
+                |> row [ spaceEvenly, width fill, paddingXY 0 10 ]
           , viewTagsCol model tags
           , [ Input.text
                 [ Border.rounded 0
@@ -1068,7 +1125,7 @@ viewTags model =
             , btn3 model.inProgress.tag Icons.send "Submit" TagCreateSubmit
                 |> el [ Element.alignRight ]
             ]
-                |> column [ spacing 10 ]
+                |> column [ spacing 10, paddingXY 0 20 ]
           ]
             |> column [ cappedWidth 450, centerX, Element.alignTop, height fill ]
         , none |> el [ height fill, width <| px 1, Background.color black ]
@@ -1079,33 +1136,109 @@ viewTags model =
                 )
             |> whenJust
                 (\t ->
-                    if List.isEmpty t.posts then
+                    [ if model.tagBeingEdited == Just t.id then
+                        [ Input.text
+                            [ Border.rounded 0
+                            , Border.color black
+                            , width fill
+                            , Border.widthEach { bottom = 1, top = 0, left = 0, right = 0 }
+                            , onKeydown [ onEnter <| TagUpdateSubmit t ]
+                            ]
+                            { label = Input.labelHidden ""
+                            , onChange = TagUpdate
+                            , placeholder = Nothing
+                            , text = model.tagUpdate
+                            }
+                        , iBtn 30 Icons.close <| TagUpdateSet Nothing
+                        , iBtn 30 Icons.send <| TagUpdateSubmit t
+                        ]
+                            |> row [ width fill, spacing 10 ]
+
+                      else
+                        Input.button [ width fill, padding 10 ]
+                            { onPress = Just <| TagUpdateSet <| Just t
+                            , label =
+                                [ text t.name
+                                , icon Icons.edit 20
+                                ]
+                                    |> row [ spaceEvenly, width fill ]
+                            }
+                    , if List.isEmpty t.posts then
                         viewNoPosts
 
-                    else
+                      else
                         t.posts
+                            |> List.sortWith Calendar.compare
+                            |> (if model.postSortReverse then
+                                    List.reverse
+
+                                else
+                                    identity
+                               )
                             |> List.map
                                 (\date ->
-                                    [ date |> formatDay |> text
+                                    Input.button
+                                        [ Font.size 25
+                                        , Border.rounded 15
+                                        , width fill
+                                        , Background.color sand
+                                        , Border.shadow
+                                            { offset = ( 3, 3 )
+                                            , blur = 3
+                                            , size = 1
+                                            , color = Element.rgb255 150 150 150
+                                            }
+                                        ]
+                                        { onPress =
+                                            Types.RouteDay date
+                                                |> NavigateTo
+                                                |> Just
+                                        , label =
+                                            [ date |> formatDay |> text
 
-                                    --, [ p.body
-                                    --|> Maybe.withDefault ""
-                                    --|> text
-                                    --]
-                                    --|> paragraph []
-                                    ]
-                                        |> column [ spacing 10, Border.width 1, padding 10 ]
+                                            --, [ p.body
+                                            --|> Maybe.withDefault ""
+                                            --|> text
+                                            --]
+                                            --|> paragraph []
+                                            --|> when False
+                                            ]
+                                                |> column
+                                                    [ spacing 10
+                                                    , padding 10
+                                                    , width fill
+                                                    ]
+                                        }
                                 )
                             |> column
-                                [ spacing 10
-                                , cappedWidth 600
+                                [ spacing 20
+                                , width fill
                                 , Element.scrollbarY
-                                , Element.alignTop
-
-                                --, height fill
-                                , height <| px 700
+                                , height fill
+                                , padding 10
                                 ]
+                    , [ [ iBtn 30
+                            (if model.postSortReverse then
+                                Icons.north
+
+                             else
+                                Icons.south
+                            )
+                            PostSortToggle
+                        , text "Sort"
+                            |> el [ Font.italic ]
+                        ]
+                            |> row [ spacing 10 ]
+                            |> when (not <| List.isEmpty t.posts)
+                      , [ btn2 False Icons.delete "Delete" <| TagDelete t
+                        ]
+                            |> row [ spacing 20, Element.alignRight ]
+                      ]
+                        |> row [ width fill, spaceEvenly, Element.alignBottom ]
+                    ]
+                        |> column [ height fill, width fill, spacing 10 ]
                 )
+            |> el [ cappedWidth 500, height fill, centerX, paddingXY 0 20 ]
             |> el [ width fill, height fill ]
         ]
             |> row [ centerX, spacing 30, height fill, width fill ]
@@ -1545,15 +1678,7 @@ viewHome model =
             , centerX
             , padding 40
             ]
-    , [ [ Element.image
-            [ width <| px 200
-            , style "animation-name" "fadeIn"
-            , style "animation-duration" "1s"
-            ]
-            { src = "/phone.png"
-            , description = ""
-            }
-        , Input.button
+    , [ Input.button
             [ Font.underline
             , Element.mouseOver
                 [ Font.color blue
@@ -1563,16 +1688,33 @@ viewHome model =
             , varela
             ]
             { onPress = Just <| NavigateTo Types.RouteCalendar
-            , label = text "Try demo"
+            , label =
+                [ Element.image
+                    [ width <| px 200
+                    , style "animation-name" "fadeIn"
+                    , style "animation-duration" "1s"
+                    ]
+                    { src = "/phone.png"
+                    , description = ""
+                    }
+                , (if isNothing model.auth then
+                    "Try demo"
+
+                   else
+                    "Return to app"
+                  )
+                    |> text
+                    |> el [ centerX ]
+                ]
+                    |> column [ spacing 10 ]
             }
-        ]
-            |> column [ spacing 10 ]
       , [ viewInfo False model.def
             |> el
                 [ width <| px 420
                 , Element.alignTop
                 ]
         , viewFunnel model
+            |> when (isNothing model.auth)
         ]
             |> column [ spaceEvenly, height fill ]
       ]
@@ -2105,106 +2247,12 @@ viewPage model =
 
 viewPageMobile : Model -> Element Msg
 viewPageMobile model =
-    [ if model.postView then
-        if model.tagView then
-            model.current
-                |> whenJust
-                    (\d ->
-                        let
-                            pst =
-                                model.posts
-                                    |> Day.get d
+    if model.postView then
+        model.current
+            |> whenJust (viewPostView model)
 
-                            topBar =
-                                [ formatDay d
-                                    |> text
-                                    |> el [ width fill ]
-                                , text "|"
-                                , text "Tags"
-                                    |> el [ Element.alignRight ]
-                                    |> el [ Font.italic, width fill ]
-                                ]
-                                    |> row [ spaceEvenly, Font.size 17, width fill ]
-                        in
-                        [ topBar
-                        , viewPostTags model d pst
-                        ]
-                            |> column
-                                [ height fill
-                                , width fill
-                                , spacing 10
-
-                                --, style "animation" "rise 0.5s"
-                                --, style "transform-origin" "bottom"
-                                --, Element.clip
-                                , fShrink
-                                ]
-                    )
-
-        else
-            model.current
-                |> whenJust
-                    (\d ->
-                        let
-                            fs =
-                                25
-
-                            pst =
-                                model.posts
-                                    |> Day.get d
-
-                            create =
-                                viewPostEditor PostCreateSubmit model.postEditorBody False fs
-
-                            make _ =
-                                viewPostEditor PostUpdateSubmit model.postEditorBody (not model.postBeingEdited) fs
-
-                            txt =
-                                pst
-                                    |> unwrap
-                                        (Just "Creating new entry")
-                                        (always
-                                            (if model.postBeingEdited then
-                                                Just "Updating entry"
-
-                                             else
-                                                Nothing
-                                            )
-                                        )
-
-                            topBar =
-                                [ formatDay d
-                                    |> text
-                                    |> el [ width fill ]
-                                , text "|"
-                                    |> when (txt /= Nothing)
-                                , txt
-                                    |> whenJust
-                                        (text
-                                            >> el [ Element.alignRight ]
-                                            >> el [ Font.italic, width fill ]
-                                        )
-                                ]
-                                    |> row [ spaceEvenly, Font.size 17, width fill ]
-                        in
-                        [ topBar
-                        , pst
-                            |> unwrap create make
-                        ]
-                            |> column
-                                [ height fill
-                                , width fill
-                                , spacing 10
-
-                                --, style "animation" "rise 0.5s"
-                                --, style "transform-origin" "bottom"
-                                --, Element.clip
-                                , fShrink
-                                ]
-                    )
-
-      else
-        viewCalendar model
+    else
+        [ viewCalendar model
             |> el
                 [ Element.alignTop
                 , width fill
@@ -2213,145 +2261,194 @@ viewPageMobile model =
                 --, style "animation-fill-mode" "forwards"
                 --, style "animation" "fadeOut 0.5s"
                 ]
-    , viewBarMobile model
-    ]
-        |> column
-            [ width fill
-            , height fill
-            , spaceEvenly
-
-            --, paddingXY 20 10
-            --, Element.clip
-            , fShrink
-            ]
-
-
-viewBarMobile : Model -> Element Msg
-viewBarMobile model =
-    let
-        pst =
-            model.current
-                |> Maybe.andThen
-                    (\d ->
-                        model.posts
-                            |> Day.get d
-                    )
-    in
-    if model.postView then
-        if model.tagView then
-            [ btn2 False Icons.edit "Write" PostUpdateStart
-            , iBtn 30 Icons.expand_more <| NavigateTo Types.RouteCalendar
-            ]
-                |> row [ width fill, spaceEvenly, alignBottom, width fill ]
-
-        else if model.postBeingEdited then
-            [ lnk "Cancel" PostUpdateCancel
-            , btn2 model.inProgress.post
-                Icons.save
-                "Submit"
-                (pst
-                    |> unwrap PostCreateSubmit
-                        (\_ ->
-                            if model.postEditorBody == "" then
-                                PostClear
-
-                            else
-                                PostUpdateSubmit
-                        )
-                )
-            ]
-                |> row [ spacing 20, Element.alignRight ]
-
-        else
-            [ btn2 False Icons.assignment_turned_in "Tags" TagViewToggle
-            , btn2 False Icons.edit "Edit" PostUpdateStart
-            , iBtn 30 Icons.expand_more <| NavigateTo Types.RouteCalendar
-            ]
-                |> row [ width fill, spaceEvenly, alignBottom, width fill ]
-
-    else
-        model.current
+        , model.current
             |> unwrap
                 (viewTodayBtn model.screen
                     |> el [ centerX, centerY ]
                 )
-                (\day ->
-                    let
-                        body =
-                            pst
-                                |> Maybe.andThen .body
-                    in
-                    [ viewTodayBtn model.screen
-                        |> el [ centerX, Element.alignBottom ]
-                        |> when (day /= model.today || model.month /= Calendar.getMonth day)
-                        |> el [ width fill, height fill ]
-                    , [ Input.button [ height fill, width fill ]
-                            { onPress =
-                                (if isNothing body then
-                                    PostUpdateStart
+                (viewBarMobile model)
+        ]
+            |> column
+                [ width fill
+                , height fill
+                , spaceEvenly
 
-                                 else
-                                    PostViewStart
-                                )
-                                    |> Just
-                            , label =
-                                [ body
-                                    |> Maybe.withDefault ""
-                                    |> viewPreview
-                                , icon Icons.edit 20
-                                    |> el [ Element.alignTop ]
-                                ]
-                                    |> row [ spacing 10, height fill, width fill ]
-                            }
-                      , Input.button [ width fill ]
-                            { onPress = Just PostViewTagStart
-                            , label =
-                                [ pst
-                                    |> unwrap 0
-                                        (.tags >> List.length)
-                                    |> String.fromInt
-                                    |> text
-                                , icon Icons.assignment_turned_in 20
-                                ]
-                                    |> row [ spacing 10, Element.alignRight ]
-                            }
+                --, paddingXY 20 10
+                --, Element.clip
+                , fShrink
+                ]
 
-                      --, View.Misc.dayParts day
-                      --|> List.map (text >> el [ centerX ] >> el [ width fill ])
-                      --|> row [ width fill, spaceEvenly, Font.size 16 ]
-                      , formatDay day
-                            |> text
-                            |> el
-                                [ (if model.screen.width < 360 then
-                                    14
 
-                                   else
-                                    16
-                                  )
-                                    |> Font.size
-                                , Font.italic
-                                , Element.alignRight
-                                ]
-                      ]
-                        |> column
-                            [ height fill
-                            , width fill
-                            , spacing 10
-                            ]
-                        |> el
-                            [ Border.widthEach { bottom = 0, top = 0, left = 1, right = 0 }
-                            , paddingXY 5 0
-                            , width fill
-                            , height fill
-                            ]
-                    ]
-                        |> row
-                            [ spacing 10
-                            , Helpers.View.cappedHeight 175
-                            , paddingXY 0 10
-                            , width fill
-                            ]
-                )
+viewPostView : Model -> Date -> Element Msg
+viewPostView model d =
+    let
+        pst =
+            model.posts
+                |> Day.get d
+
+        fs =
+            25
+
+        txt =
+            pst
+                |> unwrap
+                    (Just "Creating new entry")
+                    (always
+                        (if model.postBeingEdited then
+                            Just "Updating entry"
+
+                         else
+                            Nothing
+                        )
+                    )
+
+        dayTxt =
+            formatDay d
+                |> text
+                |> el [ width fill ]
+    in
+    if model.tagView then
+        [ [ dayTxt
+          , text "|"
+          , text "Tags"
+                |> el [ Element.alignRight ]
+                |> el [ Font.italic, width fill ]
+          ]
+            |> row [ spaceEvenly, Font.size 17, width fill ]
+        , viewPostTags model d pst
+        , [ btn2 False Icons.edit "Write" <| NavigateTo <| Types.RouteDayDetail d
+          , iBtn 30 Icons.expand_more <| NavigateTo Types.RouteCalendar
+          ]
+            |> row [ width fill, spaceEvenly, alignBottom, width fill ]
+        ]
+            |> column
+                [ height fill
+                , width fill
+                , spacing 10
+
+                --, style "animation" "rise 0.5s"
+                --, style "transform-origin" "bottom"
+                --, Element.clip
+                , fShrink
+                ]
+
+    else
+        [ [ dayTxt
+          , text "|"
+                |> when (txt /= Nothing)
+          , txt
+                |> whenJust
+                    (text
+                        >> el [ Element.alignRight ]
+                        >> el [ Font.italic, width fill ]
+                    )
+          ]
+            |> row [ spaceEvenly, Font.size 17, width fill ]
+        , viewPostEditor
+            model.postEditorBody
+            (not model.postBeingEdited)
+            fs
+        , if model.postBeingEdited then
+            [ lnk "Cancel" PostUpdateCancel
+            , btn2 model.inProgress.post
+                Icons.save
+                "Submit"
+                PostBodySubmit
+            ]
+                |> row [ spacing 20, Element.alignRight ]
+
+          else
+            [ btn2 False Icons.assignment_turned_in "Tags" <| NavigateTo <| Types.RouteDayTags d
+            , btn2 False Icons.edit "Edit" PostUpdateStart
+            , iBtn 30 Icons.expand_more <| NavigateTo Types.RouteCalendar
+            ]
+                |> row [ width fill, spaceEvenly, alignBottom, width fill ]
+        ]
+            |> column
+                [ height fill
+                , width fill
+                , spacing 10
+
+                --, style "animation" "rise 0.5s"
+                --, style "transform-origin" "bottom"
+                --, Element.clip
+                , fShrink
+                ]
+
+
+viewBarMobile : Model -> Date -> Element Msg
+viewBarMobile model day =
+    let
+        pst =
+            model.posts
+                |> Day.get day
+
+        body =
+            pst
+                |> Maybe.andThen .body
+                |> Maybe.withDefault ""
+    in
+    [ viewTodayBtn model.screen
+        |> el [ centerX, Element.alignBottom ]
+        |> when (day /= model.today || model.month /= Calendar.getMonth day)
+        |> el [ width fill, height fill ]
+    , [ Input.button [ height fill, width fill ]
+            { onPress = Just <| NavigateTo <| Types.RouteDayDetail day
+            , label =
+                [ viewPreview body
+                , icon Icons.edit 20
+                    |> el [ Element.alignTop ]
+                ]
+                    |> row [ spacing 10, height fill, width fill ]
+            }
+      , Input.button [ width fill ]
+            { onPress = Just <| NavigateTo <| Types.RouteDayTags day
+            , label =
+                [ pst
+                    |> unwrap 0
+                        (.tags >> List.length)
+                    |> String.fromInt
+                    |> text
+                , icon Icons.assignment_turned_in 20
+                ]
+                    |> row [ spacing 10, Element.alignRight ]
+            }
+
+      --, View.Misc.dayParts day
+      --|> List.map (text >> el [ centerX ] >> el [ width fill ])
+      --|> row [ width fill, spaceEvenly, Font.size 16 ]
+      , formatDay day
+            |> text
+            |> el
+                [ (if model.screen.width < 360 then
+                    14
+
+                   else
+                    16
+                  )
+                    |> Font.size
+                , Font.italic
+                , Element.alignRight
+                ]
+      ]
+        |> column
+            [ height fill
+            , width fill
+            , spacing 10
+            ]
+        |> el
+            [ Border.widthEach { bottom = 0, top = 0, left = 1, right = 0 }
+            , paddingXY 5 0
+            , width fill
+            , height fill
+            ]
+    ]
+        |> row
+            [ spacing 10
+            , Helpers.View.cappedHeight 175
+            , paddingXY 0 10
+            , width fill
+            ]
 
 
 viewTodayBtn : Types.Screen -> Element Msg
@@ -2372,7 +2469,7 @@ viewTodayBtn screen =
         , Font.size 17
         , View.Style.popIn
         ]
-        { onPress = Just GoToToday
+        { onPress = Just <| GoToToday Nothing
         , label =
             [ icon Icons.brightness_5 20
             , (if screen.width < 360 then
@@ -2413,8 +2510,8 @@ viewPost model d =
             model.posts
                 |> Day.get d
 
-        new =
-            pst |> Maybe.andThen .body |> isNothing
+        tags =
+            UD.values model.tags
 
         body =
             if model.postBeingEdited then
@@ -2430,32 +2527,22 @@ viewPost model d =
                 |> text
                 |> el [ width fill ]
             , [ lnk "Cancel" PostUpdateCancel
-                    |> when (model.postBeingEdited && isJust pst)
-              , if new then
-                    btn2 model.inProgress.post
-                        Icons.save
-                        "Save"
-                        PostCreateSubmit
-                        |> when (model.postEditorBody /= "")
-
-                else if model.postBeingEdited then
-                    btn2 model.inProgress.post
-                        Icons.save
-                        "Save"
-                        (pst
-                            |> unwrap PostCreateSubmit
-                                (\_ ->
-                                    if model.postEditorBody == "" then
-                                        PostClear
-
-                                    else
-                                        PostUpdateSubmit
-                                )
-                        )
-                        |> when
-                            (pst
-                                |> Maybe.andThen .body
-                                |> unwrap False ((/=) model.postEditorBody)
+                    |> when model.postBeingEdited
+              , if model.postBeingEdited then
+                    pst
+                        |> unwrap
+                            (btn2 model.inProgress.post
+                                Icons.save
+                                "Save"
+                                PostBodySubmit
+                                |> when (model.postEditorBody /= "")
+                            )
+                            (\p ->
+                                btn2 model.inProgress.post
+                                    Icons.save
+                                    "Save"
+                                    PostBodySubmit
+                                    |> when (p.body /= Just model.postEditorBody)
                             )
 
                 else
@@ -2473,11 +2560,7 @@ viewPost model d =
                     ]
     in
     [ [ topBar
-      , if model.tagView then
-            viewPostTags model d pst
-
-        else
-            viewPostEditor PostCreateSubmit body (not model.postBeingEdited && not new) fs
+      , viewPostEditor body (not model.postBeingEdited) fs
       ]
         |> column
             [ height fill
@@ -2489,23 +2572,24 @@ viewPost model d =
             --, Element.clip
             , fShrink
             ]
-    , [ [ viewSortSelect Types.SortName model.tagsSort
-        , viewSortSelect Types.SortDate model.tagsSort
-        , viewSortSelect Types.SortUsage model.tagsSort
+    , [ [ viewSortIcon model.tagsSortReverse Types.SortName model.tagsSort
+        , viewSortIcon model.tagsSortReverse Types.SortDate model.tagsSort
+        , viewSortIcon model.tagsSortReverse Types.SortUsage model.tagsSort
         ]
-            |> column [ spacing 10 ]
+            |> row [ spaceEvenly, paddingXY 0 10, width fill ]
       , viewTagsCol2 model
             d
-            (UD.values model.tags)
+            tags
             (pst |> unwrap [] (.tags >> List.map .tag))
       ]
-        |> column [ height fill ]
+        |> column [ height fill, paddingXY 20 0, width <| px 200 ]
+        |> when (not <| List.isEmpty tags)
     ]
         |> row [ height fill, width fill ]
 
 
-viewPostEditor : Msg -> String -> Bool -> Int -> Element Msg
-viewPostEditor msg txt disable fontSize =
+viewPostEditor : String -> Bool -> Int -> Element Msg
+viewPostEditor txt disable fontSize =
     Html.textarea
         [ Html.Attributes.id "editor"
         , Html.Attributes.value txt
@@ -2523,8 +2607,7 @@ viewPostEditor msg txt disable fontSize =
         |> el
             [ width fill
             , (if disable then
-                --Icon.pencil
-                "default"
+                View.Img.pencil
 
                else
                 "text"
@@ -2537,7 +2620,7 @@ viewPostEditor msg txt disable fontSize =
             , ebg
             , Element.Events.onClick PostUpdateStart
                 |> whenAttr disable
-            , onKeydown [ onCtrlEnter msg ]
+            , onKeydown [ onCtrlEnter PostBodySubmit ]
             ]
 
 
@@ -2668,6 +2751,27 @@ viewPostTags model d pst =
                 , Element.scrollbarY
                 , style "min-height" "auto"
                 ]
+
+
+ellipsisText : Int -> String -> Element msg
+ellipsisText n txt =
+    Html.div
+        [ Html.Attributes.style "overflow" "hidden"
+        , Html.Attributes.style "text-overflow" "ellipsis"
+        , Html.Attributes.style "white-space" "nowrap"
+        , Html.Attributes.style "height" <| String.fromInt n ++ "px"
+        , Html.Attributes.style "display" "table-cell"
+        , Html.Attributes.title txt
+        ]
+        [ Html.text txt
+        ]
+        |> Element.html
+        |> el
+            [ width fill
+            , style "width" "100%"
+            , style "table-layout" "fixed"
+            , style "display" "table"
+            ]
 
 
 {-| To handle scrollbarY problems.

@@ -61,11 +61,18 @@ update msg model =
             , Cmd.none
             )
 
-        GoToToday ->
-            ( model
-            , Helpers.today
-                |> Task.perform (RouteDay >> NavigateTo)
-            )
+        GoToToday md ->
+            md
+                |> unwrap
+                    ( model
+                    , Helpers.today
+                        |> Task.perform (Just >> GoToToday)
+                    )
+                    (\d ->
+                        ( { model | today = d }
+                        , goTo <| RouteDay d
+                        )
+                    )
 
         NextMonth ->
             ( { model
@@ -159,6 +166,9 @@ update msg model =
                                                 RouteDayDetail _ ->
                                                     Cmd.none
 
+                                                RouteDayTags _ ->
+                                                    Cmd.none
+
                                                 RouteDay d ->
                                                     auth
                                                         |> trip (Data.fetchDay d)
@@ -168,11 +178,6 @@ update msg model =
                             )
                         )
                     )
-
-        PostViewCancel ->
-            ( { model | postView = False, tagView = False }
-            , Cmd.none
-            )
 
         FocusCb res ->
             res
@@ -188,67 +193,6 @@ update msg model =
                         )
                     )
 
-        PostCreateSubmit ->
-            model.current
-                |> unwrap ( model, Cmd.none )
-                    (\d ->
-                        if String.isEmpty model.postEditorBody then
-                            ( { model | postView = False, postBeingEdited = False }, Cmd.none )
-
-                        else if model.auth == Nothing then
-                            ( { model
-                                | inProgress = model.inProgress |> (\p -> { p | post = True })
-                              }
-                            , wait
-                                |> Task.andThen
-                                    (randomTask Uuid.uuidGenerator
-                                        |> always
-                                    )
-                                |> Task.map
-                                    (\uuid ->
-                                        { id = uuid
-                                        , body = Just model.postEditorBody
-                                        , tags = []
-                                        , date = d
-                                        }
-                                            |> Ok
-                                    )
-                                |> Task.perform PostMutateCb
-                            )
-
-                        else
-                            ( { model | inProgress = model.inProgress |> (\p -> { p | post = True }) }
-                            , model.auth
-                                |> unwrap Cmd.none
-                                    (trip
-                                        (Data.postCreate model.postEditorBody
-                                            model.postCreateTags
-                                            d
-                                        )
-                                        PostMutateCb
-                                    )
-                            )
-                    )
-
-        PostDelete id date ->
-            ( { model
-                | inProgress =
-                    model.inProgress
-                        |> (\p -> { p | postDelete = True })
-              }
-            , if model.auth == Nothing then
-                wait
-                    |> Task.map (always <| Ok date)
-                    |> Task.perform PostDeleteCb
-
-              else
-                model.auth
-                    |> unwrap Cmd.none
-                        (trip (Data.postDelete id)
-                            PostDeleteCb
-                        )
-            )
-
         PostUpdateCancel ->
             ( { model
                 | postBeingEdited = False
@@ -261,39 +205,6 @@ update msg model =
             , Cmd.none
             )
 
-        PostViewTagStart ->
-            ( { model
-                | tagView = True
-              }
-            , if isWide model.screen then
-                Cmd.none
-
-              else
-                model.current
-                    |> unwrap
-                        Cmd.none
-                        (RouteDayDetail >> goTo)
-            )
-
-        PostViewStart ->
-            ( model
-            , if isWide model.screen then
-                Cmd.none
-
-              else
-                model.current
-                    |> unwrap
-                        Cmd.none
-                        (RouteDayDetail >> goTo)
-            )
-
-        TagViewToggle ->
-            ( { model
-                | tagView = not model.tagView
-              }
-            , Cmd.none
-            )
-
         PostUpdateStart ->
             ( { model
                 | postEditorBody =
@@ -302,64 +213,70 @@ update msg model =
                         |> Maybe.andThen .body
                         |> Maybe.withDefault ""
                 , postBeingEdited = True
-                , tagView = False
               }
-            , if isWide model.screen then
-                focusOnEditor
-
-              else
-                model.current
-                    |> unwrap
-                        Cmd.none
-                        (RouteDayDetail >> goTo)
+            , focusOnEditor
             )
 
-        PostClear ->
+        PostBodySubmit ->
             model.current
-                |> Maybe.andThen (\d -> Day.get d model.posts)
                 |> unwrap ( model, Cmd.none )
-                    (\post ->
-                        ( { model
-                            | inProgress =
-                                model.inProgress
-                                    |> (\p ->
-                                            { p | post = True }
-                                       )
-                          }
-                        , wait
-                            |> Task.map
-                                ({ post
-                                    | body = Nothing
-                                 }
-                                    |> Just
-                                    |> Ok
-                                    |> always
-                                )
-                            |> Task.perform (PostCb post.date)
-                        )
-                    )
-
-        PostUpdateSubmit ->
-            model.current
-                |> Maybe.andThen (\d -> Day.get d model.posts)
-                |> unwrap ( model, Cmd.none )
-                    (\post ->
+                    (\d ->
                         ( { model
                             | inProgress =
                                 model.inProgress
                                     |> (\p -> { p | post = True })
                           }
-                        , model.auth
+                        , Day.get d model.posts
                             |> unwrap
-                                (wait
-                                    |> Task.map
-                                        ({ post | body = Just model.postEditorBody }
-                                            |> Ok
-                                            |> always
+                                (model.auth
+                                    |> unwrap
+                                        (wait
+                                            |> Task.andThen
+                                                (randomTask Uuid.uuidGenerator
+                                                    |> always
+                                                )
+                                            |> Task.map
+                                                (\uuid ->
+                                                    { id = uuid
+                                                    , body = Just model.postEditorBody
+                                                    , tags = []
+                                                    , date = d
+                                                    }
+                                                        |> Ok
+                                                )
+                                            |> Task.perform PostMutateCb
                                         )
-                                    |> Task.perform PostMutateCb
+                                        (trip
+                                            (Data.postCreate model.postEditorBody
+                                                model.postCreateTags
+                                                d
+                                            )
+                                            PostMutateCb
+                                        )
                                 )
-                                (trip (Data.postUpdateBody post.id model.postEditorBody) PostMutateCb)
+                                (\post ->
+                                    model.auth
+                                        |> unwrap
+                                            (wait
+                                                |> Task.map
+                                                    ({ post
+                                                        | body =
+                                                            if model.postEditorBody == "" then
+                                                                Nothing
+
+                                                            else
+                                                                Just model.postEditorBody
+                                                     }
+                                                        |> Ok
+                                                        |> always
+                                                    )
+                                                |> Task.perform PostMutateCb
+                                            )
+                                            (trip
+                                                (Data.postUpdateBody post.id model.postEditorBody)
+                                                PostMutateCb
+                                            )
+                                )
                         )
                     )
 
@@ -398,34 +315,6 @@ update msg model =
                             | tags =
                                 tags
                                     |> UD.fromList
-                          }
-                        , Cmd.none
-                        )
-                    )
-
-        PostDeleteCb res ->
-            res
-                |> unpack
-                    (\err ->
-                        ( { model
-                            | inProgress =
-                                model.inProgress
-                                    |> (\p -> { p | postDelete = False })
-                            , postBeingEdited = False
-                          }
-                        , logGqlError "PostDeleteCb" err
-                        )
-                    )
-                    (\date ->
-                        ( { model
-                            | posts =
-                                model.posts
-                                    |> Day.remove date
-                            , postEditorBody = ""
-                            , inProgress = model.inProgress |> (\p -> { p | postDelete = False })
-                            , current = Nothing
-                            , postView = False
-                            , postBeingEdited = False
                           }
                         , Cmd.none
                         )
@@ -565,7 +454,6 @@ update msg model =
                     (\err ->
                         ( { model
                             | inProgress = inProgress
-                            , postBeingEdited = False
                           }
                         , logGqlError "PostCb" err
                         )
@@ -579,14 +467,7 @@ update msg model =
                                             |> Day.insert
                                                 post.date
                                                 post
-                                    , postBeingEdited = False
                                     , inProgress = inProgress
-                                    , postView =
-                                        if isNothing post.body then
-                                            False
-
-                                        else
-                                            model.postView
                                   }
                                 , Cmd.none
                                 )
@@ -596,7 +477,6 @@ update msg model =
                                     | posts =
                                         model.posts
                                             |> Day.remove day
-                                    , postBeingEdited = False
                                     , inProgress = inProgress
                                   }
                                 , Cmd.none
@@ -770,11 +650,11 @@ update msg model =
                         model.inProgress
                             |> (\p -> { p | login = True })
                   }
-                  --, Data.nonce email
-                  --|> Task.attempt NonceCb
-                , wait
-                    |> Task.map (always <| Err <| Data.makeGqlCode "no-purchase")
-                    |> Task.perform NonceCb
+                , Data.nonce email
+                    |> Task.attempt NonceCb
+                  --, wait
+                  --|> Task.map (always <| Err <| Data.makeGqlCode "no-purchase")
+                  --|> Task.perform NonceCb
                 )
 
             else
@@ -893,12 +773,12 @@ update msg model =
                                 }
                            )
               }
-            , wait
-                |> Task.perform (always PaymentFail)
-              --, Ports.buy
-              --{ email = model.loginForm.email
-              --, annual = annual
-              --}
+              --, wait
+              --|> Task.perform (always PaymentFail)
+            , Ports.buy
+                { email = model.loginForm.email
+                , annual = annual
+                }
             )
 
         Boot { key, href, swActive } ->
@@ -1005,6 +885,9 @@ update msg model =
                                             Types.ViewCalendar
 
                                         RouteDayDetail _ ->
+                                            Types.ViewCalendar
+
+                                        RouteDayTags _ ->
                                             Types.ViewCalendar
                                 )
               }
@@ -1116,33 +999,34 @@ update msg model =
                         )
                     )
 
-        RefreshCb msg_ res ->
+        RefreshCb cmd res ->
             res
                 |> unpack
                     (\err ->
                         ( model
-                        , logGqlError "TagUpdateCb" err
+                        , logGqlError "RefreshCb" err
                         )
                     )
-                    (unwrap
-                        ( { model | auth = Nothing }
-                        , Cmd.batch
-                            [ Ports.clearState ()
-                            , goTo RouteHome
-                            ]
+                    (Maybe.map2
+                        (\auth token ->
+                            let
+                                newAuth =
+                                    { auth | token = token }
+                            in
+                            ( { model
+                                | auth = Just newAuth
+                              }
+                            , cmd newAuth
+                            )
                         )
-                        (\tk ->
-                            model.auth
-                                |> unwrap
-                                    ( model, Cmd.none )
-                                    (\auth ->
-                                        ( { model
-                                            | auth = Just { auth | token = tk }
-                                          }
-                                        , msg_ { auth | token = tk }
-                                        )
-                                    )
-                        )
+                        model.auth
+                        >> Maybe.withDefault
+                            ( { model | auth = Nothing }
+                            , [ Ports.clearState ()
+                              , goTo RouteHome
+                              ]
+                                |> Cmd.batch
+                            )
                     )
 
         PostTagAttach day tagId ->
@@ -1261,7 +1145,7 @@ update msg model =
                                             , postTags =
                                                 post.tags
                                                     |> List.filter
-                                                        (\pt_ -> pt_.id /= pt.id)
+                                                        (\x -> x.id /= pt.id)
                                             , tagId = tagId
                                             , tagPosts =
                                                 model.tags
@@ -1276,7 +1160,7 @@ update msg model =
                                     |> Task.perform (PostTagCb pair)
                                 )
                                 (trip
-                                    (Data.tagDetach pt.tag)
+                                    (Data.tagDetach pt.id)
                                     (PostTagCb pair)
                                 )
                         )
@@ -1398,6 +1282,31 @@ update msg model =
                 goTo RouteTags
             )
 
+        CellSelect d ->
+            if model.current == Just d then
+                if model.landscape then
+                    ( { model
+                        | postEditorBody =
+                            Day.get d model.posts
+                                |> Maybe.andThen .body
+                                |> Maybe.withDefault ""
+                        , postBeingEdited = True
+                      }
+                    , focusOnEditor
+                    )
+
+                else
+                    ( model
+                    , RouteDayDetail d
+                        |> goTo
+                    )
+
+            else
+                ( model
+                , Types.RouteDay d
+                    |> goTo
+                )
+
         UrlChange r_ ->
             let
                 model_ =
@@ -1417,10 +1326,10 @@ update msg model =
                     )
                     (handleRoute model_)
 
-        Bad mm ->
+        JwtFailure cmd ->
             ( model
             , Data.refresh
-                |> Task.attempt (RefreshCb mm)
+                |> Task.attempt (RefreshCb cmd)
             )
 
         NavigateTo route ->
@@ -1516,95 +1425,79 @@ handleRoute model route =
             )
 
         RouteDayDetail d ->
+            let
+                txt =
+                    Day.get d model.posts
+                        |> Maybe.andThen .body
+
+                startEdit =
+                    isNothing txt
+            in
             ( { model
                 | postView = True
+                , tagView = False
                 , current = Just d
                 , view = Types.ViewCalendar
+                , postBeingEdited = startEdit
+                , postEditorBody = txt |> Maybe.withDefault ""
               }
-            , if model.postBeingEdited && not model.tagView then
+            , if startEdit then
                 focusOnEditor
 
               else
                 Cmd.none
             )
 
+        RouteDayTags d ->
+            ( { model
+                | postView = True
+                , tagView = True
+                , current = Just d
+                , view = Types.ViewCalendar
+              }
+            , Cmd.none
+            )
+
         RouteDay d ->
-            model.auth
-                |> unwrap
-                    (model.posts
-                        |> Day.get d
-                        |> (\data ->
-                                let
-                                    shouldFocusOnEditor =
-                                        if data == Nothing then
-                                            isWide model.screen
-
-                                        else
-                                            isWide model.screen && model.postBeingEdited
-
-                                    editorText =
-                                        data |> Maybe.andThen .body |> Maybe.withDefault ""
-                                in
-                                ( { model
-                                    | postEditorBody = editorText
-                                    , postCreateTags = []
-                                    , postBeingEdited = shouldFocusOnEditor
-                                    , current = Just d
-                                    , month = Calendar.getMonth d
-                                    , year = Calendar.getYear d
-                                    , view = Types.ViewCalendar
-                                    , postView = False
-                                  }
-                                , if False then
-                                    focusOnEditor
-
-                                  else
-                                    Cmd.none
-                                )
-                           )
-                    )
-                    (routeLiveDay model d)
+            model.posts
+                |> Day.get d
+                |> routeDay model d
 
 
-routeLiveDay : Model -> Date -> Auth -> ( Model, Cmd Msg )
-routeLiveDay model d auth =
-    model.posts
-        |> Day.get d
-        |> (\data ->
-                let
-                    shouldFocusOnEditor =
-                        if data == Nothing then
-                            isWide model.screen
+routeDay : Model -> Date -> Maybe Post -> ( Model, Cmd Msg )
+routeDay model d pst =
+    let
+        startEdit =
+            Just d == model.current
 
-                        else
-                            isWide model.screen && model.postBeingEdited
-
-                    editorText =
-                        data |> Maybe.andThen .body |> Maybe.withDefault ""
-                in
-                ( { model
-                    | postEditorBody = editorText
-                    , postCreateTags = []
-                    , postBeingEdited = shouldFocusOnEditor
-                    , inProgress = model.inProgress |> (\p -> { p | post = False })
-                    , current = Just d
-                    , month = Calendar.getMonth d
-                    , year = Calendar.getYear d
-                    , postView = False
-                  }
-                , Cmd.batch
-                    [ trip
-                        (Data.fetchDay d)
-                        (PostCb d)
-                        auth
-                    , if False then
-                        focusOnEditor
-
-                      else
-                        Cmd.none
-                    ]
+        editorText =
+            pst |> Maybe.andThen .body |> Maybe.withDefault ""
+    in
+    ( { model
+        | postEditorBody = editorText
+        , postCreateTags = []
+        , postBeingEdited = startEdit
+        , inProgress = model.inProgress |> (\p -> { p | post = False })
+        , current = Just d
+        , month = Calendar.getMonth d
+        , year = Calendar.getYear d
+        , postView = False
+        , view = Types.ViewCalendar
+      }
+    , Cmd.batch
+        [ model.auth
+            |> unwrap Cmd.none
+                (trip
+                    (Data.fetchDay d)
+                    (PostCb d)
                 )
-           )
+        , if model.landscape && startEdit then
+            focusOnEditor
+
+          else
+            Cmd.none
+        ]
+    )
 
 
 parseErrors : Graphql.Http.Error a -> List String
@@ -1629,7 +1522,7 @@ trip task msg =
             (unpack
                 (\err ->
                     if codeCheck "invalid-jwt" err then
-                        Bad
+                        JwtFailure
                             (task
                                 >> Task.attempt msg
                             )

@@ -25,6 +25,9 @@ goTo route =
         Types.RouteDayDetail day ->
             absolute [ "calendar", Day.toString day, "view" ] []
 
+        Types.RouteDayTags day ->
+            absolute [ "calendar", Day.toString day, "tags" ] []
+
         Types.RouteTags ->
             absolute [ "tags" ] []
 
@@ -50,6 +53,7 @@ routes =
     , map (Just Types.RouteTag) (s "tags" </> s "detail")
     , map (parseDay Types.RouteDay) (s "calendar" </> string)
     , map (parseDay Types.RouteDayDetail) (s "calendar" </> string </> s "view")
+    , map (parseDay Types.RouteDayTags) (s "calendar" </> string </> s "tags")
     ]
 
 

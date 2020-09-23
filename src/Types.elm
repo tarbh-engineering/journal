@@ -73,14 +73,11 @@ type Msg
     | PostTagCb ( Date, Uuid ) (GqlResult PostTagRes)
     | PostTagNewCb ( Date, Uuid ) (GqlResult PostTagNewRes)
     | PostMutateCb (GqlResult Post)
-    | PostDeleteCb (GqlResult Date)
     | TagsCb (GqlResult (List Tag))
-    | PostViewCancel
-    | PostCreateSubmit
-    | PostDelete Uuid Date
+    | CellSelect Date
     | PostUpdateStart
     | PostUpdateCancel
-    | PostUpdateSubmit
+    | PostBodySubmit
     | BodyUpdate String
     | CheckCb (GqlResult Bool)
     | NonceCb (GqlResult String)
@@ -96,7 +93,6 @@ type Msg
     | Logout
     | LogoutCb (GqlResult Bool)
     | InitCb (Maybe Route) (GqlResult (Maybe Auth))
-    | PostViewTagStart
     | TagDelete Tag
     | TagDeleteCb (GqlResult Uuid)
     | TagUpdate String
@@ -109,10 +105,7 @@ type Msg
     | FocusCb (Result Browser.Dom.Error ())
     | UrlChange (Result String Route)
     | NavigateTo Route
-    | GoToToday
-    | PostClear
-    | PostViewStart
-    | TagViewToggle
+    | GoToToday (Maybe Date)
     | VisibilityChange Visibility
     | Resize Screen
     | PrevMonth
@@ -123,7 +116,7 @@ type Msg
     | TagDeselect
     | SetDef Def
     | RefreshCb (Auth -> Cmd Msg) (GqlResult (Maybe Jwt))
-    | Bad (Auth -> Cmd Msg)
+    | JwtFailure (Auth -> Cmd Msg)
     | Boot BootFlags
     | DropdownToggle
     | TagsViewSet TagsView
@@ -155,6 +148,7 @@ type Route
     | RouteCalendar
     | RouteDay Date
     | RouteDayDetail Date
+    | RouteDayTags Date
     | RouteHome
     | RouteTags
     | RouteTag
