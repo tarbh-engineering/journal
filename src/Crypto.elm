@@ -65,7 +65,7 @@ serviceWorkerRequest key body decoder =
     Http.task
         { method = "CRYPTO"
         , headers = []
-        , url = "http://" ++ key
+        , url = "https://" ++ key
         , body = Http.jsonBody body
         , resolver =
             Http.stringResolver
