@@ -28,8 +28,6 @@ module.exports = {
   mode: production ? "production" : "development",
   entry: "./src/index.js",
   output: {
-    // publicPath only necessary due to HMR bug:
-    // https://github.com/webpack/webpack-dev-server/issues/1385#issuecomment-482166140
     publicPath: "/",
     path: publicFolder,
     filename: "bundle.js",

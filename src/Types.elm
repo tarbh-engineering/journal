@@ -1,4 +1,4 @@
-module Types exposing (Auth, BootFlags, Cipher, Def(..), Flags, Funnel(..), GqlResult, GqlTask, Keys, Model, Msg(..), Post, PostRaw, PostTag, PostTagNewRes, PostTagRes, Route(..), Screen, Tag, TagRaw, TagsSort(..), TagsView(..), View(..))
+module Types exposing (Auth, Cipher, Def(..), EmailRes(..), Flags, Funnel(..), GqlResult, GqlTask, Keys, Model, Msg(..), Post, PostRaw, PostTag, PostTagNewRes, PostTagRes, Route(..), Screen, Tag, TagRaw, TagsSort(..), TagsView(..), View(..))
 
 import Array exposing (Array)
 import Browser.Dom
@@ -80,11 +80,12 @@ type Msg
     | PostBodySubmit
     | BodyUpdate String
     | CheckCb (GqlResult Bool)
-    | NonceCb (GqlResult String)
+    | NonceCb (GqlResult EmailRes)
     | LoginCb (GqlResult Auth)
     | EmailSubmit
     | LoginSubmit String
     | SignupSubmit String
+    | GuestSignupSubmit String
     | Buy Bool
     | PaymentFail
     | LoginFormEmailUpdate String
@@ -112,13 +113,12 @@ type Msg
     | PrevMonth
     | NextMonth
     | FaqToggle
-    | Change
+    | FunnelCancel
     | TagSelect Uuid
     | TagDeselect
     | SetDef Def
     | RefreshCb (Auth -> Cmd Msg) (GqlResult (Maybe Jwt))
     | JwtFailure (Auth -> Cmd Msg)
-    | Boot BootFlags
     | DropdownToggle
     | TagsViewSet TagsView
     | TagsSortSet TagsSort
@@ -134,19 +134,14 @@ type alias Flags =
     , year : Int
     , screen : Screen
     , isMobile : Bool
-    }
-
-
-type alias BootFlags =
-    { key : Maybe String
     , href : String
+    , key : Maybe String
     , swActive : Bool
     }
 
 
 type Route
-    = RouteToday
-    | RouteCalendar
+    = RouteCalendar
     | RouteDay Date
     | RouteDayDetail Date
     | RouteDayTags Date
@@ -201,13 +196,20 @@ type Funnel
     = Hello
     | WelcomeBack String
     | JoinUs
-    | CheckEmail
+    | GuestSignup String
 
 
 type Def
-    = Secure
-    | Private
-    | Journal
+    = Private
+    | Devices
+    | OpenSource
+    | Control
+
+
+type EmailRes
+    = Guest String
+    | Nonce String
+    | Newbie
 
 
 type alias LoginForm =

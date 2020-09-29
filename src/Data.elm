@@ -1,8 +1,9 @@
-module Data exposing (check, fetchDay, fetchPostsByTag, graphqlEndpoint, ignoreParsedErrorData, login, logout, mutate, nonce, postCreate, postCreateWithTag, postSelection, postUpdateBody, query, range, refresh, signup, tagAttach, tagCreate, tagDelete, tagDetach, tagSelection, tagUpdate, tags)
+module Data exposing (check, fetchDay, fetchPostsByTag, graphqlEndpoint, ignoreParsedErrorData, join, login, logout, mutate, nonce, postCreate, postCreateWithTag, postSelection, postUpdateBody, query, range, refresh, signup, tagAttach, tagCreate, tagDelete, tagDetach, tagSelection, tagUpdate, tags)
 
 import Api.InputObject
 import Api.Mutation
 import Api.Object
+import Api.Object.Data
 import Api.Object.Post
 import Api.Object.Post_tag
 import Api.Object.Tag
@@ -292,6 +293,18 @@ signup pw nonce_ ciph =
         |> Task.mapError ignoreParsedErrorData
 
 
+join : String -> String -> String -> GqlTask Jwt
+join pw nonce_ email =
+    Api.Mutation.join
+        { nonce = nonce_
+        , password = pw
+        , email = email
+        }
+        |> Graphql.Http.mutationRequest graphqlEndpoint
+        |> Graphql.Http.toTask
+        |> Task.mapError ignoreParsedErrorData
+
+
 login : String -> String -> GqlTask Jwt
 login email pw =
     Api.Mutation.login
@@ -303,11 +316,27 @@ login email pw =
         |> Task.mapError ignoreParsedErrorData
 
 
-nonce : String -> GqlTask String
+nonce : String -> GqlTask Types.EmailRes
 nonce email =
     Api.Query.nonce
         { email = email
         }
+        (Graphql.SelectionSet.map2
+            (\key ->
+                case key of
+                    "guest" ->
+                        Types.Guest
+
+                    "nonce" ->
+                        Types.Nonce
+
+                    _ ->
+                        always Types.Newbie
+            )
+            Api.Object.Data.key
+            Api.Object.Data.value
+        )
+        |> Graphql.SelectionSet.map (Maybe.withDefault Types.Newbie)
         |> Graphql.Http.queryRequest graphqlEndpoint
         |> Graphql.Http.toTask
         |> Task.mapError ignoreParsedErrorData

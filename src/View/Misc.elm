@@ -17,25 +17,7 @@ import View.Style exposing (black, blue, rotate, sand, varela, white)
 
 getArea : Screen -> Int
 getArea scr =
-    let
-        area =
-            scr.width * scr.height
-    in
-    if area < 200000 then
-        --0
-        area
-
-    else if area < 300000 then
-        --1
-        area
-
-    else if area < 800000 then
-        --2
-        area
-
-    else
-        --3
-        area
+    scr.width * scr.height
 
 
 tallInt : Int
@@ -60,12 +42,6 @@ formatDateTime d =
         |> DateTime.getMonth
         |> monthName
     , d |> DateTime.getYear |> String.fromInt
-
-    --, [ d |> DateTime.getHours |> Helpers.padNum
-    --, ":"
-    --, d |> DateTime.getMinutes |> Helpers.padNum
-    --]
-    --|> String.join ""
     ]
         |> String.join " "
 
@@ -136,14 +112,10 @@ btn2 : Bool -> Icon msg -> String -> msg -> Element msg
 btn2 inProg ic str msg =
     Input.button
         [ padding 10
-
-        --, style "transition" "all 0.2s"
         , Element.mouseOver
             [ Font.color white
             , Background.color black
             ]
-
-        --, Border.rounded 15
         , Border.roundEach { topLeft = 0, bottomRight = 0, topRight = 25, bottomLeft = 25 }
         , Background.color sand
         , style "cursor" "wait"
@@ -222,8 +194,6 @@ btn : String -> msg -> Element msg
 btn str msg =
     Input.button
         [ Element.paddingXY 15 0
-
-        --, style "transition" "all 0.2s"
         , Element.mouseOver
             [ Font.color white
             , Background.color black

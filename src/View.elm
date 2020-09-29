@@ -240,33 +240,10 @@ viewCell model n day =
             black
           )
             |> Font.color
-
-        --, style "transition" "all 0.8s"
-        --, Html.Attributes.class "shift"
-        --|> Element.htmlAttribute
-        --|> whenAttr (not model.isMobile)
-        --, shiftShadow
-        --|> whenAttr (Just day.date == model.current)
-        --, Element.moveUp 5
-        --|> whenAttr (Just day.date == model.current)
-        --, Element.moveRight 5
-        --|> whenAttr (Just day.date == model.current)
         , Element.mouseOver
             [ Font.color View.Style.grey
-
-            --, Element.moveUp 5
-            --, Element.moveRight 5
-            --[ Background.color black
-            --, Font.color blue
-            --, Border.shadow
-            --{ offset = ( -5, 5 )
-            --, blur = 0
-            --, size = 0
-            --, color = blue
-            --}
-            --, Border.color black
             ]
-            |> whenAttr (not model.isMobile)
+            |> whenAttr (not model.isMobile && not curr)
         , (if day.month == EQ then
             sand
 
@@ -281,8 +258,6 @@ viewCell model n day =
                 , Background.color blue
                 , style "transform-origin" "center"
                 , View.Style.popIn
-
-                --|> whenAttr (not model.postBeingEdited)
                 ]
             |> Element.inFront
             |> whenAttr curr
@@ -459,10 +434,6 @@ view model =
                      , hairline
                      , btn3 False Icons.emoji_events "Sign up now" (NavigateTo Types.RouteHome)
                         |> el [ centerX ]
-
-                     --, hairline
-                     --, btn "Load example data" FakeData
-                     --|> el [ centerX ]
                      ]
                         |> column [ spacing 20, centerX, cappedWidth 450 ]
                     )
@@ -505,8 +476,6 @@ view model =
             [ spacing wd
             , height fill
             , width fill
-
-            --, Element.clip
             , fShrink
             ]
         |> render model.isMobile
@@ -858,14 +827,7 @@ viewSortIcon rev sort active =
             sort == active
     in
     Input.button
-        [ (if curr then
-            --blue
-            black
-
-           else
-            black
-          )
-            |> Font.color
+        [ Font.color black
         , Element.mouseOver [ Font.color blue ]
         ]
         { onPress = Just <| TagsSortSet sort
@@ -1002,16 +964,10 @@ viewTag model t =
                                 |> NavigateTo
                                 |> Just
                         , label =
-                            [ date |> formatDay |> text
-
-                            --, [ p.body
-                            --|> Maybe.withDefault ""
-                            --|> text
-                            --]
-                            --|> paragraph []
-                            --|> when False
-                            ]
-                                |> column
+                            date
+                                |> formatDay
+                                |> text
+                                |> el
                                     [ spacing 10
                                     , padding 10
                                     , width fill
@@ -1185,16 +1141,10 @@ viewTags model =
                                                 |> NavigateTo
                                                 |> Just
                                         , label =
-                                            [ date |> formatDay |> text
-
-                                            --, [ p.body
-                                            --|> Maybe.withDefault ""
-                                            --|> text
-                                            --]
-                                            --|> paragraph []
-                                            --|> when False
-                                            ]
-                                                |> column
+                                            date
+                                                |> formatDay
+                                                |> text
+                                                |> el
                                                     [ spacing 10
                                                     , padding 10
                                                     , width fill
@@ -1253,7 +1203,7 @@ viewHomeMobile model =
                 , Font.semiBold
                 , abel
                 ]
-        , View.Img.tmp
+        , View.Img.loci
             (if small then
                 55
 
@@ -1265,9 +1215,6 @@ viewHomeMobile model =
         ]
             |> row
                 [ spacing 20
-
-                --, style "animation-name" "fadeIn"
-                --, style "animation-duration" "1s"
                 , centerX
                 , padding 10
                 ]
@@ -1286,22 +1233,12 @@ viewHomeMobile model =
             , varela
             , Border.rounded 50
             , padding 20
-
-            --, shadow
             , Border.shadow
                 { offset = ( 4, 4 )
                 , blur = 4
                 , size = 0
                 , color = Element.rgb255 150 150 150
                 }
-
-            --, Background.gradient
-            --{ angle = 0
-            --, steps =
-            --[ Element.rgb255 150 208 255
-            --, Element.rgb255 13 50 77
-            --]
-            --}
             , Font.color black
             , Background.color sand
             ]
@@ -1329,8 +1266,6 @@ viewHomeMobile model =
             , fShrink
             , viewFaq model
                 |> Element.inFront
-
-            --, Element.clip
             ]
 
 
@@ -1458,15 +1393,14 @@ viewBuy model =
             }
       ]
         |> row [ spaceEvenly, width fill ]
-    , [ Element.image
-            [ height <| px 35
-
-            --, fadeIn
-            , View.Style.popIn
+    , [ Element.newTabLink
+            [ View.Style.popIn
             , style "transform-origin" "center"
             ]
-            { src = "/stripe1.png", description = "" }
-      , lnk "Back" Change
+            { url = "https://stripe.com"
+            , label = View.Img.stripe |> Element.html
+            }
+      , lnk "Back" FunnelCancel
       ]
         |> row [ spaceEvenly, width fill ]
     ]
@@ -1486,68 +1420,8 @@ viewBuy model =
 
 viewInfo : Bool -> Maybe Def -> Element Msg
 viewInfo small mDef =
-    [ [ text "The"
-            |> el
-                [ Element.paddingEach
-                    { top = 0
-                    , bottom = 9
-                    , left = 0
-                    , right = 0
-                    }
-                ]
-      , [ "secure"
-            |> viewDef mDef Types.Secure
-        , text ","
-        ]
-            |> row []
-      , "private"
-            |> viewDef mDef Types.Private
-      , [ "journal"
-            |> viewDef mDef Types.Journal
-        , text "."
-        ]
-            |> row []
-      ]
-        |> row
-            [ spacing 5
-            , Font.italic
-            , (if small then
-                17
-
-               else
-                20
-              )
-                |> Font.size
-            , varela
-            , centerX
-            ]
-    , mDef
-        |> whenJust
-            (\d ->
-                (case d of
-                    Secure ->
-                        [ text "Built for performance and security, using the leading technologies available."
-                        ]
-
-                    Private ->
-                        [ text "Everything you write is end-to-end encrypted, ensuring only you can ever read it." ]
-
-                    Journal ->
-                        [ text "For everyday use, on every device." ]
-                )
-                    |> paragraph
-                        [ padding 20
-
-                        --, width Element.shrink
-                        , Background.color sand
-                        , ebg
-                        , Font.size 20
-                        ]
-            )
-    ]
-        |> column
-            [ width fill
-            ]
+    text "The secure, private journal."
+        |> el [ varela, Font.size 30, Font.italic ]
 
 
 viewFaq : Model -> Element Msg
@@ -1607,8 +1481,6 @@ viewFaq model =
             , padding 10
             , height fill
             , width fill
-
-            --, Element.clip
             , fShrink
             ]
         |> when model.faq
@@ -1633,8 +1505,6 @@ viewFaq model =
                 , left = 20
                 , right = 20
                 }
-
-             --, Element.clip
              , fShrink
              , Element.alignBottom
              ]
@@ -1652,69 +1522,177 @@ viewFaq model =
 
 viewHome : Model -> Element Msg
 viewHome model =
-    [ [ text "BOLSTER"
+    [ [ View.Img.dark
+            |> Element.html
+            |> el [ height <| px 250, width <| px 250 ]
+      , [ text "BOLSTER"
             |> el
                 [ Font.size 150
                 , Font.semiBold
                 , abel
+                , paddingXY 20 0
                 ]
-      , View.Img.tmp 150
-            |> Element.html
-            |> el []
+        , el [ Background.color black, width fill, height <| px 5 ] none
+        , text "The secure, private journal."
+            |> el [ varela, Font.size 30, Font.italic, centerX ]
+        ]
+            |> column [ spacing 10 ]
       ]
         |> row
-            [ spacing 40
-            , style "animation-name" "fadeIn"
+            [ style "animation-name" "fadeIn"
             , style "animation-duration" "1s"
             , centerX
-            , padding 40
             ]
-    , [ Input.button
-            [ centerX
-            ]
-            { onPress = Just <| NavigateTo Types.RouteCalendar
-            , label =
-                [ Element.image
-                    [ width <| px 200
-                    , style "animation-name" "fadeIn"
-                    , style "animation-duration" "1s"
-                    ]
-                    { src = "/phone.png"
-                    , description = ""
-                    }
-                , btn3
-                    False
-                    Icons.phonelink
-                    (if isNothing model.auth then
-                        "Try demo"
+    , [ [ [ viewLn model.def Icons.lock Private
+          , viewLn model.def Icons.save Control
+          , viewLn model.def Icons.devices Devices
+          , viewLn model.def Icons.public OpenSource
+          ]
+            |> column [ spacing 10, Element.alignLeft ]
+        , model.def
+            |> whenJust
+                (\d ->
+                    (case d of
+                        OpenSource ->
+                            [ [ text "Built for performance and security, using the leading technologies available." ]
+                                |> paragraph []
+                            , [ text "The code can be viewed "
+                              , Element.newTabLink
+                                    [ Font.underline
+                                    , Element.mouseOver
+                                        [ Font.color blue
+                                        ]
+                                    ]
+                                    { url = "https://github.com/tarbh-engineering/journal"
+                                    , label = text "here"
+                                    }
+                              , text "."
+                              ]
+                                |> paragraph []
+                            ]
 
-                     else
-                        "Return to app"
+                        Private ->
+                            [ [ text "Everything you write is end-to-end encrypted, ensuring only you can ever read it." ]
+                                |> paragraph []
+                            ]
+
+                        Control ->
+                            [ [ text "Export your data in a selection of formats at any time." ]
+                                |> paragraph []
+                            ]
+
+                        Devices ->
+                            [ text "For everyday use, on every device."
+                            , [ text "Visit this website on mobile to install for "
+                              , Element.newTabLink
+                                    [ Font.underline
+                                    , Element.mouseOver
+                                        [ Font.color blue
+                                        ]
+                                    ]
+                                    { url = "https://mobilesyrup.com/2020/05/24/how-install-progressive-web-app-pwa-android-ios-pc-mac/"
+                                    , label = text "iOS or Android"
+                                    }
+                              , text "."
+                              ]
+                                |> paragraph []
+                            ]
                     )
-                    (NavigateTo Types.RouteCalendar)
-                    |> el [ centerX ]
-                ]
-                    |> column [ spacing 10 ]
-            }
-      , [ viewInfo False model.def
-            |> el
-                [ width <| px 420
-                , Element.alignTop
-                ]
-        , viewFunnel model
-            |> when (isNothing model.auth)
+                        |> column
+                            [ padding 20
+                            , spacing 20
+                            , Background.color sand
+                            , ebg
+                            , Font.size 25
+                            , width fill
+                            , height fill
+                            , Border.shadow
+                                { offset = ( 0, 3 )
+                                , blur = 0
+                                , size = 0
+                                , color = Element.rgb255 150 150 150
+                                }
+                            ]
+                )
         ]
-            |> column [ spaceEvenly, height fill ]
+            |> row [ centerX, width <| px 750 ]
+      , if isNothing model.auth then
+            viewFunnel model
+
+        else
+            btn3
+                False
+                Icons.phonelink
+                "Return to app"
+                (NavigateTo Types.RouteCalendar)
+                |> el [ centerX ]
       ]
-        |> row
-            [ spacing 40
-            , centerX
-            ]
+        |> column [ spacing 50, height fill, centerX ]
     ]
         |> column
-            [ spacing 30
-            , width fill
+            [ spacing 50
+            , centerX
+            , padding 30
             ]
+
+
+viewLn c icn def =
+    let
+        curr =
+            c == Just def
+
+        txt =
+            case def of
+                Private ->
+                    "End-to-end encrypted privacy"
+
+                Devices ->
+                    "For use on every device"
+
+                OpenSource ->
+                    "Open source codebase"
+
+                Control ->
+                    "Complete control over your data"
+    in
+    Input.button
+        [ Background.color sand |> whenAttr curr
+        , width fill
+        , Border.shadow
+            { offset = ( 0, 3 )
+            , blur = 0
+            , size = 0
+            , color = Element.rgb255 150 150 150
+            }
+            |> whenAttr curr
+        , Font.bold
+            |> whenAttr curr
+        , padding 10
+        ]
+        { onPress = Just <| SetDef def
+        , label =
+            [ icon icn 30
+                |> el
+                    [ padding 10
+                    , Background.color sand
+                        |> whenAttr (not curr)
+                    , Border.rounded 25
+                    , Border.shadow
+                        { offset = ( 3, 3 )
+                        , blur = 3
+                        , size = 0
+                        , color = Element.rgb255 150 150 150
+                        }
+                        |> whenAttr (not curr)
+                    ]
+            , text txt
+                |> el
+                    [ Font.size 20
+                    , paddingXY 10 0
+                    ]
+            ]
+                |> row [ spacing 5 ]
+        }
 
 
 viewDef : Maybe Def -> Def -> String -> Element Msg
@@ -1728,8 +1706,6 @@ viewDef curr def str =
             ]
         , Background.color sand
             |> whenAttr (Just def == curr)
-
-        --, Font.color blue
         , Element.paddingEach { top = 5, bottom = 15, left = 5, right = 5 }
         ]
         { onPress = Just <| SetDef def
@@ -1745,113 +1721,90 @@ viewFunnel model =
                 EmailSubmit
 
             else
-                Change
+                FunnelCancel
 
         valid =
             isValidEmail model.loginForm.email
     in
     case model.funnel of
         Hello ->
-            [ Input.email
-                [ Border.rounded 0
-                , Border.widthEach { top = 0, bottom = 1, left = 0, right = 0 }
-
-                --, Border.width 0
-                --, height <| px 50
-                , paddingXY 0 10
-
-                --, style "cursor" "wait"
-                --|> whenAttr model.inProgress
-                , width fill
-                , onKeydown [ onEnter ent ]
-
-                --|> whenAttr valid
-                , Font.size 24
-                , ebg
-                , Font.italic
-                ]
-                { onChange = LoginFormEmailUpdate
-                , label = Input.labelHidden ""
-                , placeholder =
-                    text "Your email address"
-                        |> Input.placeholder []
-                        |> Just
-                , text = model.loginForm.email
-                }
-
-            --, el [ height fill, width <| px 1, Background.color black ] none
-            , Input.button
-                [ --, Background.color darkBlue
-                  --, Font.color white
-                  --, style "cursor" "wait"
-                  --|> whenAttr model.inProgress
-                  width <| px 120
-                , height fill
-                , style "cursor" "not-allowed"
-                    |> whenAttr
-                        (not <| isValidEmail model.loginForm.email)
-                , style "transition" "all 0.2s"
-                , Element.mouseOver
-                    [ Font.color white
-                    , Background.color black
+            [ [ Input.email
+                    [ Border.rounded 0
+                    , Border.widthEach { top = 0, bottom = 1, left = 0, right = 0 }
+                    , paddingXY 0 10
+                    , width fill
+                    , onKeydown [ onEnter ent ]
+                    , Font.size 24
+                    , ebg
+                    , Font.italic
                     ]
-                    |> whenAttr
-                        (isValidEmail model.loginForm.email)
-                ]
-                { onPress =
-                    if valid then
-                        Just ent
-
-                    else
-                        Nothing
-                , label =
-                    (if model.funnel /= Types.Hello then
-                        "Change"
-
-                     else
-                        "Continue"
-                    )
-                        |> text
-                        |> el [ centerX ]
-                }
-                |> when False
-            , btn2 model.inProgress.login Icons.send "Submit" ent
-                |> el [ Element.alignRight ]
-            ]
+                    { onChange = LoginFormEmailUpdate
+                    , label = Input.labelHidden ""
+                    , placeholder =
+                        text "Your email address"
+                            |> Input.placeholder []
+                            |> Just
+                    , text = model.loginForm.email
+                    }
+              , btn2 model.inProgress.login Icons.send "Submit" ent
+                    |> el [ Element.alignRight ]
+              ]
                 |> column
                     [ spacing 10
-
-                    --, Element.alignRight
-                    --, style "cursor" "wait"
-                    --|> whenAttr model.inProgress
-                    --, (if model.inProgress then
-                    --sand
-                    --else
-                    --white
-                    --)
-                    --|> Background.color
-                    --, padding 10
-                    --, Border.width 1
+                    , Element.alignRight
+                    , cappedWidth 450
+                    ]
+            , btn3
+                False
+                Icons.phonelink
+                "Try the demo"
+                (NavigateTo Types.RouteCalendar)
+                |> el [ centerX ]
+            ]
+                |> column
+                    [ spacing 40
                     , paddingXY 20 0
+                    , Element.alignRight
                     , width fill
                     ]
 
         WelcomeBack nonce ->
             viewWelcome model nonce
 
-        CheckEmail ->
-            [ text "Please check your email for signup instructions."
-            , btn "Re-send email" (NavigateTo Types.RouteHome)
-                |> el [ centerX ]
-            ]
-                |> column
-                    [ centerX
-                    , spacing 20
-                    ]
-
         JoinUs ->
             viewBuy model
                 |> el [ paddingXY 20 0, width fill ]
+
+        GuestSignup x ->
+            [ text "Welcome, please choose a password"
+                |> el [ Font.italic ]
+            , Input.currentPassword
+                [ Border.rounded 0
+                , Border.width 1
+                , Border.color black
+                , width fill
+                , padding 10
+                ]
+                { onChange = LoginFormPasswordUpdate
+                , label = Input.labelHidden ""
+                , show = False
+                , placeholder =
+                    text "Your password"
+                        |> Input.placeholder []
+                        |> Just
+                , text = model.loginForm.password
+                }
+            , [ lnk "Cancel" FunnelCancel
+              , btn3 model.inProgress.login Icons.send "Submit" <| GuestSignupSubmit x
+              ]
+                |> row [ Element.alignRight, spacing 20 ]
+            ]
+                |> column
+                    [ cappedWidth 450
+                    , spacing 20
+                    , centerX
+                    , padding 20
+                    ]
 
 
 viewWelcome : Model -> String -> Element Msg
@@ -1861,17 +1814,9 @@ viewWelcome model nonce =
     , [ Input.currentPassword
             [ Border.rounded 0
             , Border.widthEach { top = 0, bottom = 1, left = 0, right = 0 }
-
-            --, Border.width 0
-            --, height <| px 50
             , paddingXY 0 10
-
-            --, style "cursor" "wait"
-            --|> whenAttr model.inProgress
             , width fill
             , onKeydown [ onEnter <| LoginSubmit nonce ]
-
-            --|> whenAttr valid
             ]
             { onChange = LoginFormPasswordUpdate
             , label = Input.labelHidden ""
@@ -1883,7 +1828,7 @@ viewWelcome model nonce =
             , text = model.loginForm.password
             , show = False
             }
-      , [ lnk "Back" Change
+      , [ lnk "Back" FunnelCancel
         , btn3 model.inProgress.login Icons.save "Submit" (LoginSubmit nonce)
         ]
             |> row [ Element.alignRight, spacing 10 ]
@@ -1916,7 +1861,7 @@ viewFrame model elem =
             ]
             { onPress = Just <| NavigateTo Types.RouteHome
             , label =
-                [ View.Img.tmp 40
+                [ View.Img.loci 40
                     |> Element.html
                     |> el []
                 , text "BOLSTER" |> el [ abel, Font.size 30 ]
@@ -1975,7 +1920,7 @@ viewFrameMobile model elem =
     [ [ Input.button []
             { onPress = Just <| NavigateTo Types.RouteHome
             , label =
-                [ View.Img.tmp pic
+                [ View.Img.loci pic
                     |> Element.html
                     |> el []
                 , text "DEMO"
@@ -2004,8 +1949,6 @@ viewFrameMobile model elem =
         |> row
             [ width fill
             , spaceEvenly
-
-            --, paddingXY 20 10
             , [ Input.button [ Element.alignRight ]
                     { onPress = Just DropdownToggle
                     , label = icon Icons.menu 40
@@ -2022,17 +1965,9 @@ viewFrameMobile model elem =
                         |> whenAttr model.dropdown
                     , shadow2
                         |> whenAttr model.dropdown
-
-                    --, padding 10
-                    --|> whenAttr (not model.dropdown)
-                    --, Border.width 1
-                    --|> whenAttr model.dropdown
                     ]
                 |> el
                     [ Element.alignRight
-
-                    --, padding 10
-                    --|> whenAttr model.dropdown
                     , style "z-index" "1"
                     ]
                 |> when (not model.tall)
@@ -2043,12 +1978,9 @@ viewFrameMobile model elem =
         |> when (model.screen.height >= View.Misc.tallInt)
     ]
         |> column
-            --[ spacing nd
             [ spaceEvenly
             , height fill
             , width fill
-
-            --, Element.clip
             , fShrink
             , padding nd
             ]
@@ -2139,8 +2071,6 @@ viewBottomBar model =
     in
     [ ( Icons.settings, Types.RouteSettings, ViewSettings )
     , ( Icons.event, Types.RouteCalendar, ViewCalendar )
-
-    -- note_add
     , ( Icons.assignment_turned_in, Types.RouteTags, ViewTags )
     ]
         |> List.map
@@ -2244,10 +2174,6 @@ viewPageMobile model =
             |> el
                 [ Element.alignTop
                 , width fill
-
-                --, style "transform-origin" "bottom center"
-                --, style "animation-fill-mode" "forwards"
-                --, style "animation" "fadeOut 0.5s"
                 ]
         , model.current
             |> unwrap
@@ -2260,9 +2186,6 @@ viewPageMobile model =
                 [ width fill
                 , height fill
                 , spaceEvenly
-
-                --, paddingXY 20 10
-                --, Element.clip
                 , fShrink
                 ]
 
@@ -2313,10 +2236,6 @@ viewPostView model d =
                 [ height fill
                 , width fill
                 , spacing 10
-
-                --, style "animation" "rise 0.5s"
-                --, style "transform-origin" "bottom"
-                --, Element.clip
                 , fShrink
                 ]
 
@@ -2356,10 +2275,6 @@ viewPostView model d =
                 [ height fill
                 , width fill
                 , spacing 10
-
-                --, style "animation" "rise 0.5s"
-                --, style "transform-origin" "bottom"
-                --, Element.clip
                 , fShrink
                 ]
 
@@ -2401,10 +2316,6 @@ viewBarMobile model day =
                 ]
                     |> row [ spacing 10, Element.alignRight ]
             }
-
-      --, View.Misc.dayParts day
-      --|> List.map (text >> el [ centerX ] >> el [ width fill ])
-      --|> row [ width fill, spaceEvenly, Font.size 16 ]
       , formatDay day
             |> text
             |> el
@@ -2479,6 +2390,12 @@ viewReady =
         , Helpers.View.cappedHeight 700
         , Background.color sand
         , style "cursor" View.Img.pencil
+        , Border.shadow
+            { offset = ( 3, 3 )
+            , blur = 3
+            , size = 0
+            , color = Element.rgb255 150 150 150
+            }
         ]
         { onPress = Just <| ReadyStart Nothing
         , label = none
@@ -2551,10 +2468,6 @@ viewPost model d =
             [ height fill
             , width fill
             , spacing 10
-
-            --, style "animation" "rise 0.5s"
-            --, style "transform-origin" "bottom"
-            --, Element.clip
             , fShrink
             ]
     , [ [ viewSortIcon model.tagsSortReverse Types.SortName model.tagsSort
@@ -2606,6 +2519,12 @@ viewPostEditor txt disable fontSize =
             , Element.Events.onClick PostUpdateStart
                 |> whenAttr disable
             , onKeydown [ onCtrlEnter PostBodySubmit ]
+            , Border.shadow
+                { offset = ( 3, 3 )
+                , blur = 3
+                , size = 0
+                , color = Element.rgb255 150 150 150
+                }
             ]
 
 
@@ -2686,7 +2605,6 @@ viewPostTags model d pst =
                         prog =
                             List.member ( d, t.id ) model.inProgress.postTags
                     in
-                    --[ ellipsisText 20 t.name
                     [ Input.button [ width fill ]
                         { onPress = Just <| TagSelect t.id
                         , label = paragraph [] [ text t.name ]

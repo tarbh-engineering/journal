@@ -3,16 +3,20 @@ module Main exposing (main)
 import Browser
 import Browser.Events
 import Calendar
+import Data
 import Day
 import Derberos.Date.Utils exposing (numberToMonth)
 import Helpers
 import Helpers.UuidDict as UD
+import Json.Decode as JD
+import Maybe.Extra exposing (unwrap)
 import Ports
 import Routing
 import Task
 import Time
 import Types exposing (Flags, Model, Msg, Screen)
 import Update exposing (update)
+import Url
 import View exposing (view)
 import View.Misc exposing (isTall)
 
@@ -29,6 +33,56 @@ main =
 
 init : Flags -> ( Model, Cmd Msg )
 init flags =
+    let
+        url =
+            Url.fromString flags.href
+
+        route =
+            flags.href
+                |> Routing.router
+                |> Result.toMaybe
+
+        anon =
+            flags.key == Nothing
+
+        --url_
+        --|> Url.Parser.parse
+        --(s "signup"
+        --</> Url.Parser.string
+        --</> Url.Parser.string
+        --|> Url.Parser.map Tuple.pair
+        --)
+        --|> Maybe.map
+        --(\( iv, ciph ) ->
+        --( { model
+        --| view = ViewSignup
+        --, mg = ( iv, ciph )
+        --}
+        --, Data.check iv ciph
+        --|> Task.attempt CheckCb
+        --)
+        --)
+        --|> orElse
+        --(url_
+        --|> Url.Parser.parse (s "payment-success")
+        --|> Maybe.map
+        --(\_ ->
+        --( { model | view = ViewSuccess }
+        --, Cmd.none
+        --)
+        --)
+        --)
+        signup =
+            url
+                |> Maybe.andThen Routing.parseSignup
+
+        signupCmd =
+            signup
+                |> unwrap Cmd.none
+                    (Data.check
+                        >> Task.attempt Types.CheckCb
+                    )
+    in
     ( { emptyModel
         | screen = flags.screen
         , isMobile = flags.isMobile
@@ -37,9 +91,85 @@ init flags =
         , tall = isTall flags.screen
         , landscape = flags.screen.width > flags.screen.height
         , area = View.Misc.getArea flags.screen
+        , swActive = flags.swActive
+        , current =
+            if anon then
+                Nothing
+
+            else
+                route
+                    |> Maybe.andThen
+                        (\r ->
+                            case r of
+                                Types.RouteDay d ->
+                                    Just d
+
+                                _ ->
+                                    Nothing
+                        )
+        , view =
+            if Maybe.Extra.isJust signup then
+                signup
+                    |> Maybe.withDefault ""
+                    |> Types.ViewSignup
+
+            else if anon then
+                emptyModel.view
+
+            else
+                route
+                    |> unwrap emptyModel.view
+                        (\r ->
+                            case r of
+                                Types.RouteHome ->
+                                    Types.ViewCalendar
+
+                                Types.RouteTags ->
+                                    Types.ViewTags
+
+                                Types.RouteTag ->
+                                    Types.ViewTags
+
+                                Types.RouteSettings ->
+                                    Types.ViewSettings
+
+                                Types.RouteCalendar ->
+                                    Types.ViewCalendar
+
+                                Types.RouteDay _ ->
+                                    Types.ViewCalendar
+
+                                Types.RouteDayDetail _ ->
+                                    Types.ViewCalendar
+
+                                Types.RouteDayTags _ ->
+                                    Types.ViewCalendar
+                        )
       }
-    , Helpers.today
-        |> Task.perform Types.TodaySet
+    , [ Helpers.today
+            |> Task.perform Types.TodaySet
+      , if Maybe.Extra.isJust signup then
+            signupCmd
+
+        else
+            flags.key
+                |> Maybe.andThen
+                    (JD.decodeString JD.value
+                        >> Result.toMaybe
+                    )
+                |> unwrap (Routing.goTo Types.RouteHome)
+                    (\key_ ->
+                        Data.refresh
+                            |> Task.map
+                                (Maybe.map
+                                    (\token ->
+                                        { token = token, key = key_ }
+                                    )
+                                )
+                            |> Task.attempt (Types.InitCb route)
+                    )
+      ]
+        |> Cmd.batch
     )
 
 
@@ -48,7 +178,6 @@ subscriptions _ =
     Sub.batch
         [ Browser.Events.onVisibilityChange Types.VisibilityChange
         , Ports.paymentFail (always Types.PaymentFail)
-        , Ports.boot Types.Boot
         , Ports.onUrlChange
             (Routing.router
                 >> Types.UrlChange

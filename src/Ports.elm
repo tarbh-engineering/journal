@@ -1,7 +1,6 @@
-port module Ports exposing (boot, buy, clearState, log, onUrlChange, paymentFail, pushUrl, saveState)
+port module Ports exposing (buy, clearState, log, onUrlChange, paymentFail, pushUrl, saveState)
 
 import Json.Decode exposing (Value)
-import Types
 
 
 
@@ -31,6 +30,3 @@ port paymentFail : (() -> msg) -> Sub msg
 
 
 port onUrlChange : (String -> msg) -> Sub msg
-
-
-port boot : (Types.BootFlags -> msg) -> Sub msg

@@ -5,6 +5,10 @@
 module Api.Object exposing (..)
 
 
+type Data
+    = Data
+
+
 type Mutation
     = Mutation
 

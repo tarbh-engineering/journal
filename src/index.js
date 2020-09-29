@@ -53,45 +53,48 @@ const cryptoEnabled = Boolean(
     ].every(isFn)
 );
 
-const now = new Date();
+const boot = (swActive) => {
+  const now = new Date();
 
-const flags = {
-  month: now.getMonth(),
-  year: now.getFullYear(),
-  screen: {
-    width: window.innerWidth,
-    height: window.innerHeight,
-  },
-  isMobile,
-};
+  const flags = {
+    month: now.getMonth(),
+    year: now.getFullYear(),
+    screen: {
+      width: window.innerWidth,
+      height: window.innerHeight,
+    },
+    isMobile,
+    swActive,
+    href: location.href,
+    key: swActive ? localStorage.getItem(LS_KEY) : null,
+  };
 
-const app = Elm.Main.init({
-  node: document.getElementById("app"),
-  flags,
-});
+  const app = Elm.Main.init({
+    node: document.getElementById("app"),
+    flags,
+  });
 
-window.addEventListener("popstate", () =>
-  app.ports.onUrlChange.send(location.href)
-);
+  window.addEventListener("popstate", () =>
+    app.ports.onUrlChange.send(location.href)
+  );
 
-app.ports.pushUrl.subscribe((url) => {
-  history.pushState({}, "", url);
-  app.ports.onUrlChange.send(location.href);
-});
+  app.ports.pushUrl.subscribe((url) => {
+    history.pushState({}, "", url);
+    app.ports.onUrlChange.send(location.href);
+  });
 
-app.ports.log.subscribe(console.log);
+  app.ports.log.subscribe(console.log);
 
-app.ports.clearState.subscribe(() => localStorage.removeItem(LS_KEY));
+  app.ports.clearState.subscribe(() => localStorage.removeItem(LS_KEY));
 
-const x = () =>
   app.ports.buy.subscribe(({ email, annual }) =>
     loadStripe(stripeProjectId)
       .then((stripe) =>
         stripe.redirectToCheckout({
           items: [{ plan: annual ? stripeAnnual : stripeMonthly, quantity: 1 }],
           customerEmail: email,
-          successUrl: location.origin + "/payment-success",
-          cancelUrl: location.origin,
+          successUrl: location.origin + "/?payment_result=true",
+          cancelUrl: location.origin + "/?payment_result=false",
         })
       )
       .then(console.log)
@@ -101,16 +104,10 @@ const x = () =>
       })
   );
 
-app.ports.saveState.subscribe((state) =>
-  localStorage.setItem(LS_KEY, JSON.stringify(state))
-);
-
-const boot = (swActive) =>
-  app.ports.boot.send({
-    href: location.href,
-    key: localStorage.getItem(LS_KEY),
-    swActive,
-  });
+  app.ports.saveState.subscribe((state) =>
+    localStorage.setItem(LS_KEY, JSON.stringify(state))
+  );
+};
 
 if (swEnabled && cryptoEnabled && asyncEnabled) {
   window.navigator.serviceWorker.register("/sw.js").then(

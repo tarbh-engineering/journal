@@ -19,6 +19,20 @@ import Graphql.SelectionSet exposing (SelectionSet)
 import Json.Decode as Decode
 
 
+type alias JoinRequiredArguments =
+    { email : String
+    , nonce : String
+    , password : String
+    }
+
+
+join :
+    JoinRequiredArguments
+    -> SelectionSet CustomScalars.Jwt Api.Object.Mutation
+join requiredArgs =
+    Object.selectionForField "CustomScalars.Jwt" "join" [ Argument.required "email" requiredArgs.email Encode.string, Argument.required "nonce" requiredArgs.nonce Encode.string, Argument.required "password" requiredArgs.password Encode.string ] (CustomScalars.codecs |> Api.Scalar.unwrapCodecs |> .codecJwt |> .decoder)
+
+
 type alias LoginRequiredArguments =
     { email : String
     , password : String

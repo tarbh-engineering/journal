@@ -39,9 +39,10 @@ type alias NonceRequiredArguments =
 
 nonce :
     NonceRequiredArguments
-    -> SelectionSet String RootQuery
-nonce requiredArgs =
-    Object.selectionForField "String" "nonce" [ Argument.required "email" requiredArgs.email Encode.string ] Decode.string
+    -> SelectionSet decodesTo Api.Object.Data
+    -> SelectionSet (Maybe decodesTo) RootQuery
+nonce requiredArgs object_ =
+    Object.selectionForCompositeField "nonce" [ Argument.required "email" requiredArgs.email Encode.string ] object_ (identity >> Decode.nullable)
 
 
 type alias PostOptionalArguments =

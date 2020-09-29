@@ -1,5 +1,4 @@
 {
-  "short_name": "Bolster",
   "name": "Bolster",
   "icons": [
     {
@@ -26,7 +25,7 @@
     }
   ],
   "start_url": "/",
-  "background_color": "#ffffff",
+  "background_color": "#000000",
   "theme_color": "#000000",
   "display": "standalone"
 }

@@ -14,28 +14,25 @@ goTo : Route -> Cmd msg
 goTo route =
     (case route of
         Types.RouteCalendar ->
-            absolute [ "calendar" ] []
-
-        Types.RouteToday ->
-            absolute [ "today" ] []
+            absolute [ "app", "calendar" ] []
 
         Types.RouteDay day ->
-            absolute [ "calendar", Day.toString day ] []
+            absolute [ "app", "calendar", Day.toString day ] []
 
         Types.RouteDayDetail day ->
-            absolute [ "calendar", Day.toString day, "view" ] []
+            absolute [ "app", "calendar", Day.toString day, "view" ] []
 
         Types.RouteDayTags day ->
-            absolute [ "calendar", Day.toString day, "tags" ] []
+            absolute [ "app", "calendar", Day.toString day, "tags" ] []
 
         Types.RouteTags ->
-            absolute [ "tags" ] []
+            absolute [ "app", "tags" ] []
 
         Types.RouteTag ->
-            absolute [ "tags", "detail" ] []
+            absolute [ "app", "tags", "detail" ] []
 
         Types.RouteSettings ->
-            absolute [ "settings" ] []
+            absolute [ "app", "settings" ] []
 
         Types.RouteHome ->
             absolute [] []
@@ -46,14 +43,13 @@ goTo route =
 routes : List (Parser (Maybe Route -> a) a)
 routes =
     [ map (Just Types.RouteHome) top
-    , map (Just Types.RouteToday) (s "today")
-    , map (Just Types.RouteCalendar) (s "calendar")
-    , map (Just Types.RouteSettings) (s "settings")
-    , map (Just Types.RouteTags) (s "tags")
-    , map (Just Types.RouteTag) (s "tags" </> s "detail")
-    , map (parseDay Types.RouteDay) (s "calendar" </> string)
-    , map (parseDay Types.RouteDayDetail) (s "calendar" </> string </> s "view")
-    , map (parseDay Types.RouteDayTags) (s "calendar" </> string </> s "tags")
+    , map (Just Types.RouteCalendar) (s "app" </> s "calendar")
+    , map (Just Types.RouteSettings) (s "app" </> s "settings")
+    , map (Just Types.RouteTags) (s "app" </> s "tags")
+    , map (Just Types.RouteTag) (s "app" </> s "tags" </> s "detail")
+    , map (parseDay Types.RouteDay) (s "app" </> s "calendar" </> string)
+    , map (parseDay Types.RouteDayDetail) (s "app" </> s "calendar" </> string </> s "view")
+    , map (parseDay Types.RouteDayTags) (s "app" </> s "calendar" </> string </> s "tags")
     ]
 
 

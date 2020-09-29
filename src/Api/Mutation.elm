@@ -270,6 +270,20 @@ insert_tag_one fillInOptionals requiredArgs object_ =
     Object.selectionForCompositeField "insert_tag_one" (optionalArgs ++ [ Argument.required "object" requiredArgs.object Api.InputObject.encodeTag_insert_input ]) object_ (identity >> Decode.nullable)
 
 
+type alias JoinRequiredArguments =
+    { email : String
+    , nonce : String
+    , password : String
+    }
+
+
+join :
+    JoinRequiredArguments
+    -> SelectionSet CustomScalars.Jwt RootMutation
+join requiredArgs =
+    Object.selectionForField "CustomScalars.Jwt" "join" [ Argument.required "email" requiredArgs.email Encode.string, Argument.required "nonce" requiredArgs.nonce Encode.string, Argument.required "password" requiredArgs.password Encode.string ] (CustomScalars.codecs |> Api.Scalar.unwrapCodecs |> .codecJwt |> .decoder)
+
+
 type alias LoginRequiredArguments =
     { email : String
     , password : String

@@ -22,7 +22,6 @@ import Routing exposing (goTo)
 import Task exposing (Task)
 import Time
 import Types exposing (Auth, GqlResult, GqlTask, Model, Msg(..), Post, Route(..))
-import Url
 import Uuid
 import Validate exposing (isValidEmail)
 
@@ -120,7 +119,6 @@ update msg model =
             ( { model
                 | screen = screen
                 , landscape =
-                    --if Debug.log "!" (View.Misc.getArea screen /= model.area) then
                     if screen.width == model.screen.width then
                         model.landscape
 
@@ -159,11 +157,6 @@ update msg model =
                                     |> unwrap Cmd.none
                                         (\route_ ->
                                             case route_ of
-                                                RouteToday ->
-                                                    Helpers.today
-                                                        |> Task.perform
-                                                            (RouteDay >> NavigateTo)
-
                                                 RouteHome ->
                                                     Cmd.none
 
@@ -697,37 +690,38 @@ update msg model =
             res
                 |> unpack
                     (\err ->
-                        if codeCheck "no-user" err then
-                            ( { model
-                                | funnel = Types.CheckEmail
-                                , inProgress = inProgress
-                              }
-                            , Cmd.none
-                            )
-
-                        else if codeCheck "no-purchase" err then
-                            ( { model
-                                | funnel = Types.JoinUs
-                                , inProgress = inProgress
-                              }
-                            , Cmd.none
-                            )
-
-                        else
-                            ( { model
-                                | errors = parseErrors err
-                                , inProgress = inProgress
-                              }
-                            , logGqlError "NonceCb" err
-                            )
-                    )
-                    (\nonce ->
                         ( { model
-                            | funnel = Types.WelcomeBack nonce
+                            | errors = parseErrors err
                             , inProgress = inProgress
                           }
-                        , Cmd.none
+                        , logGqlError "NonceCb" err
                         )
+                    )
+                    (\data ->
+                        case data of
+                            Types.Nonce n ->
+                                ( { model
+                                    | funnel = Types.WelcomeBack n
+                                    , inProgress = inProgress
+                                  }
+                                , Cmd.none
+                                )
+
+                            Types.Guest n ->
+                                ( { model
+                                    | funnel = Types.GuestSignup n
+                                    , inProgress = inProgress
+                                  }
+                                , Cmd.none
+                                )
+
+                            Types.Newbie ->
+                                ( { model
+                                    | funnel = Types.JoinUs
+                                    , inProgress = inProgress
+                                  }
+                                , Cmd.none
+                                )
                     )
 
         LoginSubmit nonce ->
@@ -761,7 +755,7 @@ update msg model =
                     |> Task.attempt LoginCb
                 )
 
-        Change ->
+        FunnelCancel ->
             ( { model | funnel = Types.Hello }, Cmd.none )
 
         Logout ->
@@ -786,144 +780,10 @@ update msg model =
                                 }
                            )
               }
-            , wait
-                |> Task.perform (always PaymentFail)
-              --, Ports.buy
-              --{ email = model.loginForm.email
-              --, annual = annual
-              --}
-            )
-
-        Boot { key, href, swActive } ->
-            let
-                url =
-                    Url.fromString href
-
-                route =
-                    href
-                        |> Routing.router
-                        |> Result.toMaybe
-
-                anon =
-                    key == Nothing
-
-                --url_
-                --|> Url.Parser.parse
-                --(s "signup"
-                --</> Url.Parser.string
-                --</> Url.Parser.string
-                --|> Url.Parser.map Tuple.pair
-                --)
-                --|> Maybe.map
-                --(\( iv, ciph ) ->
-                --( { model
-                --| view = ViewSignup
-                --, mg = ( iv, ciph )
-                --}
-                --, Data.check iv ciph
-                --|> Task.attempt CheckCb
-                --)
-                --)
-                --|> orElse
-                --(url_
-                --|> Url.Parser.parse (s "payment-success")
-                --|> Maybe.map
-                --(\_ ->
-                --( { model | view = ViewSuccess }
-                --, Cmd.none
-                --)
-                --)
-                --)
-                signup =
-                    url
-                        |> Maybe.andThen Routing.parseSignup
-
-                signupCmd =
-                    signup
-                        |> unwrap Cmd.none
-                            (Data.check
-                                >> Task.attempt CheckCb
-                            )
-            in
-            ( { model
-                | swActive = swActive
-                , current =
-                    if anon then
-                        model.current
-
-                    else
-                        route
-                            |> Maybe.andThen
-                                (\r ->
-                                    case r of
-                                        RouteDay d ->
-                                            Just d
-
-                                        _ ->
-                                            Nothing
-                                )
-                , view =
-                    if Maybe.Extra.isJust signup then
-                        signup
-                            |> Maybe.withDefault ""
-                            |> Types.ViewSignup
-
-                    else if anon then
-                        model.view
-
-                    else
-                        route
-                            |> unwrap model.view
-                                (\r ->
-                                    case r of
-                                        RouteToday ->
-                                            Types.ViewCalendar
-
-                                        RouteHome ->
-                                            Types.ViewCalendar
-
-                                        RouteTags ->
-                                            Types.ViewTags
-
-                                        RouteTag ->
-                                            Types.ViewTags
-
-                                        RouteSettings ->
-                                            Types.ViewSettings
-
-                                        RouteCalendar ->
-                                            Types.ViewCalendar
-
-                                        RouteDay _ ->
-                                            Types.ViewCalendar
-
-                                        RouteDayDetail _ ->
-                                            Types.ViewCalendar
-
-                                        RouteDayTags _ ->
-                                            Types.ViewCalendar
-                                )
-              }
-            , if Maybe.Extra.isJust signup then
-                signupCmd
-
-              else
-                key
-                    |> Maybe.andThen
-                        (JD.decodeString JD.value
-                            >> Result.toMaybe
-                        )
-                    |> unwrap (goTo Types.RouteHome)
-                        (\key_ ->
-                            Data.refresh
-                                |> Task.map
-                                    (Maybe.map
-                                        (\token ->
-                                            { token = token, key = key_ }
-                                        )
-                                    )
-                                |> Task.attempt (InitCb route)
-                        )
+            , Ports.buy
+                { email = model.loginForm.email
+                , annual = annual
+                }
             )
 
         SignupSubmit ciph ->
@@ -941,6 +801,41 @@ update msg model =
                                 |> Task.andThen
                                     (\keys ->
                                         Data.signup keys.serverKey nonce ciph
+                                            |> Task.map
+                                                (\token ->
+                                                    { key = keys.encryptionKey
+                                                    , token = token
+                                                    }
+                                                )
+                                    )
+                        )
+                    |> Task.attempt LoginCb
+                )
+
+        GuestSignupSubmit email ->
+            let
+                inProgress =
+                    model.inProgress
+                        |> (\p ->
+                                { p
+                                    | login = True
+                                }
+                           )
+            in
+            if String.isEmpty model.loginForm.password then
+                ( { model | errors = [ "empty field(s)" ] }
+                , Cmd.none
+                )
+
+            else
+                ( { model | errors = [], inProgress = inProgress }
+                , Crypto.nonce
+                    |> Task.andThen
+                        (\nonce ->
+                            Crypto.keys model.loginForm.password nonce
+                                |> Task.andThen
+                                    (\keys ->
+                                        Data.join keys.serverKey nonce email
                                             |> Task.map
                                                 (\token ->
                                                     { key = keys.encryptionKey
@@ -1320,24 +1215,15 @@ update msg model =
                     |> goTo
                 )
 
-        UrlChange r_ ->
-            let
-                model_ =
-                    { model
-                        | -- postBeingEdited = False
-                          --, tagView = False
-                          --, postView = False
-                          dropdown = False
-                    }
-            in
-            r_
+        UrlChange route ->
+            route
                 |> unpack
                     (\err ->
-                        ( model_
+                        ( model
                         , Ports.log err
                         )
                     )
-                    (handleRoute model_)
+                    (handleRoute model)
 
         JwtFailure cmd ->
             ( model
@@ -1367,12 +1253,6 @@ handleRoute model route =
             isNothing model.auth
     in
     case route of
-        RouteToday ->
-            ( model
-            , Helpers.today
-                |> Task.perform (RouteDay >> NavigateTo)
-            )
-
         RouteHome ->
             ( { model
                 | view = Types.ViewHome
