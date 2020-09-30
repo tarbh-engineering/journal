@@ -1,4 +1,4 @@
-module Types exposing (Auth, BootAction(..), Cipher, Def(..), EmailRes(..), Flags, Funnel(..), GqlResult, GqlTask, Keys, Model, Msg(..), Post, PostRaw, PostTag, PostTagNewRes, PostTagRes, Route(..), Screen, Tag, TagRaw, TagsSort(..), TagsView(..), View(..))
+module Types exposing (Auth, BootAction(..), Cipher, Def(..), EmailRes(..), Flags, Funnel(..), GqlResult, GqlTask, Keys, Model, Msg(..), Post, PostRaw, PostTag, PostWithTagRes, PostTagRes, Route(..), Screen, Tag, TagRaw, TagsSort(..), TagsView(..), View(..))
 
 import Array exposing (Array)
 import Browser.Dom
@@ -71,7 +71,7 @@ type Msg
     = PostsCb (GqlResult (List Post))
     | PostCb Date (GqlResult (Maybe Post))
     | PostTagCb ( Date, Uuid ) (GqlResult PostTagRes)
-    | PostTagNewCb ( Date, Uuid ) (GqlResult PostTagNewRes)
+    | PostWithTagCb ( Date, Uuid ) (GqlResult PostWithTagRes)
     | PostMutateCb (GqlResult Post)
     | TagsCb (GqlResult (List Tag))
     | CellSelect Date
@@ -254,7 +254,7 @@ type alias PostTagRes =
     }
 
 
-type alias PostTagNewRes =
+type alias PostWithTagRes =
     { post : Post
     , tagId : Uuid
     , tagPosts : List Date

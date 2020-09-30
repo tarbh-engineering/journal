@@ -374,7 +374,7 @@ update msg model =
                         )
                     )
 
-        PostTagNewCb pair res ->
+        PostWithTagCb pair res ->
             let
                 inProgress =
                     model.inProgress
@@ -392,7 +392,7 @@ update msg model =
                         ( { model
                             | inProgress = inProgress
                           }
-                        , logGqlError "PostTagNewCb" err
+                        , logGqlError "PostWithTagCb" err
                         )
                     )
                     (\data ->
@@ -982,10 +982,10 @@ update msg model =
                                         }
                                             |> Ok
                                     )
-                                |> Task.perform (PostTagNewCb pair)
+                                |> Task.perform (PostWithTagCb pair)
                             )
                             (trip (Data.postCreateWithTag tagId day)
-                                (PostTagNewCb pair)
+                                (PostWithTagCb pair)
                             )
                     )
                     (\post ->

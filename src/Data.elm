@@ -583,7 +583,7 @@ postCreate body tags_ d { key, token } =
             )
 
 
-postCreateWithTag : Uuid -> Date -> Auth -> GqlTask Types.PostTagNewRes
+postCreateWithTag : Uuid -> Date -> Auth -> GqlTask Types.PostWithTagRes
 postCreateWithTag tag d { key, token } =
     Api.Mutation.insert_post_one
         identity
