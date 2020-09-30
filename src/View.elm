@@ -1216,55 +1216,6 @@ viewInfo def =
                 |> column [ spacing 10 ]
             )
             (\d ->
-                let
-                    body =
-                        case d of
-                            OpenSource ->
-                                [ [ text "Built for performance and security, using the leading technologies available." ]
-                                    |> paragraph []
-                                , [ text "The code can be viewed "
-                                  , Element.newTabLink
-                                        [ Font.underline
-                                        , Element.mouseOver
-                                            [ Font.color blue
-                                            ]
-                                        ]
-                                        { url = "https://github.com/tarbh-engineering/journal"
-                                        , label = text "here"
-                                        }
-                                  , text "."
-                                  ]
-                                    |> paragraph []
-                                ]
-
-                            Private ->
-                                [ [ text "Everything you write is end-to-end encrypted, ensuring only you can ever read it." ]
-                                    |> paragraph []
-                                ]
-
-                            Control ->
-                                [ [ text "Export your data in a selection of formats at any time." ]
-                                    |> paragraph []
-                                ]
-
-                            Devices ->
-                                [ [ text "For everyday use, on every device." ]
-                                    |> paragraph []
-                                , [ text "Visit this website on mobile to install for "
-                                  , Element.newTabLink
-                                        [ Font.underline
-                                        , Element.mouseOver
-                                            [ Font.color blue
-                                            ]
-                                        ]
-                                        { url = "https://mobilesyrup.com/2020/05/24/how-install-progressive-web-app-pwa-android-ios-pc-mac/"
-                                        , label = text "iOS or Android"
-                                        }
-                                  , text "."
-                                  ]
-                                    |> paragraph []
-                                ]
-                in
                 [ Input.button
                     [ height <| px 40, paddingXY 10 0, Font.bold ]
                     { onPress = Just <| SetDef d
@@ -1273,9 +1224,7 @@ viewInfo def =
                             |> text
                             |> el [ centerY ]
                     }
-
-                --, el [ width fill, height <| px 1, Background.color black ] none
-                , body
+                , defText d
                     |> column [ spacing 10, height fill, paddingXY 10 0 ]
                 ]
                     |> column
@@ -1483,58 +1432,13 @@ viewHome model =
         , model.def
             |> whenJust
                 (\d ->
-                    (case d of
-                        OpenSource ->
-                            [ [ text "Built for performance and security, using the leading technologies available." ]
-                                |> paragraph []
-                            , [ text "The code can be viewed "
-                              , Element.newTabLink
-                                    [ Font.underline
-                                    , Element.mouseOver
-                                        [ Font.color blue
-                                        ]
-                                    ]
-                                    { url = "https://github.com/tarbh-engineering/journal"
-                                    , label = text "here"
-                                    }
-                              , text "."
-                              ]
-                                |> paragraph []
-                            ]
-
-                        Private ->
-                            [ [ text "Everything you write is end-to-end encrypted, ensuring only you can ever read it." ]
-                                |> paragraph []
-                            ]
-
-                        Control ->
-                            [ [ text "Export your data in a selection of formats at any time." ]
-                                |> paragraph []
-                            ]
-
-                        Devices ->
-                            [ text "For everyday use, on every device."
-                            , [ text "Visit this website on mobile to install for "
-                              , Element.newTabLink
-                                    [ Font.underline
-                                    , Element.mouseOver
-                                        [ Font.color blue
-                                        ]
-                                    ]
-                                    { url = "https://mobilesyrup.com/2020/05/24/how-install-progressive-web-app-pwa-android-ios-pc-mac/"
-                                    , label = text "iOS or Android"
-                                    }
-                              , text "."
-                              ]
-                                |> paragraph []
-                            ]
-                    )
+                    defText d
                         |> column
                             [ padding 20
                             , spacing 20
                             , Background.color sand
                             , ebg
-                            , Font.size 25
+                            , Font.size 28
                             , width fill
                             , height fill
                             , Border.shadow
@@ -1564,6 +1468,56 @@ viewHome model =
             [ spacing 50
             , centerX
             , padding 30
+            ]
+
+
+defText : Def -> List (Element msg)
+defText d =
+    case d of
+        OpenSource ->
+            [ [ text "Built for performance and security, using the leading technologies available." ]
+                |> paragraph []
+            , [ text "The code can be viewed "
+              , Element.newTabLink
+                    [ Font.underline
+                    , Element.mouseOver
+                        [ Font.color blue
+                        ]
+                    ]
+                    { url = "https://github.com/tarbh-engineering/journal"
+                    , label = text "here"
+                    }
+              , text "."
+              ]
+                |> paragraph []
+            ]
+
+        Private ->
+            [ [ text "Everything you write is encrypted on your device before it is saved, ensuring only you can ever read it." ]
+                |> paragraph []
+            ]
+
+        Control ->
+            [ [ text "Export your data in a variety of formats at any time." ]
+                |> paragraph []
+            ]
+
+        Devices ->
+            [ [ text "For everyday use on mobile, desktop and tablet." ]
+                |> paragraph []
+            , [ text "Visit this website using your devices to install for "
+              , Element.newTabLink
+                    [ Font.underline
+                    , Element.mouseOver
+                        [ Font.color blue
+                        ]
+                    ]
+                    { url = "https://mobilesyrup.com/2020/05/24/how-install-progressive-web-app-pwa-android-ios-pc-mac/"
+                    , label = text "iOS and Android"
+                    }
+              , text "."
+              ]
+                |> paragraph []
             ]
 
 
