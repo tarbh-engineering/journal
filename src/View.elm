@@ -804,9 +804,9 @@ viewNoTags model =
                 |> Just
         , text = model.tagCreateName
         }
-    , [ [ "Gym"
-        , "Nice food"
+    , [ [ "Restaurant"
         , "Flight"
+        , "Gym"
         , "etc."
         ]
             |> List.map (text >> el [ Font.italic ])
