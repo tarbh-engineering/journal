@@ -45,39 +45,21 @@ init flags =
         anon =
             flags.key == Nothing
 
-        --url_
-        --|> Url.Parser.parse
-        --(s "signup"
-        --</> Url.Parser.string
-        --</> Url.Parser.string
-        --|> Url.Parser.map Tuple.pair
-        --)
-        --|> Maybe.map
-        --(\( iv, ciph ) ->
-        --( { model
-        --| view = ViewSignup
-        --, mg = ( iv, ciph )
-        --}
-        --, Data.check iv ciph
-        --|> Task.attempt CheckCb
-        --)
-        --)
-        --|> orElse
-        --(url_
-        --|> Url.Parser.parse (s "payment-success")
-        --|> Maybe.map
-        --(\_ ->
-        --( { model | view = ViewSuccess }
-        --, Cmd.none
-        --)
-        --)
-        --)
-        signup =
+        boot =
             url
-                |> Maybe.andThen Routing.parseSignup
+                |> Maybe.andThen Routing.parseBoot
 
         signupCmd =
-            signup
+            boot
+                |> Maybe.andThen
+                    (\s ->
+                        case s of
+                            Types.BootSignup str ->
+                                Just str
+
+                            _ ->
+                                Nothing
+                    )
                 |> unwrap Cmd.none
                     (Data.check
                         >> Task.attempt Types.CheckCb
@@ -92,6 +74,20 @@ init flags =
         , landscape = flags.screen.width > flags.screen.height
         , area = View.Misc.getArea flags.screen
         , swActive = flags.swActive
+        , funnel =
+            boot
+                |> unwrap Types.Hello
+                    (\atn ->
+                        case atn of
+                            Types.BootSignup str ->
+                                Types.Signup str
+
+                            Types.BootPaymentFail ->
+                                Types.PayErr
+
+                            Types.BootPaymentSuccess ->
+                                Types.PayOk
+                    )
         , current =
             if anon then
                 Nothing
@@ -108,12 +104,7 @@ init flags =
                                     Nothing
                         )
         , view =
-            if Maybe.Extra.isJust signup then
-                signup
-                    |> Maybe.withDefault ""
-                    |> Types.ViewSignup
-
-            else if anon then
+            if anon then
                 emptyModel.view
 
             else
@@ -148,26 +139,22 @@ init flags =
       }
     , [ Helpers.today
             |> Task.perform Types.TodaySet
-      , if Maybe.Extra.isJust signup then
-            signupCmd
-
-        else
-            flags.key
-                |> Maybe.andThen
-                    (JD.decodeString JD.value
-                        >> Result.toMaybe
-                    )
-                |> unwrap (Routing.goTo Types.RouteHome)
-                    (\key_ ->
-                        Data.refresh
-                            |> Task.map
-                                (Maybe.map
-                                    (\token ->
-                                        { token = token, key = key_ }
+      , flags.key
+            |> unwrap signupCmd
+                (JD.decodeString JD.value
+                    >> Result.toMaybe
+                    >> unwrap Cmd.none
+                        (\key ->
+                            Data.refresh
+                                |> Task.map
+                                    (Maybe.map
+                                        (\token ->
+                                            { token = token, key = key }
+                                        )
                                     )
-                                )
-                            |> Task.attempt (Types.InitCb route)
-                    )
+                                |> Task.attempt (Types.InitCb route)
+                        )
+                )
       ]
         |> Cmd.batch
     )

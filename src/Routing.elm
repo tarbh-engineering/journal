@@ -1,13 +1,16 @@
-module Routing exposing (goTo, parseSignup, router)
+module Routing exposing (goTo, parseBoot, router)
 
 import Calendar exposing (Date)
 import Day
+import Dict
 import Iso8601
+import Maybe.Extra
 import Ports
-import Types exposing (Route)
+import Types exposing (BootAction, Route)
 import Url exposing (Url)
 import Url.Builder exposing (absolute)
-import Url.Parser exposing ((</>), Parser, map, oneOf, parse, s, string, top)
+import Url.Parser exposing ((</>), (<?>), Parser, map, oneOf, parse, s, string, top)
+import Url.Parser.Query as Q
 
 
 goTo : Route -> Cmd msg
@@ -53,10 +56,36 @@ routes =
     ]
 
 
-parseSignup : Url -> Maybe String
-parseSignup =
+parseBoot : Url -> Maybe BootAction
+parseBoot =
     Url.Parser.parse
-        (s "signup" </> Url.Parser.string)
+        (top
+            <?> Q.string "signup"
+            <?> Q.enum "payment_result"
+                    (Dict.fromList
+                        [ ( "true", True )
+                        , ( "false", False )
+                        ]
+                    )
+            |> map
+                (\sn res ->
+                    [ sn
+                        |> Maybe.map Types.BootSignup
+                    , res
+                        |> Maybe.map
+                            (\r ->
+                                if r then
+                                    Types.BootPaymentSuccess
+
+                                else
+                                    Types.BootPaymentFail
+                            )
+                    ]
+                        |> Maybe.Extra.values
+                        |> List.head
+                )
+        )
+        >> Maybe.andThen identity
 
 
 parseDay : (Date -> Route) -> String -> Maybe Route

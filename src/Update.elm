@@ -787,13 +787,17 @@ update msg model =
             )
 
         SignupSubmit ciph ->
+            let
+                inProgress =
+                    model.inProgress |> (\p -> { p | login = True })
+            in
             if String.isEmpty model.loginForm.password then
                 ( { model | errors = [ "empty field(s)" ] }
                 , Cmd.none
                 )
 
             else
-                ( { model | errors = [] }
+                ( { model | errors = [], inProgress = inProgress }
                 , Crypto.nonce
                     |> Task.andThen
                         (\nonce ->

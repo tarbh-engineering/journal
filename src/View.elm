@@ -333,49 +333,6 @@ view model =
             else
                 viewHomeMobile model
 
-        ViewSignup ciph ->
-            model.magic
-                |> whenJust
-                    (\b ->
-                        if b then
-                            [ text "Choose a password"
-                                |> el [ Font.italic ]
-                            , Input.currentPassword
-                                [ Border.rounded 0
-                                , Border.width 1
-                                , Border.color black
-                                , width fill
-                                , padding 10
-                                ]
-                                { onChange = LoginFormPasswordUpdate
-                                , label = Input.labelHidden ""
-                                , show = False
-                                , placeholder =
-                                    text "Your password"
-                                        |> Input.placeholder []
-                                        |> Just
-                                , text = model.loginForm.password
-                                }
-                            , btn "Submit" <| SignupSubmit ciph
-                            ]
-                                |> column
-                                    [ cappedWidth 450
-                                    , spacing 30
-                                    , centerX
-                                    , padding 40
-                                    ]
-
-                        else
-                            [ text "This link is broken."
-                            , btn "Re-send email" (NavigateTo Types.RouteHome)
-                                |> el [ centerX ]
-                            ]
-                                |> column
-                                    [ centerX
-                                    , spacing 20
-                                    ]
-                    )
-
         ViewCalendar ->
             (if model.landscape then
                 viewPage model
@@ -463,24 +420,6 @@ view model =
                 viewTagsMobile model
             )
                 |> frame
-
-        ViewSuccess ->
-            [ text "BOLSTER"
-                |> el
-                    [ varela
-                    , Font.semiBold
-                    , Font.size 75
-                    , style "animation-name" "fadeIn"
-                    , style "animation-duration" "1s"
-                    ]
-            , text "Thank you for your purchase."
-                |> el [ centerX ]
-            , text "Please check your email for the next steps."
-                |> el [ centerX ]
-            , btn "Continue" (NavigateTo Types.RouteHome)
-                |> el [ centerX ]
-            ]
-                |> column [ centerX, spacing 20, padding 40 ]
     ]
         |> column
             [ spacing wd
@@ -1278,20 +1217,6 @@ viewInfo def =
             )
             (\d ->
                 let
-                    title =
-                        case d of
-                            Private ->
-                                "End-to-end encrypted privacy"
-
-                            Devices ->
-                                "For use on every device"
-
-                            OpenSource ->
-                                "Open source codebase"
-
-                            Control ->
-                                "Full control over your data"
-
                     body =
                         case d of
                             OpenSource ->
@@ -1344,7 +1269,8 @@ viewInfo def =
                     [ height <| px 40, paddingXY 10 0, Font.bold ]
                     { onPress = Just <| SetDef d
                     , label =
-                        text title
+                        defTitle d
+                            |> text
                             |> el [ centerY ]
                     }
 
@@ -1512,9 +1438,9 @@ viewBuy model =
         |> row [ spaceEvenly, width fill ]
     ]
         |> column
-            [ centerX
+            [ Element.alignRight
             , spacing 20
-            , width fill
+            , cappedWidth 450
             , padding 20
             , Element.alignBottom
             , Background.color sand
@@ -1666,21 +1592,6 @@ viewClick c def =
 
 viewLabel : Def -> Element Msg
 viewLabel def =
-    let
-        txt =
-            case def of
-                Private ->
-                    "End-to-end encrypted privacy"
-
-                Devices ->
-                    "For use on every device"
-
-                OpenSource ->
-                    "Open source codebase"
-
-                Control ->
-                    "Full control over your data"
-    in
     Input.button
         [ width fill
         , height <| px 40
@@ -1690,11 +1601,28 @@ viewLabel def =
         ]
         { onPress = Just <| SetDef def
         , label =
-            text txt
+            defTitle def
+                |> text
                 |> el
                     [ centerY
                     ]
         }
+
+
+defTitle : Def -> String
+defTitle def =
+    case def of
+        Private ->
+            "End-to-end encrypted privacy"
+
+        Devices ->
+            "For use on every device"
+
+        OpenSource ->
+            "Open source codebase"
+
+        Control ->
+            "Full control over your data"
 
 
 defIcon : Def -> Icon msg
@@ -1721,20 +1649,6 @@ viewLn c def =
 
         curr =
             c == Just def
-
-        txt =
-            case def of
-                Private ->
-                    "End-to-end encrypted privacy"
-
-                Devices ->
-                    "For use on every device"
-
-                OpenSource ->
-                    "Open source codebase"
-
-                Control ->
-                    "Full control over your data"
     in
     Input.button
         [ Background.color sand |> whenAttr curr
@@ -1749,6 +1663,7 @@ viewLn c def =
         , Font.bold
             |> whenAttr curr
         , padding 10
+        , Element.mouseOver [ Font.color blue ]
         ]
         { onPress = Just <| SetDef def
         , label =
@@ -1761,7 +1676,8 @@ viewLn c def =
                     , shadow3
                         |> whenAttr (not curr)
                     ]
-            , text txt
+            , defTitle def
+                |> text
                 |> el
                     [ Font.size 20
                     , paddingXY 10 0
@@ -1821,42 +1737,105 @@ viewFunnel model =
                     , width fill
                     ]
 
+        PayErr ->
+            [ text "The payment process was not completed."
+                |> el [ centerX ]
+            , lnk "Continue" FunnelCancel
+                |> el [ centerX ]
+            ]
+                |> column
+                    [ padding 20
+                    , spacing 20
+                    , Background.color sand
+                    , cappedWidth 450
+                    , shadow3
+                    , Border.rounded 25
+                    , Element.alignRight
+                    ]
+
+        PayOk ->
+            [ text "Thank you for your purchase."
+                |> el [ centerX ]
+            , [ text "Please check your email inbox to proceed." ]
+                |> paragraph [ Font.center ]
+            , lnk "Close" FunnelCancel
+                |> el [ centerX ]
+            ]
+                |> column
+                    [ padding 20
+                    , spacing 20
+                    , Background.color sand
+                    , cappedWidth 450
+                    , shadow3
+                    , Border.rounded 25
+                    , Element.alignRight
+                    ]
+
+        Signup ciph ->
+            model.magic
+                |> whenJust
+                    (\b ->
+                        if b then
+                            viewSignup model (SignupSubmit ciph)
+
+                        else
+                            [ text "This link is broken."
+                            , btn "Continue" FunnelCancel
+                                |> el [ centerX ]
+                            ]
+                                |> column
+                                    [ centerX
+                                    , spacing 20
+                                    ]
+                    )
+
         WelcomeBack nonce ->
             viewWelcome model nonce
 
         JoinUs ->
             viewBuy model
-                |> el [ width fill ]
 
         GuestSignup x ->
-            [ [ text "Welcome, please choose a password" ]
-                |> paragraph [ Font.italic ]
-            , Input.currentPassword
-                [ Border.rounded 0
-                , Border.width 1
-                , Border.color black
-                , width fill
-                , padding 10
-                ]
-                { onChange = LoginFormPasswordUpdate
-                , label = Input.labelHidden ""
-                , show = False
-                , placeholder =
-                    text "Your password"
-                        |> Input.placeholder []
-                        |> Just
-                , text = model.loginForm.password
-                }
-            , [ lnk "Cancel" FunnelCancel
-              , btn3 model.inProgress.login Icons.send "Submit" <| GuestSignupSubmit x
-              ]
-                |> row [ Element.alignRight, spacing 20 ]
+            viewSignup model (GuestSignupSubmit x)
+
+
+viewSignup : Model -> Msg -> Element Msg
+viewSignup model msg =
+    [ text "Welcome"
+        |> el [ Font.bold ]
+    , text "Choose a password to protect your account"
+        |> el [ Font.italic ]
+    , Input.currentPassword
+        [ Border.rounded 0
+        , Border.width 1
+        , width fill
+        , Border.widthEach
+            { top = 0
+            , bottom = 1
+            , left = 0
+            , right = 0
+            }
+        , paddingXY 0 10
+        ]
+        { onChange = LoginFormPasswordUpdate
+        , label = Input.labelHidden ""
+        , show = False
+        , placeholder =
+            text "Your password"
+                |> Input.placeholder []
+                |> Just
+        , text = model.loginForm.password
+        }
+    , [ lnk "Cancel" FunnelCancel
+      , btn3 model.inProgress.login Icons.send "Submit" msg
+      ]
+        |> row [ Element.alignRight, spacing 20 ]
+    ]
+        |> column
+            [ cappedWidth 450
+            , spacing 20
+            , Element.alignRight
             ]
-                |> column
-                    [ cappedWidth 450
-                    , spacing 20
-                    , centerX
-                    ]
 
 
 viewWelcome : Model -> String -> Element Msg
@@ -1891,7 +1870,8 @@ viewWelcome model nonce =
             ]
     ]
         |> column
-            [ width fill
+            [ cappedWidth 450
+            , Element.alignRight
             , spacing 10
             , fadeIn
             ]

@@ -1,4 +1,4 @@
-module Types exposing (Auth, Cipher, Def(..), EmailRes(..), Flags, Funnel(..), GqlResult, GqlTask, Keys, Model, Msg(..), Post, PostRaw, PostTag, PostTagNewRes, PostTagRes, Route(..), Screen, Tag, TagRaw, TagsSort(..), TagsView(..), View(..))
+module Types exposing (Auth, BootAction(..), Cipher, Def(..), EmailRes(..), Flags, Funnel(..), GqlResult, GqlTask, Keys, Model, Msg(..), Post, PostRaw, PostTag, PostTagNewRes, PostTagRes, Route(..), Screen, Tag, TagRaw, TagsSort(..), TagsView(..), View(..))
 
 import Array exposing (Array)
 import Browser.Dom
@@ -140,6 +140,12 @@ type alias Flags =
     }
 
 
+type BootAction
+    = BootSignup String
+    | BootPaymentFail
+    | BootPaymentSuccess
+
+
 type Route
     = RouteCalendar
     | RouteDay Date
@@ -155,9 +161,7 @@ type View
     = ViewHome
     | ViewCalendar
     | ViewSettings
-    | ViewSuccess
     | ViewTags
-    | ViewSignup String
 
 
 type alias GqlResult a =
@@ -197,6 +201,9 @@ type Funnel
     | WelcomeBack String
     | JoinUs
     | GuestSignup String
+    | Signup String
+    | PayErr
+    | PayOk
 
 
 type Def
