@@ -26,7 +26,7 @@ import Time.Format.I18n.I_en_us exposing (dayShort, monthName)
 import Types exposing (Def(..), Funnel(..), Model, Msg(..), Post, Route, Tag, View(..))
 import View.Img
 import View.Misc exposing (btn, btn2, btn3, formatDateTime, formatDay, iBtn, icon, lnk, spinner)
-import View.Style exposing (abel, black, blue, ebg, fadeIn, rotate, sand, varela, white)
+import View.Style exposing (abel, black, blue, ebg, fadeIn, grey, rotate, sand, varela, white)
 
 
 onCtrlEnter : msg -> Decoder msg
@@ -88,7 +88,17 @@ shadow2 =
         { offset = ( 3, 3 )
         , blur = 4
         , size = 2
-        , color = Element.rgb255 150 150 150
+        , color = grey
+        }
+
+
+shadow3 : Attribute msg
+shadow3 =
+    Border.shadow
+        { offset = ( 3, 3 )
+        , blur = 3
+        , size = 0
+        , color = grey
         }
 
 
@@ -412,7 +422,7 @@ view model =
                                                 { offset = ( 2, 2 )
                                                 , blur = 3
                                                 , size = 1
-                                                , color = Element.rgb255 150 150 150
+                                                , color = grey
                                                 }
                                                 |> whenAttr curr
                                             , Background.color sand
@@ -663,7 +673,7 @@ viewTagsCol2 model d tags tagIds =
                         { offset = ( 3, 3 )
                         , blur = 3
                         , size = 1
-                        , color = Element.rgb255 150 150 150
+                        , color = grey
                         }
                     ]
                     { onPress =
@@ -756,7 +766,7 @@ viewTagsCol model tags =
                                     { offset = ( 3, 3 )
                                     , blur = 3
                                     , size = 1
-                                    , color = Element.rgb255 150 150 150
+                                    , color = grey
                                     }
                                 ]
                     }
@@ -849,7 +859,7 @@ viewSortIcon rev sort active =
                             { offset = ( 3, 3 )
                             , blur = 3
                             , size = 1
-                            , color = Element.rgb255 150 150 150
+                            , color = grey
                             }
                         ]
 
@@ -956,7 +966,7 @@ viewTag model t =
                             { offset = ( 3, 3 )
                             , blur = 3
                             , size = 1
-                            , color = Element.rgb255 150 150 150
+                            , color = grey
                             }
                         ]
                         { onPress =
@@ -1133,7 +1143,7 @@ viewTags model =
                                             { offset = ( 3, 3 )
                                             , blur = 3
                                             , size = 1
-                                            , color = Element.rgb255 150 150 150
+                                            , color = grey
                                             }
                                         ]
                                         { onPress =
@@ -1191,156 +1201,44 @@ viewHomeMobile model =
         small =
             View.Misc.isSmall model.screen
     in
-    [ [ [ View.Img.loci 65
-            |> Element.html
-            |> el []
-        , text "BOLSTER"
-            |> el
-                [ (if small then
-                    35
+    [ [ [ [ View.Img.loci 65
+                |> Element.html
+                |> el []
+          , text "BOLSTER"
+                |> el
+                    [ (if small then
+                        35
 
-                   else
-                    55
-                  )
-                    |> Font.size
-                , Font.semiBold
-                , abel
-                ]
-        ]
+                       else
+                        55
+                      )
+                        |> Font.size
+                    , Font.semiBold
+                    , abel
+                    ]
+          ]
             |> row
                 [ spacing 20
                 , centerX
                 ]
-      , text "The secure, private journal."
+        , text "The secure, private journal."
             |> el
                 [ varela
                 , Font.size 20
                 , Font.italic
                 , centerX
                 ]
+        ]
+            |> column
+                [ width fill
+                , spacing 10
+                ]
+      , viewInfo model.def
       ]
         |> column
             [ width fill
-            , spacing 10
+            , spacing 30
             ]
-    , [ [ viewClick model.def Private
-        , viewClick model.def Control
-        , viewClick model.def Devices
-        , viewClick model.def OpenSource
-        ]
-            |> column [ spacing 10 ]
-      , model.def
-            |> unwrap
-                ([ viewLabel Private
-                 , viewLabel Control
-                 , viewLabel Devices
-                 , viewLabel OpenSource
-                 ]
-                    |> column [ spacing 10 ]
-                )
-                (\d ->
-                    let
-                        title =
-                            case d of
-                                Private ->
-                                    "End-to-end encrypted privacy"
-
-                                Devices ->
-                                    "For use on every device"
-
-                                OpenSource ->
-                                    "Open source codebase"
-
-                                Control ->
-                                    "Full control over your data"
-
-                        body =
-                            case d of
-                                OpenSource ->
-                                    [ [ text "Built for performance and security, using the leading technologies available." ]
-                                        |> paragraph []
-                                    , [ text "The code can be viewed "
-                                      , Element.newTabLink
-                                            [ Font.underline
-                                            , Element.mouseOver
-                                                [ Font.color blue
-                                                ]
-                                            ]
-                                            { url = "https://github.com/tarbh-engineering/journal"
-                                            , label = text "here"
-                                            }
-                                      , text "."
-                                      ]
-                                        |> paragraph []
-                                    ]
-
-                                Private ->
-                                    [ [ text "Everything you write is end-to-end encrypted, ensuring only you can ever read it." ]
-                                        |> paragraph []
-                                    ]
-
-                                Control ->
-                                    [ [ text "Export your data in a selection of formats at any time." ]
-                                        |> paragraph []
-                                    ]
-
-                                Devices ->
-                                    [ [ text "For everyday use, on every device." ]
-                                        |> paragraph []
-                                    , [ text "Visit this website on mobile to install for "
-                                      , Element.newTabLink
-                                            [ Font.underline
-                                            , Element.mouseOver
-                                                [ Font.color blue
-                                                ]
-                                            ]
-                                            { url = "https://mobilesyrup.com/2020/05/24/how-install-progressive-web-app-pwa-android-ios-pc-mac/"
-                                            , label = text "iOS or Android"
-                                            }
-                                      , text "."
-                                      ]
-                                        |> paragraph []
-                                    ]
-                    in
-                    [ Input.button
-                        [ height <| px 40, paddingXY 10 0, Font.bold ]
-                        { onPress = Just <| SetDef d
-                        , label =
-                            text title
-                                |> el [ centerY ]
-                        }
-
-                    --, el [ width fill, height <| px 1, Background.color black ] none
-                    , body
-                        |> column [ spacing 10, height fill, paddingXY 10 0 ]
-                    ]
-                        |> column
-                            [ width fill
-                            , spacing 5
-                            , Element.alignTop
-                            , height fill
-                            , Background.color sand
-                            , Border.roundEach
-                                { topLeft = 0
-                                , bottomRight = 0
-                                , topRight = 0
-                                , bottomLeft =
-                                    if d == Types.OpenSource then
-                                        0
-
-                                    else
-                                        25
-                                }
-                            , Border.shadow
-                                { offset = ( 0, 3 )
-                                , blur = 0
-                                , size = 0
-                                , color = Element.rgb255 150 150 150
-                                }
-                            ]
-                )
-      ]
-        |> row [ width fill, Font.size 17 ]
     , if isNothing model.auth then
         viewFunnel model
 
@@ -1359,6 +1257,123 @@ viewHomeMobile model =
             , fShrink
             , padding 20
             ]
+
+
+viewInfo : Maybe Def -> Element Msg
+viewInfo def =
+    [ [ viewClick def Private
+      , viewClick def Control
+      , viewClick def Devices
+      , viewClick def OpenSource
+      ]
+        |> column [ spacing 10 ]
+    , def
+        |> unwrap
+            ([ viewLabel Private
+             , viewLabel Control
+             , viewLabel Devices
+             , viewLabel OpenSource
+             ]
+                |> column [ spacing 10 ]
+            )
+            (\d ->
+                let
+                    title =
+                        case d of
+                            Private ->
+                                "End-to-end encrypted privacy"
+
+                            Devices ->
+                                "For use on every device"
+
+                            OpenSource ->
+                                "Open source codebase"
+
+                            Control ->
+                                "Full control over your data"
+
+                    body =
+                        case d of
+                            OpenSource ->
+                                [ [ text "Built for performance and security, using the leading technologies available." ]
+                                    |> paragraph []
+                                , [ text "The code can be viewed "
+                                  , Element.newTabLink
+                                        [ Font.underline
+                                        , Element.mouseOver
+                                            [ Font.color blue
+                                            ]
+                                        ]
+                                        { url = "https://github.com/tarbh-engineering/journal"
+                                        , label = text "here"
+                                        }
+                                  , text "."
+                                  ]
+                                    |> paragraph []
+                                ]
+
+                            Private ->
+                                [ [ text "Everything you write is end-to-end encrypted, ensuring only you can ever read it." ]
+                                    |> paragraph []
+                                ]
+
+                            Control ->
+                                [ [ text "Export your data in a selection of formats at any time." ]
+                                    |> paragraph []
+                                ]
+
+                            Devices ->
+                                [ [ text "For everyday use, on every device." ]
+                                    |> paragraph []
+                                , [ text "Visit this website on mobile to install for "
+                                  , Element.newTabLink
+                                        [ Font.underline
+                                        , Element.mouseOver
+                                            [ Font.color blue
+                                            ]
+                                        ]
+                                        { url = "https://mobilesyrup.com/2020/05/24/how-install-progressive-web-app-pwa-android-ios-pc-mac/"
+                                        , label = text "iOS or Android"
+                                        }
+                                  , text "."
+                                  ]
+                                    |> paragraph []
+                                ]
+                in
+                [ Input.button
+                    [ height <| px 40, paddingXY 10 0, Font.bold ]
+                    { onPress = Just <| SetDef d
+                    , label =
+                        text title
+                            |> el [ centerY ]
+                    }
+
+                --, el [ width fill, height <| px 1, Background.color black ] none
+                , body
+                    |> column [ spacing 10, height fill, paddingXY 10 0 ]
+                ]
+                    |> column
+                        [ width fill
+                        , spacing 5
+                        , Element.alignTop
+                        , height fill
+                        , Background.color sand
+                        , Border.roundEach
+                            { topLeft = 0
+                            , bottomRight = 0
+                            , topRight = 0
+                            , bottomLeft =
+                                if d == Types.OpenSource then
+                                    0
+
+                                else
+                                    25
+                            }
+                        , shadow3
+                        ]
+            )
+    ]
+        |> row [ width fill, Font.size 17 ]
 
 
 viewBuy : Model -> Element Msg
@@ -1405,7 +1420,7 @@ viewBuy model =
                 { offset = ( 4, 4 )
                 , blur = 4
                 , size = 0
-                , color = Element.rgb255 150 150 150
+                , color = grey
                 }
             , Element.mouseDown
                 [ Element.moveRight 5
@@ -1414,7 +1429,7 @@ viewBuy model =
                     { offset = ( 0, 0 )
                     , blur = 0
                     , size = 0
-                    , color = Element.rgb255 150 150 150
+                    , color = grey
                     }
                 ]
                 |> whenAttr waiting
@@ -1454,7 +1469,7 @@ viewBuy model =
                 { offset = ( 4, 4 )
                 , blur = 4
                 , size = 0
-                , color = Element.rgb255 150 150 150
+                , color = grey
                 }
             , Element.mouseDown
                 [ Element.moveRight 5
@@ -1463,7 +1478,7 @@ viewBuy model =
                     { offset = ( 0, 0 )
                     , blur = 0
                     , size = 0
-                    , color = Element.rgb255 150 150 150
+                    , color = grey
                     }
                 ]
                 |> whenAttr waiting
@@ -1600,7 +1615,7 @@ viewHome model =
                                 { offset = ( 0, 3 )
                                 , blur = 0
                                 , size = 0
-                                , color = Element.rgb255 150 150 150
+                                , color = grey
                                 }
                             ]
                 )
@@ -1639,12 +1654,7 @@ viewClick c def =
         [ Background.color sand
             |> whenAttr curr
         , Border.roundEach { topLeft = 0, bottomRight = 0, topRight = 0, bottomLeft = 25 }
-        , Border.shadow
-            { offset = ( 3, 3 )
-            , blur = 3
-            , size = 0
-            , color = Element.rgb255 150 150 150
-            }
+        , shadow3
             |> whenAttr curr
         , centerY
         , Element.paddingEach { top = 10, bottom = 10, left = 10, right = 5 }
@@ -1733,7 +1743,7 @@ viewLn c def =
             { offset = ( 0, 3 )
             , blur = 0
             , size = 0
-            , color = Element.rgb255 150 150 150
+            , color = grey
             }
             |> whenAttr curr
         , Font.bold
@@ -1748,12 +1758,7 @@ viewLn c def =
                     , Background.color sand
                         |> whenAttr (not curr)
                     , Border.rounded 25
-                    , Border.shadow
-                        { offset = ( 3, 3 )
-                        , blur = 3
-                        , size = 0
-                        , color = Element.rgb255 150 150 150
-                        }
+                    , shadow3
                         |> whenAttr (not curr)
                     ]
             , text txt
@@ -1813,7 +1818,6 @@ viewFunnel model =
             ]
                 |> column
                     [ spacing 40
-                    , Element.alignRight
                     , width fill
                     ]
 
@@ -2406,12 +2410,7 @@ viewTodayBtn screen =
         , Border.rounded 25
         , Background.color sand
         , varela
-        , Border.shadow
-            { offset = ( 3, 3 )
-            , blur = 3
-            , size = 0
-            , color = Element.rgb255 150 150 150
-            }
+        , shadow3
         , Font.size 17
         , View.Style.popIn
         ]
@@ -2437,12 +2436,7 @@ viewReady =
         , Helpers.View.cappedHeight 700
         , Background.color sand
         , style "cursor" View.Img.pencil
-        , Border.shadow
-            { offset = ( 3, 3 )
-            , blur = 3
-            , size = 0
-            , color = Element.rgb255 150 150 150
-            }
+        , shadow3
         ]
         { onPress = Just <| ReadyStart Nothing
         , label = none
@@ -2566,12 +2560,7 @@ viewPostEditor txt disable fontSize =
             , Element.Events.onClick PostUpdateStart
                 |> whenAttr disable
             , onKeydown [ onCtrlEnter PostBodySubmit ]
-            , Border.shadow
-                { offset = ( 3, 3 )
-                , blur = 3
-                , size = 0
-                , color = Element.rgb255 150 150 150
-                }
+            , shadow3
             ]
 
 
