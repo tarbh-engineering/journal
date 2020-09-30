@@ -19,11 +19,11 @@ import Html.Attributes
 import Html.Events
 import Json.Decode as Decode exposing (Decoder)
 import Material.Icons as Icons
+import Material.Icons.Types exposing (Icon)
 import Maybe.Extra exposing (isJust, isNothing, unwrap)
 import Time exposing (Month(..))
 import Time.Format.I18n.I_en_us exposing (dayShort, monthName)
 import Types exposing (Def(..), Funnel(..), Model, Msg(..), Post, Route, Tag, View(..))
-import Validate exposing (isValidEmail)
 import View.Img
 import View.Misc exposing (btn, btn2, btn3, formatDateTime, formatDay, iBtn, icon, lnk, spinner)
 import View.Style exposing (abel, black, blue, ebg, fadeIn, rotate, sand, varela, white)
@@ -154,10 +154,10 @@ viewCalendar model =
 
         btnSize =
             if model.area < 200000 then
-                20
+                15
 
             else
-                30
+                25
     in
     [ [ iBtn btnSize Icons.chevron_left PrevMonth
       , [ model.month |> monthName |> text
@@ -1191,65 +1191,158 @@ viewHomeMobile model =
         small =
             View.Misc.isSmall model.screen
     in
-    [ [ [ text "BOLSTER"
+    [ [ [ View.Img.loci 65
+            |> Element.html
+            |> el []
+        , text "BOLSTER"
             |> el
                 [ (if small then
-                    45
+                    35
 
                    else
-                    65
+                    55
                   )
                     |> Font.size
                 , Font.semiBold
                 , abel
                 ]
-        , View.Img.loci
-            (if small then
-                55
-
-             else
-                85
-            )
-            |> Element.html
-            |> el []
         ]
             |> row
                 [ spacing 20
                 , centerX
-                , padding 10
                 ]
-      , viewInfo small model.def
+      , text "The secure, private journal."
+            |> el
+                [ varela
+                , Font.size 20
+                , Font.italic
+                , centerX
+                ]
       ]
         |> column
             [ width fill
-            , padding 20
+            , spacing 10
             ]
-    , if isNothing model.auth then
-        [ viewFunnel model
-        , Input.button
-            [ centerX
-            , centerY
-            , Font.size 25
-            , varela
-            , Border.rounded 50
-            , padding 20
-            , Border.shadow
-                { offset = ( 4, 4 )
-                , blur = 4
-                , size = 0
-                , color = Element.rgb255 150 150 150
-                }
-            , Font.color black
-            , Background.color sand
-            ]
-            { onPress = Just <| NavigateTo Types.RouteCalendar
-            , label = text "Try demo"
-            }
-            |> el [ padding 20, Element.alignRight, Element.alignBottom ]
+    , [ [ viewClick model.def Private
+        , viewClick model.def Control
+        , viewClick model.def Devices
+        , viewClick model.def OpenSource
         ]
-            |> column
-                [ width fill
-                ]
+            |> column [ spacing 10 ]
+      , model.def
+            |> unwrap
+                ([ viewLabel Private
+                 , viewLabel Control
+                 , viewLabel Devices
+                 , viewLabel OpenSource
+                 ]
+                    |> column [ spacing 10 ]
+                )
+                (\d ->
+                    let
+                        title =
+                            case d of
+                                Private ->
+                                    "End-to-end encrypted privacy"
+
+                                Devices ->
+                                    "For use on every device"
+
+                                OpenSource ->
+                                    "Open source codebase"
+
+                                Control ->
+                                    "Full control over your data"
+
+                        body =
+                            case d of
+                                OpenSource ->
+                                    [ [ text "Built for performance and security, using the leading technologies available." ]
+                                        |> paragraph []
+                                    , [ text "The code can be viewed "
+                                      , Element.newTabLink
+                                            [ Font.underline
+                                            , Element.mouseOver
+                                                [ Font.color blue
+                                                ]
+                                            ]
+                                            { url = "https://github.com/tarbh-engineering/journal"
+                                            , label = text "here"
+                                            }
+                                      , text "."
+                                      ]
+                                        |> paragraph []
+                                    ]
+
+                                Private ->
+                                    [ [ text "Everything you write is end-to-end encrypted, ensuring only you can ever read it." ]
+                                        |> paragraph []
+                                    ]
+
+                                Control ->
+                                    [ [ text "Export your data in a selection of formats at any time." ]
+                                        |> paragraph []
+                                    ]
+
+                                Devices ->
+                                    [ [ text "For everyday use, on every device." ]
+                                        |> paragraph []
+                                    , [ text "Visit this website on mobile to install for "
+                                      , Element.newTabLink
+                                            [ Font.underline
+                                            , Element.mouseOver
+                                                [ Font.color blue
+                                                ]
+                                            ]
+                                            { url = "https://mobilesyrup.com/2020/05/24/how-install-progressive-web-app-pwa-android-ios-pc-mac/"
+                                            , label = text "iOS or Android"
+                                            }
+                                      , text "."
+                                      ]
+                                        |> paragraph []
+                                    ]
+                    in
+                    [ Input.button
+                        [ height <| px 40, paddingXY 10 0, Font.bold ]
+                        { onPress = Just <| SetDef d
+                        , label =
+                            text title
+                                |> el [ centerY ]
+                        }
+
+                    --, el [ width fill, height <| px 1, Background.color black ] none
+                    , body
+                        |> column [ spacing 10, height fill, paddingXY 10 0 ]
+                    ]
+                        |> column
+                            [ width fill
+                            , spacing 5
+                            , Element.alignTop
+                            , height fill
+                            , Background.color sand
+                            , Border.roundEach
+                                { topLeft = 0
+                                , bottomRight = 0
+                                , topRight = 0
+                                , bottomLeft =
+                                    if d == Types.OpenSource then
+                                        0
+
+                                    else
+                                        25
+                                }
+                            , Border.shadow
+                                { offset = ( 0, 3 )
+                                , blur = 0
+                                , size = 0
+                                , color = Element.rgb255 150 150 150
+                                }
+                            ]
+                )
+      ]
+        |> row [ width fill, Font.size 17 ]
+    , if isNothing model.auth then
+        viewFunnel model
 
       else
         btn3
@@ -1264,8 +1357,7 @@ viewHomeMobile model =
             , width fill
             , spaceEvenly
             , fShrink
-            , viewFaq model
-                |> Element.inFront
+            , padding 20
             ]
 
 
@@ -1418,108 +1510,6 @@ viewBuy model =
             ]
 
 
-viewInfo : Bool -> Maybe Def -> Element Msg
-viewInfo small mDef =
-    text "The secure, private journal."
-        |> el [ varela, Font.size 30, Font.italic ]
-
-
-viewFaq : Model -> Element Msg
-viewFaq model =
-    [ Input.button
-        [ centerX
-        , Font.size 25
-        , varela
-        , padding 20
-        , Font.color black
-        ]
-        { onPress = Just FaqToggle
-        , label = text "FAQ"
-        }
-    , [ [ "Copper mug artisan messenger bag vaporware tumeric try-hard mlkshk quinoa waistcoat salvia taxidermy williamsburg."
-        , "Lomo raclette gentrify shoreditch polaroid venmo."
-        , "Kitsch cornhole bicycle rights, YOLO jean shorts prism direct trade sustainable marfa."
-        , "Taiyaki biodiesel you probably haven't heard of them poke post-ironic chia skateboard squid craft beer tote bag."
-        , "Portland palo santo tacos neutra deep v, kale chips selvage skateboard synth."
-        , "Ramps pour-over hexagon edison bulb, hammock prism chartreuse gastropub iceland freegan."
-        ]
-            |> List.map
-                (\b ->
-                    [ [ text "Blah blah blah?" ]
-                        |> paragraph [ Font.bold ]
-                    , [ text b ]
-                        |> paragraph [ Font.italic ]
-                    ]
-                        |> column [ spacing 5, height fill, width fill ]
-                )
-            |> column
-                [ spacing 10
-                , height fill
-                , Element.scrollbarY
-                , style "min-height" "auto"
-                , width fill
-                ]
-      , [ Element.newTabLink [ Font.size 15, Font.italic ]
-            { url = "https://tarbh.engineering"
-            , label = paragraph [] [ text "Made by Tarbh" ]
-            }
-        , Input.button
-            [ Font.size 25
-            , varela
-            , Font.color black
-            ]
-            { onPress = Just FaqToggle
-            , label =
-                [ icon Icons.keyboard_return 25, text "Back" ]
-                    |> row [ spacing 10, height <| px 50 ]
-            }
-        ]
-            |> row [ width fill, spaceEvenly ]
-      ]
-        |> column
-            [ spacing 10
-            , padding 10
-            , height fill
-            , width fill
-            , fShrink
-            ]
-        |> when model.faq
-    ]
-        |> column
-            [ Border.shadow
-                { offset = ( 4, 4 )
-                , blur = 4
-                , size = 0
-                , color = Element.rgb255 150 150 150
-                }
-            , Background.color sand
-            , Border.rounded 25
-            , height fill
-            , width fill
-            ]
-        |> List.singleton
-        |> row
-            ([ Element.paddingEach
-                { top = 10
-                , bottom = 20
-                , left = 20
-                , right = 20
-                }
-             , fShrink
-             , Element.alignBottom
-             ]
-                ++ (if model.faq then
-                        [ height <| px 450
-                        , width fill
-                        ]
-
-                    else
-                        [ Element.alignLeft
-                        ]
-                   )
-            )
-
-
 viewHome : Model -> Element Msg
 viewHome model =
     [ [ View.Img.dark
@@ -1543,10 +1533,10 @@ viewHome model =
             , style "animation-duration" "1s"
             , centerX
             ]
-    , [ [ [ viewLn model.def Icons.lock Private
-          , viewLn model.def Icons.save Control
-          , viewLn model.def Icons.devices Devices
-          , viewLn model.def Icons.public OpenSource
+    , [ [ [ viewLn model.def Private
+          , viewLn model.def Control
+          , viewLn model.def Devices
+          , viewLn model.def OpenSource
           ]
             |> column [ spacing 10, Element.alignLeft ]
         , model.def
@@ -1636,8 +1626,89 @@ viewHome model =
             ]
 
 
-viewLn c icn def =
+viewClick : Maybe Def -> Def -> Element Msg
+viewClick c def =
     let
+        icn =
+            defIcon def
+
+        curr =
+            c == Just def
+    in
+    Input.button
+        [ Background.color sand
+            |> whenAttr curr
+        , Border.roundEach { topLeft = 0, bottomRight = 0, topRight = 0, bottomLeft = 25 }
+        , Border.shadow
+            { offset = ( 3, 3 )
+            , blur = 3
+            , size = 0
+            , color = Element.rgb255 150 150 150
+            }
+            |> whenAttr curr
+        , centerY
+        , Element.paddingEach { top = 10, bottom = 10, left = 10, right = 5 }
+        ]
+        { onPress = Just <| SetDef def
+        , label = icon icn 20
+        }
+
+
+viewLabel : Def -> Element Msg
+viewLabel def =
+    let
+        txt =
+            case def of
+                Private ->
+                    "End-to-end encrypted privacy"
+
+                Devices ->
+                    "For use on every device"
+
+                OpenSource ->
+                    "Open source codebase"
+
+                Control ->
+                    "Full control over your data"
+    in
+    Input.button
+        [ width fill
+        , height <| px 40
+        , Font.underline
+        , style "text-decoration-style" "dashed"
+        , paddingXY 10 0
+        ]
+        { onPress = Just <| SetDef def
+        , label =
+            text txt
+                |> el
+                    [ centerY
+                    ]
+        }
+
+
+defIcon : Def -> Icon msg
+defIcon d =
+    case d of
+        Private ->
+            Icons.lock
+
+        Control ->
+            Icons.save
+
+        Devices ->
+            Icons.devices
+
+        OpenSource ->
+            Icons.public
+
+
+viewLn : Maybe Def -> Def -> Element Msg
+viewLn c def =
+    let
+        icn =
+            defIcon def
+
         curr =
             c == Just def
 
@@ -1653,7 +1724,7 @@ viewLn c icn def =
                     "Open source codebase"
 
                 Control ->
-                    "Complete control over your data"
+                    "Full control over your data"
     in
     Input.button
         [ Background.color sand |> whenAttr curr
@@ -1695,24 +1766,6 @@ viewLn c icn def =
         }
 
 
-viewDef : Maybe Def -> Def -> String -> Element Msg
-viewDef curr def str =
-    Input.button
-        [ Font.underline
-            |> whenAttr (Just def /= curr)
-        , style "text-decoration-style" "dashed"
-        , Element.mouseOver
-            [ Font.color blue
-            ]
-        , Background.color sand
-            |> whenAttr (Just def == curr)
-        , Element.paddingEach { top = 5, bottom = 15, left = 5, right = 5 }
-        ]
-        { onPress = Just <| SetDef def
-        , label = text str
-        }
-
-
 viewFunnel : Model -> Element Msg
 viewFunnel model =
     let
@@ -1722,9 +1775,6 @@ viewFunnel model =
 
             else
                 FunnelCancel
-
-        valid =
-            isValidEmail model.loginForm.email
     in
     case model.funnel of
         Hello ->
@@ -1763,7 +1813,6 @@ viewFunnel model =
             ]
                 |> column
                     [ spacing 40
-                    , paddingXY 20 0
                     , Element.alignRight
                     , width fill
                     ]
@@ -1773,11 +1822,11 @@ viewFunnel model =
 
         JoinUs ->
             viewBuy model
-                |> el [ paddingXY 20 0, width fill ]
+                |> el [ width fill ]
 
         GuestSignup x ->
-            [ text "Welcome, please choose a password"
-                |> el [ Font.italic ]
+            [ [ text "Welcome, please choose a password" ]
+                |> paragraph [ Font.italic ]
             , Input.currentPassword
                 [ Border.rounded 0
                 , Border.width 1
@@ -1803,7 +1852,6 @@ viewFunnel model =
                     [ cappedWidth 450
                     , spacing 20
                     , centerX
-                    , padding 20
                     ]
 
 
@@ -1841,7 +1889,6 @@ viewWelcome model nonce =
         |> column
             [ width fill
             , spacing 10
-            , paddingXY 20 0
             , fadeIn
             ]
 
@@ -1912,10 +1959,10 @@ viewFrameMobile model elem =
 
         pic =
             if model.area < 200000 then
-                35
+                25
 
             else
-                50
+                40
     in
     [ [ Input.button []
             { onPress = Just <| NavigateTo Types.RouteHome
@@ -1982,7 +2029,7 @@ viewFrameMobile model elem =
             , height fill
             , width fill
             , fShrink
-            , padding nd
+            , paddingXY nd 10
             ]
 
 
