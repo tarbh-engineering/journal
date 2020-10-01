@@ -271,7 +271,7 @@ viewCell model n day =
                 ]
             |> Element.inFront
             |> whenAttr curr
-        , [ Calendar.getDay day.date
+        , [ [ Calendar.getDay day.date
                 |> Helpers.padNum
                 |> text
                 |> el
@@ -281,12 +281,23 @@ viewCell model n day =
                     , Font.size (n // 2)
                     , abel
                     ]
-          , [ icon Icons.assignment_turned_in 15
-                |> when (pst |> unwrap False (\p -> not <| List.isEmpty p.tags))
-            , icon Icons.edit 15
-                |> when (pst |> unwrap False (\p -> isJust p.body))
+                |> el [ width fill, height fill ]
+            , icon Icons.brightness_5 20
+                |> when (model.today == day.date)
+                |> el [ centerX ]
+                |> el [ width fill ]
             ]
-                |> row [ spacing 10 ]
+                |> row [ width fill, height fill ]
+          , [ icon Icons.edit 20
+                |> when (pst |> unwrap False (\p -> isJust p.body))
+                |> el [ centerX ]
+                |> el [ width fill ]
+            , icon Icons.assignment_turned_in 20
+                |> when (pst |> unwrap False (\p -> not <| List.isEmpty p.tags))
+                |> el [ centerX ]
+                |> el [ width fill ]
+            ]
+                |> row [ width fill, height fill ]
           ]
             |> column [ height fill, width fill ]
             |> Element.inFront
@@ -2136,10 +2147,25 @@ viewPage model =
             else
                 20
     in
-    [ viewCalendar model
-        |> el
-            [ Element.alignTop
-            ]
+    [ [ viewCalendar model
+            |> el
+                [ Element.alignTop
+                ]
+      , viewTodayBtn model.screen
+            |> el
+                [ Element.alignBottom
+                , Element.alignRight
+                , padding 10
+                ]
+            |> when
+                (model.current
+                    /= Just model.today
+                    || (model.current
+                            |> unwrap False (\c -> model.month /= Calendar.getMonth c)
+                       )
+                )
+      ]
+        |> column [ height fill ]
     , model.current
         |> unwrap
             viewReady
@@ -2347,6 +2373,10 @@ viewTodayBtn screen =
         , shadow3
         , Font.size 17
         , View.Style.popIn
+        , Element.mouseOver
+            [ Background.color black
+            , Font.color white
+            ]
         ]
         { onPress = Just <| GoToToday Nothing
         , label =

@@ -1260,6 +1260,7 @@ handleRoute model route =
         RouteHome ->
             ( { model
                 | view = Types.ViewHome
+                , def = Nothing
               }
             , Cmd.none
             )
