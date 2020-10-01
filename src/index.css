@@ -95,24 +95,18 @@ html {
 
 @font-face {
   font-family: "Abel";
-  font-style: normal;
-  font-weight: 400;
-  src: local("Abel Regular"), local("Abel-Regular"),
-    url("./fonts/abel.woff2") format("woff2");
+  src: url("./fonts/abel.woff2") format("woff2"),
+    url("./fonts/abel.woff") format("woff");
 }
 
 @font-face {
   font-family: "Varela";
-  font-style: normal;
-  font-weight: 400;
-  src: local("Varela"), url("./fonts/varela.woff2") format("woff2"),
+  src: url("./fonts/varela.woff2") format("woff2"),
     url("./fonts/varela.woff") format("woff");
 }
 
 @font-face {
   font-family: "EB Garamond";
-  font-style: normal;
-  font-weight: 400;
-  src: local(""), url("./fonts/eb-garamond.woff2") format("woff2"),
+  src: url("./fonts/eb-garamond.woff2") format("woff2"),
     url("./fonts/eb-garamond.woff") format("woff");
 }
