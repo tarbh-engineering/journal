@@ -1434,10 +1434,10 @@ viewHome model =
             , style "animation-duration" "1s"
             , centerX
             ]
-    , [ [ [ viewLn model.def Private
-          , viewLn model.def Control
-          , viewLn model.def Devices
-          , viewLn model.def OpenSource
+    , [ [ [ viewLn model.def Private 0.25
+          , viewLn model.def Control 0.5
+          , viewLn model.def Devices 0.75
+          , viewLn model.def OpenSource 1.0
           ]
             |> column [ spacing 10, Element.alignLeft ]
         , model.def
@@ -1606,8 +1606,8 @@ defIcon d =
             Icons.public
 
 
-viewLn : Maybe Def -> Def -> Element Msg
-viewLn c def =
+viewLn : Maybe Def -> Def -> Float -> Element Msg
+viewLn c def fl =
     let
         icn =
             defIcon def
@@ -1629,6 +1629,11 @@ viewLn c def =
             |> whenAttr curr
         , padding 10
         , Element.mouseOver [ Font.color blue ]
+        , Element.transparent True
+        , style "animation-name" "fadeIn"
+        , style "animation-duration" "1s"
+        , style "animation-fill-mode" "forwards"
+        , style "animation-delay" (String.fromFloat fl ++ "s")
         ]
         { onPress = Just <| SetDef def
         , label =
