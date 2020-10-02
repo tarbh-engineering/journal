@@ -26,7 +26,7 @@ import Time.Format.I18n.I_en_us exposing (dayShort, monthName)
 import Types exposing (Def(..), Funnel(..), Model, Msg(..), Post, Tag, View(..))
 import View.Img
 import View.Misc exposing (btn, btn2, btn3, formatDateTime, formatDay, iBtn, icon, lnk, spinner)
-import View.Style exposing (abel, black, blue, ebg, fadeIn, grey, red, rotate, sand, serif, white)
+import View.Style exposing (abel, black, blue, ebg, fadeIn, grey, popIn, red, rotate, sand, serif, white)
 
 
 onCtrlEnter : msg -> Decoder msg
@@ -274,7 +274,7 @@ viewCell model n day =
                 , height fill
                 , Background.color col
                 , style "transform-origin" "center"
-                , View.Style.popIn
+                , popIn
                 ]
             |> Element.inFront
             |> whenAttr curr
@@ -1392,10 +1392,7 @@ viewBuy model =
             }
       ]
         |> row [ spaceEvenly, width fill ]
-    , [ Element.newTabLink
-            [ View.Style.popIn
-            , style "transform-origin" "center"
-            ]
+    , [ Element.newTabLink []
             { url = "https://stripe.com"
             , label = View.Img.stripe |> Element.html
             }
@@ -1410,7 +1407,7 @@ viewBuy model =
             , padding 20
             , Element.alignBottom
             , Background.color sand
-            , View.Style.popIn
+            , popIn
             , style "transform-origin" "center"
             , shadow2
             , Border.rounded 20
@@ -1733,11 +1730,12 @@ viewFunnel model =
                     , shadow3
                     , Border.rounded 25
                     , Element.alignRight
+                    , popIn
                     ]
 
         PayOk ->
             [ text "Thank you for your purchase."
-                |> el [ centerX ]
+                |> el [ centerX, Font.bold ]
             , [ text "Please check your email inbox to proceed." ]
                 |> paragraph [ Font.center ]
             , lnk "Close" FunnelCancel
@@ -1751,6 +1749,7 @@ viewFunnel model =
                     , shadow3
                     , Border.rounded 25
                     , Element.alignRight
+                    , popIn
                     ]
 
         Signup ciph ->
@@ -2062,7 +2061,7 @@ viewBottomBar model =
                                         , height <| px <| iconSize + 15
                                         , Background.color col
                                         , style "transform-origin" "center"
-                                        , View.Style.popIn
+                                        , popIn
                                         , Border.rounded 50
                                         , centerX
                                         , centerY
@@ -2311,7 +2310,7 @@ viewTodayBtn screen =
         , Background.color sand
         , shadow3
         , Font.size 17
-        , View.Style.popIn
+        , popIn
         , Element.mouseOver
             [ Background.color black
             , Font.color white

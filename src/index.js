@@ -56,6 +56,8 @@ const cryptoEnabled = Boolean(
 const boot = (swActive) => {
   const now = new Date();
 
+  const key = localStorage.getItem(LS_KEY);
+
   const flags = {
     month: now.getMonth(),
     year: now.getFullYear(),
@@ -66,8 +68,12 @@ const boot = (swActive) => {
     isMobile,
     swActive,
     href: location.href,
-    key: swActive ? localStorage.getItem(LS_KEY) : null,
+    key: swActive ? key : null,
   };
+
+  if (!key) {
+    window.history.replaceState({}, "", "/");
+  }
 
   const app = Elm.Main.init({
     node: document.getElementById("app"),
