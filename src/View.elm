@@ -13,7 +13,7 @@ import Element.Font as Font
 import Element.Input as Input exposing (button)
 import Helpers
 import Helpers.UuidDict as UD
-import Helpers.View exposing (cappedWidth, style, when, whenAttr, whenJust)
+import Helpers.View exposing (cappedHeight, cappedWidth, style, when, whenAttr, whenJust)
 import Html exposing (Html)
 import Html.Attributes
 import Html.Events
@@ -320,7 +320,7 @@ view model =
                 viewHome model
 
             else
-                viewHomeMobile model
+                viewHomeMobile model wd
 
         ViewCalendar ->
             (if model.landscape then
@@ -1088,16 +1088,16 @@ viewTags model =
             |> row [ centerX, spacing 30, height fill, width fill ]
 
 
-viewHomeMobile : Model -> Element Msg
-viewHomeMobile model =
+viewHomeMobile : Model -> Int -> Element Msg
+viewHomeMobile model pd =
     let
         small =
             View.Misc.isSmall model.screen
     in
-    [ [ [ [ View.Img.loci 65
-                |> Element.html
-                |> el []
-          , text "BOLSTER"
+    [ [ [ View.Img.loci 65
+            |> Element.html
+            |> el []
+        , [ text "BOLSTER"
                 |> el
                     [ (if small then
                         35
@@ -1108,27 +1108,26 @@ viewHomeMobile model =
                         |> Font.size
                     , Font.semiBold
                     , abel
+                    , centerX
+                    ]
+          , serif "The secure, private journal."
+                |> el
+                    [ Font.size 20
+                    , centerX
                     ]
           ]
+            |> column []
+        ]
             |> row
                 [ spacing 20
                 , centerX
-                ]
-        , serif "The secure, private journal."
-            |> el
-                [ Font.size 20
-                , centerX
-                ]
-        ]
-            |> column
-                [ width fill
-                , spacing 10
+                , Element.alignTop
                 ]
       , viewInfo model.def
       ]
         |> column
             [ width fill
-            , spacing 30
+            , height fill
             ]
     , if isNothing model.auth then
         viewFunnel model
@@ -1146,7 +1145,7 @@ viewHomeMobile model =
             , width fill
             , spaceEvenly
             , fShrink
-            , padding 20
+            , padding pd
             ]
 
 
@@ -1200,7 +1199,7 @@ viewInfo def =
                         ]
             )
     ]
-        |> row [ width fill, Font.size 17 ]
+        |> row [ width fill, Font.size 17, centerY ]
 
 
 viewBuy : Model -> Element Msg
@@ -1634,8 +1633,9 @@ viewFunnel model =
                 |> el [ centerX ]
             ]
                 |> column
-                    [ spacing 40
-                    , width fill
+                    [ width fill
+                    , cappedHeight 200
+                    , spaceEvenly
                     ]
 
         PayErr ->
