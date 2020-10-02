@@ -2109,6 +2109,15 @@ viewPostView model d =
             formatDay d
                 |> text
                 |> el [ width fill ]
+
+        body =
+            if model.postBeingEdited then
+                model.postEditorBody
+
+            else
+                pst
+                    |> Maybe.andThen .body
+                    |> Maybe.withDefault ""
     in
     if model.tagView then
         [ [ dayTxt
@@ -2144,7 +2153,7 @@ viewPostView model d =
           ]
             |> row [ spaceEvenly, Font.size 17, width fill ]
         , viewPostEditor
-            model.postEditorBody
+            body
             (not model.postBeingEdited)
             fs
         , if model.postBeingEdited then
