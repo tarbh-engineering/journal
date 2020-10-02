@@ -1117,13 +1117,6 @@ update msg model =
             , Cmd.none
             )
 
-        DropdownToggle ->
-            ( { model
-                | dropdown = not model.dropdown
-              }
-            , Cmd.none
-            )
-
         FaqToggle ->
             ( { model
                 | faq = not model.faq

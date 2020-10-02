@@ -23,10 +23,10 @@ import Material.Icons.Types exposing (Icon)
 import Maybe.Extra exposing (isJust, isNothing, unwrap)
 import Time exposing (Month(..))
 import Time.Format.I18n.I_en_us exposing (dayShort, monthName)
-import Types exposing (Def(..), Funnel(..), Model, Msg(..), Post, Route, Tag, View(..))
+import Types exposing (Def(..), Funnel(..), Model, Msg(..), Post, Tag, View(..))
 import View.Img
 import View.Misc exposing (btn, btn2, btn3, formatDateTime, formatDay, iBtn, icon, lnk, spinner)
-import View.Style exposing (abel, black, blue, ebg, fadeIn, grey, rotate, sand, varela, white)
+import View.Style exposing (abel, black, blue, ebg, fadeIn, grey, red, rotate, sand, serif, white)
 
 
 onCtrlEnter : msg -> Decoder msg
@@ -238,6 +238,13 @@ viewCell model n day =
             model.posts
                 |> Day.get day.date
 
+        col =
+            if model.month == Calendar.getMonth day.date then
+                blue
+
+            else
+                grey
+
         curr =
             Just day.date == model.current
     in
@@ -258,14 +265,14 @@ viewCell model n day =
             sand
 
            else
-            Element.rgb255 190 165 140
+            white
           )
             |> Background.color
         , none
             |> el
                 [ width fill
                 , height fill
-                , Background.color blue
+                , Background.color col
                 , style "transform-origin" "center"
                 , View.Style.popIn
                 ]
@@ -462,7 +469,7 @@ render isMobile =
                         Nothing
 
                     else
-                        Just <| Element.rgb255 255 0 0
+                        Just red
                 , backgroundColor = Nothing
                 , shadow = Nothing
                 }
@@ -476,6 +483,7 @@ render isMobile =
         }
         ([ height fill
          , width fill
+         , View.Style.baseFont
          ]
             |> (++)
                 (if isMobile then
@@ -519,7 +527,7 @@ viewTagsMobile model =
                             { onChange = TagCreateNameUpdate
                             , label = Input.labelHidden ""
                             , placeholder =
-                                text "New tag"
+                                serif "New tag"
                                     |> Input.placeholder []
                                     |> Just
                             , text = model.tagCreateName
@@ -749,7 +757,7 @@ viewNoTags model =
         { onChange = TagCreateNameUpdate
         , label = Input.labelHidden ""
         , placeholder =
-            text "Create your first tag"
+            serif "Create your first tag"
                 |> Input.placeholder []
                 |> Just
         , text = model.tagCreateName
@@ -1024,7 +1032,7 @@ viewTags model =
                 { onChange = TagCreateNameUpdate
                 , label = Input.labelHidden ""
                 , placeholder =
-                    text "New tag"
+                    serif "New tag"
                         |> Input.placeholder []
                         |> Just
                 , text = model.tagCreateName
@@ -1171,11 +1179,9 @@ viewHomeMobile model =
                 [ spacing 20
                 , centerX
                 ]
-        , text "The secure, private journal."
+        , serif "The secure, private journal."
             |> el
-                [ varela
-                , Font.size 20
-                , Font.italic
+                [ Font.size 20
                 , centerX
                 ]
         ]
@@ -1415,17 +1421,22 @@ viewHome : Model -> Element Msg
 viewHome model =
     [ [ View.Img.dark
             |> Element.html
-            |> el [ height <| px 250, width <| px 250 ]
+            |> el
+                [ height <| px 250
+                , width <| px 250
+                , Background.color black
+                , padding 30
+                ]
       , [ text "BOLSTER"
             |> el
-                [ Font.size 150
+                [ Font.size 120
                 , Font.semiBold
                 , abel
                 , paddingXY 20 0
                 ]
         , el [ Background.color black, width fill, height <| px 5 ] none
-        , text "The secure, private journal."
-            |> el [ varela, Font.size 30, Font.italic, centerX ]
+        , serif "The secure, private journal."
+            |> el [ Font.size 35, centerX ]
         ]
             |> column [ spacing 10 ]
       ]
@@ -1479,6 +1490,7 @@ viewHome model =
             [ spacing 50
             , centerX
             , padding 30
+            , height fill
             ]
 
 
@@ -1682,7 +1694,7 @@ viewFunnel model =
                     { onChange = LoginFormEmailUpdate
                     , label = Input.labelHidden ""
                     , placeholder =
-                        text "Your email address"
+                        serif "Your email address"
                             |> Input.placeholder []
                             |> Just
                     , text = model.loginForm.email
@@ -1708,8 +1720,8 @@ viewFunnel model =
                     ]
 
         PayErr ->
-            [ text "The payment process was not completed."
-                |> el [ centerX ]
+            [ [ text "The payment process was not completed." ]
+                |> paragraph [ Font.center ]
             , lnk "Continue" FunnelCancel
                 |> el [ centerX ]
             ]
@@ -1791,7 +1803,7 @@ viewSignup model msg =
         , label = Input.labelHidden ""
         , show = False
         , placeholder =
-            text "Your password"
+            serif "Your password"
                 |> Input.placeholder []
                 |> Just
         , text = model.loginForm.password
@@ -1811,7 +1823,7 @@ viewSignup model msg =
 viewWelcome : Model -> String -> Element Msg
 viewWelcome model nonce =
     [ text "Welcome back"
-        |> el [ Font.italic, Font.bold, Font.size 28, abel ]
+        |> el [ Font.bold, Font.size 28 ]
     , [ Input.currentPassword
             [ Border.rounded 0
             , Border.widthEach { top = 0, bottom = 1, left = 0, right = 0 }
@@ -1822,7 +1834,7 @@ viewWelcome model nonce =
             { onChange = LoginFormPasswordUpdate
             , label = Input.labelHidden ""
             , placeholder =
-                text "Your password"
+                serif "Your password"
                     |> el [ centerY ]
                     |> Input.placeholder []
                     |> Just
@@ -1866,39 +1878,56 @@ viewFrame model elem =
                     |> Element.html
                     |> el []
                 , text "BOLSTER" |> el [ abel, Font.size 30 ]
-                , text "DEMO"
-                    |> el [ Font.light, varela ]
+                , serif "DEMO"
+                    |> el [ Font.light ]
                     |> when (model.auth == Nothing)
                 ]
                     |> row [ spacing 10 ]
             }
-      , [ ( "Calendar", Types.RouteCalendar, ViewCalendar )
-        , ( "Tags", Types.RouteTags, ViewTags )
-        , ( "Settings", Types.RouteSettings, ViewSettings )
+      , [ viewNavButton Icons.event "Calendar" Types.RouteCalendar (model.view == ViewCalendar)
+        , viewNavButton Icons.assignment_turned_in "Tags" Types.RouteTags (model.view == ViewTags)
+        , viewNavButton Icons.settings "Settings" Types.RouteSettings (model.view == ViewSettings)
         ]
-            |> List.map
-                (\( n, r, v ) ->
-                    Input.button
-                        [ Font.underline |> whenAttr (v == model.view)
-                        , Element.mouseOver
-                            [ Font.color blue
-                            ]
-                        ]
-                        { onPress =
-                            if v == model.view then
-                                Nothing
-
-                            else
-                                Just <| NavigateTo r
-                        , label = text n
-                        }
-                )
             |> row [ spacing 40 ]
       ]
         |> row [ width fill, spaceEvenly, paddingXY 20 wd ]
     , elem
     ]
         |> column [ spacing wd, height fill, cappedWidth 1275, centerX ]
+
+
+viewNavButton : Icon Msg -> String -> Types.Route -> Bool -> Element Msg
+viewNavButton icn n r curr =
+    Input.button
+        [ padding 10
+        , (if curr then
+            sand
+
+           else
+            white
+          )
+            |> Background.color
+        , shadow3
+            |> whenAttr curr
+        , Element.mouseOver [ Font.color blue ]
+            |> whenAttr (not curr)
+        , Border.roundEach
+            { topLeft = 0
+            , bottomRight = 0
+            , topRight = 25
+            , bottomLeft = 25
+            }
+        ]
+        { onPress =
+            if curr then
+                Nothing
+
+            else
+                Just <| NavigateTo r
+        , label =
+            [ icon icn 30, text n ]
+                |> row [ spacing 10 ]
+        }
 
 
 viewFrameMobile : Model -> Element Msg -> Element Msg
@@ -1945,34 +1974,10 @@ viewFrameMobile model elem =
         )
             |> text
             |> el [ Font.italic ]
-            |> when model.tall
       ]
         |> row
             [ width fill
             , spaceEvenly
-            , [ Input.button [ Element.alignRight ]
-                    { onPress = Just DropdownToggle
-                    , label = icon Icons.menu 40
-                    }
-              , [ viewRoute Types.RouteCalendar model.view
-                , viewRoute Types.RouteTags model.view
-                , viewRoute Types.RouteSettings model.view
-                ]
-                    |> column [ spacing 10, padding 10 ]
-                    |> when model.dropdown
-              ]
-                |> column
-                    [ Background.color sand
-                        |> whenAttr model.dropdown
-                    , shadow2
-                        |> whenAttr model.dropdown
-                    ]
-                |> el
-                    [ Element.alignRight
-                    , style "z-index" "1"
-                    ]
-                |> when (not model.tall)
-                |> Element.inFront
             ]
     , elem
     , viewBottomBar model
@@ -1985,76 +1990,6 @@ viewFrameMobile model elem =
             , fShrink
             , paddingXY nd 10
             ]
-
-
-viewRoute : Route -> View -> Element Msg
-viewRoute r v =
-    let
-        txt =
-            case r of
-                Types.RouteCalendar ->
-                    "Calendar"
-
-                Types.RouteTags ->
-                    "Tags"
-
-                Types.RouteSettings ->
-                    "Settings"
-
-                _ ->
-                    "???"
-
-        icn =
-            case r of
-                Types.RouteCalendar ->
-                    Icons.calendar_today
-
-                Types.RouteTags ->
-                    Icons.assignment_turned_in
-
-                Types.RouteSettings ->
-                    Icons.settings
-
-                _ ->
-                    Icons.help
-
-        active =
-            case r of
-                Types.RouteCalendar ->
-                    v == ViewCalendar
-
-                Types.RouteTags ->
-                    v == ViewTags
-
-                Types.RouteSettings ->
-                    v == ViewSettings
-
-                _ ->
-                    False
-    in
-    Input.button
-        [ Border.width 1 |> whenAttr active
-        , Element.mouseOver
-            [ Font.color blue
-            ]
-        , Font.size 25
-        , width fill
-        , padding 10
-        ]
-        { onPress =
-            (if active then
-                DropdownToggle
-
-             else
-                NavigateTo r
-            )
-                |> Just
-        , label =
-            [ icon icn 20
-            , text txt
-            ]
-                |> row [ spacing 10 ]
-        }
 
 
 viewBottomBar : Model -> Element Msg
@@ -2374,7 +2309,6 @@ viewTodayBtn screen =
         , height <| px 50
         , Border.rounded 25
         , Background.color sand
-        , varela
         , shadow3
         , Font.size 17
         , View.Style.popIn
@@ -2402,7 +2336,7 @@ viewReady : Element Msg
 viewReady =
     Input.button
         [ width fill
-        , Helpers.View.cappedHeight 700
+        , height fill
         , Background.color sand
         , style "cursor" View.Img.pencil
         , shadow3

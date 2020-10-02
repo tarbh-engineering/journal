@@ -18,7 +18,7 @@ import Types exposing (Flags, Model, Msg, Screen)
 import Update exposing (update)
 import Url
 import View exposing (view)
-import View.Misc exposing (isTall)
+import View.Misc
 
 
 main : Program Flags Model Msg
@@ -70,7 +70,6 @@ init flags =
         , isMobile = flags.isMobile
         , month = numberToMonth flags.month |> Maybe.withDefault Time.Jan
         , year = flags.year
-        , tall = isTall flags.screen
         , landscape = flags.screen.width > flags.screen.height
         , area = View.Misc.getArea flags.screen
         , swActive = flags.swActive
@@ -219,8 +218,6 @@ emptyModel =
     , thanks = False
     , swActive = False
     , faq = False
-    , dropdown = False
-    , tall = False
     , tagsView = Types.TagsView
     , tagsSort = Types.SortName
     , tagsSortReverse = False

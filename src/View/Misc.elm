@@ -1,4 +1,4 @@
-module View.Misc exposing (btn, btn2, btn3, dayParts, formatDateTime, formatDay, getArea, iBtn, icon, isSmall, isTall, lnk, spinner, tallInt)
+module View.Misc exposing (btn, btn2, btn3, dayParts, formatDateTime, formatDay, getArea, iBtn, icon, isSmall, lnk, spinner, tallInt)
 
 import Calendar exposing (Date)
 import DateTime exposing (DateTime)
@@ -12,7 +12,7 @@ import Material.Icons.Types exposing (Icon)
 import Ordinal
 import Time.Format.I18n.I_en_us exposing (monthName)
 import Types exposing (Screen)
-import View.Style exposing (black, blue, rotate, sand, varela, white)
+import View.Style exposing (black, blue, rotate, sand, white)
 
 
 getArea : Screen -> Int
@@ -23,11 +23,6 @@ getArea scr =
 tallInt : Int
 tallInt =
     512
-
-
-isTall : Screen -> Bool
-isTall scr =
-    scr.height >= tallInt
 
 
 isSmall : Screen -> Bool
@@ -164,7 +159,6 @@ btn3 inProg ic str msg =
         , height <| px 50
         , Border.roundEach { topLeft = 0, bottomRight = 0, topRight = 25, bottomLeft = 25 }
         , Background.color sand
-        , varela
         , Border.shadow
             { offset = ( 3, 3 )
             , blur = 3

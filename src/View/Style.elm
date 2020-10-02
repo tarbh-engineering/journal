@@ -1,6 +1,6 @@
-module View.Style exposing (abel, black, blue, ebg, fadeIn, garish, gold, grey, popIn, purple, red, rotate, sand, serif, varela, white, yellow)
+module View.Style exposing (abel, baseFont, black, blue, ebg, fadeIn, garish, gold, grey, popIn, purple, red, rotate, sand, serif, text, white, yellow)
 
-import Element exposing (Attribute, Color, rgb255)
+import Element exposing (Attribute, Color, Element, el, rgb255)
 import Element.Font as Font
 import Helpers.View exposing (style)
 
@@ -15,11 +15,10 @@ fadeIn =
     style "animation" "fadeIn 0.5s"
 
 
-serif : Attribute msg
-serif =
-    Font.family
-        [ Font.typeface "Helvetica"
-        ]
+text : String -> Element msg
+text =
+    Element.text
+        >> el []
 
 
 abel : Attribute msg
@@ -29,17 +28,25 @@ abel =
         ]
 
 
+serif : String -> Element msg
+serif =
+    Element.text
+        >> el
+            [ ebg
+            ]
+
+
+baseFont : Attribute msg
+baseFont =
+    Font.family
+        [ Font.typeface "Quicksand"
+        ]
+
+
 ebg : Attribute msg
 ebg =
     Font.family
         [ Font.typeface "EB Garamond"
-        ]
-
-
-varela : Attribute msg
-varela =
-    Font.family
-        [ Font.typeface "Varela"
         ]
 
 

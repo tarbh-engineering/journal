@@ -100,9 +100,9 @@ html {
 }
 
 @font-face {
-  font-family: "Varela";
-  src: url("./fonts/varela.woff2") format("woff2"),
-    url("./fonts/varela.woff") format("woff");
+  font-family: "Quicksand";
+  src: url("./fonts/quicksand.woff2") format("woff2"),
+    url("./fonts/quicksand.woff") format("woff");
 }
 
 @font-face {
