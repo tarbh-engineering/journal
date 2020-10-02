@@ -12,7 +12,7 @@ import Material.Icons.Types exposing (Icon)
 import Ordinal
 import Time.Format.I18n.I_en_us exposing (monthName)
 import Types exposing (Screen)
-import View.Style exposing (black, blue, rotate, sand, white)
+import View.Style exposing (black, blue, rotate, sand, shadowAlt, white)
 
 
 getArea : Screen -> Int
@@ -91,12 +91,7 @@ iBtn n icn msg =
     }
         |> Input.button
             [ Font.color black
-            , Border.shadow
-                { offset = ( 2, 2 )
-                , blur = 3
-                , size = 1
-                , color = Element.rgb255 150 150 150
-                }
+            , shadowAlt
             , Background.color sand
             , Border.roundEach { topLeft = 0, bottomRight = 0, topRight = 15, bottomLeft = 15 }
             , padding 10
@@ -119,12 +114,7 @@ btn2 inProg ic str msg =
         , Font.color black
         , height <| px 50
         , width <| px 120
-        , Border.shadow
-            { offset = ( 3, 3 )
-            , blur = 4
-            , size = 2
-            , color = Element.rgb255 150 150 150
-            }
+        , shadowAlt
         ]
         { onPress =
             if inProg then
@@ -160,12 +150,7 @@ btn3 inProg ic str msg =
         , height <| px 50
         , Border.roundEach { topLeft = 0, bottomRight = 0, topRight = 25, bottomLeft = 25 }
         , Background.color sand
-        , Border.shadow
-            { offset = ( 3, 3 )
-            , blur = 3
-            , size = 0
-            , color = Element.rgb255 150 150 150
-            }
+        , shadowAlt
         ]
         { onPress =
             if inProg then

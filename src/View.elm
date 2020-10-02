@@ -26,7 +26,7 @@ import Time.Format.I18n.I_en_us exposing (dayShort, monthName)
 import Types exposing (Def(..), Funnel(..), Model, Msg(..), Post, Tag, View(..))
 import View.Img
 import View.Misc exposing (btn, btn2, btn3, formatDateTime, formatDay, iBtn, icon, lnk, spinner)
-import View.Style exposing (abel, black, blue, ebg, fadeIn, grey, popIn, red, rotate, sand, serif, white)
+import View.Style exposing (abel, black, blue, ebg, fadeIn, grey, popIn, red, rotate, sand, serif, shadow, shadowAlt, shadowNone, white)
 
 
 onCtrlEnter : msg -> Decoder msg
@@ -80,36 +80,6 @@ onKeydown decoders =
             )
         |> Html.Events.on "keydown"
         |> Element.htmlAttribute
-
-
-shadow2 : Attribute msg
-shadow2 =
-    Border.shadow
-        { offset = ( 3, 3 )
-        , blur = 4
-        , size = 2
-        , color = grey
-        }
-
-
-shadow3 : Attribute msg
-shadow3 =
-    Border.shadow
-        { offset = ( 3, 3 )
-        , blur = 3
-        , size = 0
-        , color = grey
-        }
-
-
-shadow : Attribute msg
-shadow =
-    Border.shadow
-        { offset = ( 4, 4 )
-        , blur = 0
-        , size = 2
-        , color = black
-        }
 
 
 viewCalendar : Model -> Element Msg
@@ -394,12 +364,7 @@ view model =
                                         |> Input.button
                                             [ Font.color black
                                             , Font.size 17
-                                            , Border.shadow
-                                                { offset = ( 2, 2 )
-                                                , blur = 3
-                                                , size = 1
-                                                , color = grey
-                                                }
+                                            , shadow
                                                 |> whenAttr curr
                                             , Background.color sand
                                                 |> whenAttr curr
@@ -628,12 +593,7 @@ viewTagsCol2 model d tags tagIds =
                         sand
                       )
                         |> Background.color
-                    , Border.shadow
-                        { offset = ( 3, 3 )
-                        , blur = 3
-                        , size = 1
-                        , color = grey
-                        }
+                    , shadowAlt
                     ]
                     { onPress =
                         (if curr then
@@ -721,12 +681,7 @@ viewTagsCol model tags =
                                     sand
                                   )
                                     |> Background.color
-                                , Border.shadow
-                                    { offset = ( 3, 3 )
-                                    , blur = 3
-                                    , size = 1
-                                    , color = grey
-                                    }
+                                , shadowAlt
                                 ]
                     }
             )
@@ -808,12 +763,7 @@ viewSortIcon rev sort active =
                         [ Background.color sand
                         , padding 5
                         , Border.rounded 20
-                        , Border.shadow
-                            { offset = ( 3, 3 )
-                            , blur = 3
-                            , size = 1
-                            , color = grey
-                            }
+                        , shadowAlt
                         ]
 
             else
@@ -915,12 +865,7 @@ viewTag model t =
                         , Border.rounded 15
                         , width fill
                         , Background.color sand
-                        , Border.shadow
-                            { offset = ( 3, 3 )
-                            , blur = 3
-                            , size = 1
-                            , color = grey
-                            }
+                        , shadowAlt
                         ]
                         { onPress =
                             Types.RouteDayDetail date
@@ -1092,12 +1037,7 @@ viewTags model =
                                         , Border.rounded 15
                                         , width fill
                                         , Background.color sand
-                                        , Border.shadow
-                                            { offset = ( 3, 3 )
-                                            , blur = 3
-                                            , size = 1
-                                            , color = grey
-                                            }
+                                        , shadowAlt
                                         ]
                                         { onPress =
                                             Types.RouteDay date
@@ -1256,7 +1196,7 @@ viewInfo def =
                                 else
                                     25
                             }
-                        , shadow3
+                        , shadow
                         ]
             )
     ]
@@ -1303,21 +1243,11 @@ viewBuy model =
             , Font.center
             , Font.color white
             , Border.rounded 10
-            , Border.shadow
-                { offset = ( 4, 4 )
-                , blur = 4
-                , size = 0
-                , color = grey
-                }
+            , shadow
             , Element.mouseDown
                 [ Element.moveRight 5
                 , Element.moveDown 5
-                , Border.shadow
-                    { offset = ( 0, 0 )
-                    , blur = 0
-                    , size = 0
-                    , color = grey
-                    }
+                , shadowNone
                 ]
                 |> whenAttr waiting
             , style "cursor" monthlyCursor
@@ -1352,21 +1282,11 @@ viewBuy model =
             , Font.center
             , Font.color white
             , Border.rounded 10
-            , Border.shadow
-                { offset = ( 4, 4 )
-                , blur = 4
-                , size = 0
-                , color = grey
-                }
+            , shadow
             , Element.mouseDown
                 [ Element.moveRight 5
                 , Element.moveDown 5
-                , Border.shadow
-                    { offset = ( 0, 0 )
-                    , blur = 0
-                    , size = 0
-                    , color = grey
-                    }
+                , shadowNone
                 ]
                 |> whenAttr waiting
             , style "cursor" annualCursor
@@ -1404,7 +1324,7 @@ viewBuy model =
             , Background.color sand
             , popIn
             , style "transform-origin" "center"
-            , shadow2
+            , shadow
             , Border.rounded 20
             ]
 
@@ -1437,10 +1357,10 @@ viewHome model =
             , style "animation-duration" "1s"
             , centerX
             ]
-    , [ [ [ viewLn model.def Private 0.25
-          , viewLn model.def Control 0.5
-          , viewLn model.def Devices 0.75
-          , viewLn model.def OpenSource 1.0
+    , [ [ [ viewLn model.def Private 0.125
+          , viewLn model.def Control 0.25
+          , viewLn model.def Devices 0.375
+          , viewLn model.def OpenSource 0.5
           ]
             |> column [ spacing 10, Element.alignLeft ]
         , model.def
@@ -1455,11 +1375,17 @@ viewHome model =
                             , Font.size 28
                             , width fill
                             , height fill
-                            , Border.shadow
-                                { offset = ( 0, 3 )
-                                , blur = 0
-                                , size = 0
-                                , color = grey
+                            , shadow
+                            , Border.roundEach
+                                { topLeft = 0
+                                , bottomRight = 0
+                                , topRight = 25
+                                , bottomLeft =
+                                    if d == Types.OpenSource then
+                                        0
+
+                                    else
+                                        25
                                 }
                             ]
                 )
@@ -1549,7 +1475,7 @@ viewClick c def =
         [ Background.color sand
             |> whenAttr curr
         , Border.roundEach { topLeft = 0, bottomRight = 0, topRight = 0, bottomLeft = 25 }
-        , shadow3
+        , shadow
             |> whenAttr curr
         , centerY
         , Element.paddingEach { top = 10, bottom = 10, left = 10, right = 5 }
@@ -1622,12 +1548,7 @@ viewLn c def fl =
     Input.button
         [ Background.color sand |> whenAttr curr
         , width fill
-        , Border.shadow
-            { offset = ( 0, 3 )
-            , blur = 0
-            , size = 0
-            , color = grey
-            }
+        , shadow
             |> whenAttr curr
         , Font.bold
             |> whenAttr curr
@@ -1635,9 +1556,15 @@ viewLn c def fl =
         , Element.mouseOver [ Font.color blue ]
         , Element.transparent True
         , style "animation-name" "fadeIn"
-        , style "animation-duration" "1s"
+        , style "animation-duration" "0.5s"
         , style "animation-fill-mode" "forwards"
         , style "animation-delay" (String.fromFloat fl ++ "s")
+        , Border.roundEach
+            { topLeft = 0
+            , bottomRight = 0
+            , topRight = 0
+            , bottomLeft = 25
+            }
         ]
         { onPress = Just <| SetDef def
         , label =
@@ -1647,7 +1574,7 @@ viewLn c def fl =
                     , Background.color sand
                         |> whenAttr (not curr)
                     , Border.rounded 25
-                    , shadow3
+                    , shadow
                         |> whenAttr (not curr)
                     ]
             , defTitle def
@@ -1722,7 +1649,7 @@ viewFunnel model =
                     , spacing 20
                     , Background.color sand
                     , cappedWidth 450
-                    , shadow3
+                    , shadow
                     , Border.rounded 25
                     , Element.alignRight
                     , popIn
@@ -1741,7 +1668,7 @@ viewFunnel model =
                     , spacing 20
                     , Background.color sand
                     , cappedWidth 450
-                    , shadow3
+                    , shadow
                     , Border.rounded 25
                     , Element.alignRight
                     , popIn
@@ -1901,7 +1828,7 @@ viewNavButton icn n r curr =
             white
           )
             |> Background.color
-        , shadow3
+        , shadow
             |> whenAttr curr
         , Element.mouseOver [ Font.color blue ]
             |> whenAttr (not curr)
@@ -2303,7 +2230,7 @@ viewTodayBtn screen =
         , height <| px 50
         , Border.roundEach { topLeft = 0, bottomRight = 0, topRight = 25, bottomLeft = 25 }
         , Background.color sand
-        , shadow3
+        , shadow
         , Font.size 17
         , popIn
         , Element.mouseOver
@@ -2333,7 +2260,7 @@ viewReady =
         , height fill
         , Background.color View.Style.paper
         , style "cursor" View.Img.pencil
-        , shadow3
+        , shadow
         ]
         { onPress = Just <| ReadyStart Nothing
         , label = none
@@ -2457,7 +2384,7 @@ viewPostEditor txt disable fontSize =
             , Element.Events.onClick PostUpdateStart
                 |> whenAttr disable
             , onKeydown [ onCtrlEnter PostBodySubmit ]
-            , shadow3
+            , shadow
             ]
 
 

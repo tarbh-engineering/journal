@@ -1,8 +1,39 @@
-module View.Style exposing (abel, baseFont, black, blue, ebg, fadeIn, garish, gold, grey, paper, popIn, purple, red, rotate, sand, serif, text, white, yellow)
+module View.Style exposing (abel, baseFont, black, blue, ebg, fadeIn, garish, gold, grey, paper, popIn, purple, red, rotate, sand, serif, shadow, shadowAlt, shadowNone, text, white, yellow)
 
 import Element exposing (Attribute, Color, Element, el, rgb255)
+import Element.Border as Border
 import Element.Font as Font
 import Helpers.View exposing (style)
+
+
+shadow : Attribute msg
+shadow =
+    Border.shadow
+        { offset = ( 3, 3 )
+        , blur = 0
+        , size = 0
+        , color = grey
+        }
+
+
+shadowAlt : Attribute msg
+shadowAlt =
+    Border.shadow
+        { offset = ( 3, 3 )
+        , blur = 3
+        , size = 1
+        , color = grey
+        }
+
+
+shadowNone : Element.Attr dec msg
+shadowNone =
+    Border.shadow
+        { offset = ( 0, 0 )
+        , blur = 0
+        , size = 0
+        , color = grey
+        }
 
 
 popIn : Attribute msg
