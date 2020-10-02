@@ -90,29 +90,83 @@ update msg model =
                     )
 
         NextMonth ->
-            ( { model
-                | year =
+            let
+                month =
+                    getNextMonth model.month
+
+                year =
                     if model.month == Time.Dec then
                         model.year + 1
 
                     else
                         model.year
-                , month = getNextMonth model.month
+
+                start_ =
+                    Calendar.fromRawParts
+                        { year = year
+                        , month = month
+                        , day = 1
+                        }
+            in
+            ( { model
+                | year = year
+                , month = month
               }
-            , Cmd.none
+            , start_
+                |> unwrap Cmd.none
+                    (\start ->
+                        model.auth
+                            |> unwrap Cmd.none
+                                (trip
+                                    (Data.range
+                                        start
+                                        (start
+                                            |> Calendar.incrementMonth
+                                        )
+                                    )
+                                    PostsCb
+                                )
+                    )
             )
 
         PrevMonth ->
-            ( { model
-                | year =
+            let
+                month =
+                    getPrevMonth model.month
+
+                year =
                     if model.month == Time.Jan then
                         model.year - 1
 
                     else
                         model.year
-                , month = getPrevMonth model.month
+
+                start_ =
+                    Calendar.fromRawParts
+                        { year = year
+                        , month = month
+                        , day = 1
+                        }
+            in
+            ( { model
+                | year = year
+                , month = month
               }
-            , Cmd.none
+            , start_
+                |> unwrap Cmd.none
+                    (\start ->
+                        model.auth
+                            |> unwrap Cmd.none
+                                (trip
+                                    (Data.range
+                                        start
+                                        (start
+                                            |> Calendar.incrementMonth
+                                        )
+                                    )
+                                    PostsCb
+                                )
+                    )
             )
 
         Resize screen ->
