@@ -1628,7 +1628,7 @@ viewFunnel model =
                     ]
             , btn3
                 False
-                Icons.phonelink
+                Icons.sports_esports
                 "Try the demo"
                 (NavigateTo Types.RouteCalendar)
                 |> el [ centerX ]
