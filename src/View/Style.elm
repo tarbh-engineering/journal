@@ -1,4 +1,4 @@
-module View.Style exposing (abel, baseFont, black, blue, ebg, fadeIn, garish, gold, grey, paper, popIn, purple, red, rotate, sand, serif, shadow, shadowAlt, shadowNone, text, white, yellow)
+module View.Style exposing (abel, baseFont, black, blue, ebg, fadeIn, garish, gold, green, grey, paper, popIn, purple, red, rotate, sand, serif, shadow, shadowAlt, shadowNone, text, white, yellow)
 
 import Element exposing (Attribute, Color, Element, el, rgb255)
 import Element.Border as Border
@@ -101,6 +101,11 @@ blue =
 red : Color
 red =
     rgb255 206 68 40
+
+
+green : Color
+green =
+    rgb255 108 164 50
 
 
 garish : Color

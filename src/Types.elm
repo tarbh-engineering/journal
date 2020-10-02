@@ -53,7 +53,6 @@ type alias Model =
     , magic : Maybe Bool
     , thanks : Bool
     , swActive : Bool
-    , faq : Bool
     , tagsView : TagsView
     , tagsSort : TagsSort
     , tagsSortReverse : Bool
@@ -110,7 +109,6 @@ type Msg
     | Resize Screen
     | PrevMonth
     | NextMonth
-    | FaqToggle
     | FunnelCancel
     | TagSelect Uuid
     | TagDeselect

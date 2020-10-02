@@ -1171,13 +1171,6 @@ update msg model =
             , Cmd.none
             )
 
-        FaqToggle ->
-            ( { model
-                | faq = not model.faq
-              }
-            , Cmd.none
-            )
-
         LoginFormEmailUpdate str ->
             ( { model
                 | loginForm =

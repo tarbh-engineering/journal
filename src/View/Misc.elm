@@ -22,7 +22,7 @@ getArea scr =
 
 tallInt : Int
 tallInt =
-    512
+    475
 
 
 isSmall : Screen -> Bool

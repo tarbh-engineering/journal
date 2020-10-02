@@ -26,7 +26,7 @@ import Time.Format.I18n.I_en_us exposing (dayShort, monthName)
 import Types exposing (Def(..), Funnel(..), Model, Msg(..), Post, Tag, View(..))
 import View.Img
 import View.Misc exposing (btn, btn2, btn3, formatDateTime, formatDay, iBtn, icon, lnk, spinner)
-import View.Style exposing (abel, black, blue, ebg, fadeIn, grey, popIn, red, rotate, sand, serif, shadow, shadowAlt, shadowNone, white)
+import View.Style exposing (abel, black, blue, ebg, fadeIn, green, grey, popIn, red, rotate, sand, serif, shadow, shadowAlt, shadowNone, white)
 
 
 onCtrlEnter : msg -> Decoder msg
@@ -1805,9 +1805,9 @@ viewFrame model elem =
                 ]
                     |> row [ spacing 10 ]
             }
-      , [ viewNavButton Icons.event "Calendar" Types.RouteCalendar (model.view == ViewCalendar)
-        , viewNavButton Icons.assignment_turned_in "Tags" Types.RouteTags (model.view == ViewTags)
-        , viewNavButton Icons.settings "Settings" Types.RouteSettings (model.view == ViewSettings)
+      , [ viewNavButton blue Icons.event "Calendar" Types.RouteCalendar (model.view == ViewCalendar)
+        , viewNavButton red Icons.assignment_turned_in "Tags" Types.RouteTags (model.view == ViewTags)
+        , viewNavButton green Icons.settings "Settings" Types.RouteSettings (model.view == ViewSettings)
         ]
             |> row [ spacing 40 ]
       ]
@@ -1817,27 +1817,17 @@ viewFrame model elem =
         |> column [ spacing wd, height fill, cappedWidth 1275, centerX ]
 
 
-viewNavButton : Icon Msg -> String -> Types.Route -> Bool -> Element Msg
-viewNavButton icn n r curr =
+viewNavButton : Element.Color -> Icon Msg -> String -> Types.Route -> Bool -> Element Msg
+viewNavButton col icn n r curr =
     Input.button
         [ padding 10
-        , (if curr then
-            sand
+        , if curr then
+            Font.bold
 
-           else
-            white
-          )
-            |> Background.color
-        , shadow
+          else
+            Font.light
+        , Font.underline
             |> whenAttr curr
-        , Element.mouseOver [ Font.color blue ]
-            |> whenAttr (not curr)
-        , Border.roundEach
-            { topLeft = 0
-            , bottomRight = 0
-            , topRight = 25
-            , bottomLeft = 25
-            }
         ]
         { onPress =
             if curr then
@@ -1846,8 +1836,40 @@ viewNavButton icn n r curr =
             else
                 Just <| NavigateTo r
         , label =
-            [ icon icn 30, text n ]
-                |> row [ spacing 10 ]
+            [ icon icn 30
+                |> el
+                    [ centerX
+                    , centerY
+                    , (if curr then
+                        white
+
+                       else
+                        black
+                      )
+                        |> Font.color
+                    ]
+                |> el
+                    [ width <| px 50
+                    , height <| px 50
+                    , none
+                        |> el
+                            [ Background.color col
+                            , Border.rounded 25
+                            , style "transform-origin" "center"
+                            , popIn
+                            , width fill
+                            , height fill
+                            ]
+                        |> Element.behindContent
+                        |> whenAttr curr
+                    ]
+            , text n
+            ]
+                |> row
+                    [ spacing 5
+                    , Element.mouseOver [ Font.color blue ]
+                        |> whenAttr (not curr)
+                    ]
         }
 
 
@@ -1939,13 +1961,13 @@ viewBottomBar model =
                     col =
                         case r of
                             Types.RouteSettings ->
-                                View.Style.gold
+                                green
 
                             Types.RouteCalendar ->
                                 blue
 
                             Types.RouteTags ->
-                                View.Style.red
+                                red
 
                             _ ->
                                 View.Style.garish

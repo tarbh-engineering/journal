@@ -217,7 +217,6 @@ emptyModel =
         }
     , thanks = False
     , swActive = False
-    , faq = False
     , tagsView = Types.TagsView
     , tagsSort = Types.SortName
     , tagsSortReverse = False
