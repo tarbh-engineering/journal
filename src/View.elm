@@ -178,6 +178,7 @@ viewCalendar model =
                 , spacing 10
                 , Background.color white
                 , padding 10
+                , Font.size 25
                 ]
       , iBtn btnSize Icons.chevron_right NextMonth
       ]
@@ -240,7 +241,7 @@ viewCell model n day =
 
         col =
             if model.month == Calendar.getMonth day.date then
-                blue
+                black
 
             else
                 grey
@@ -746,13 +747,7 @@ viewNoTags model =
         , paddingXY 0 10
         , onKeydown [ onEnter TagCreateSubmit ]
         , Border.widthEach { bottom = 1, top = 0, left = 0, right = 0 }
-        , Background.gradient
-            { angle = degrees 0
-            , steps =
-                [ Element.rgb255 245 220 235
-                , Element.rgb255 255 255 255
-                ]
-            }
+        , Font.size 25
         ]
         { onChange = TagCreateNameUpdate
         , label = Input.labelHidden ""
@@ -768,7 +763,7 @@ viewNoTags model =
         , "etc."
         ]
             |> List.map (text >> el [ Font.italic ])
-            |> column [ spacing 5 ]
+            |> column [ spacing 5, Font.size 20 ]
       , btn3 model.inProgress.tag Icons.send "Submit" TagCreateSubmit
             |> el [ Element.alignTop ]
       ]
@@ -2306,7 +2301,7 @@ viewTodayBtn screen =
         [ Element.paddingXY 15 0
         , Font.color black
         , height <| px 50
-        , Border.rounded 25
+        , Border.roundEach { topLeft = 0, bottomRight = 0, topRight = 25, bottomLeft = 25 }
         , Background.color sand
         , shadow3
         , Font.size 17
@@ -2336,7 +2331,7 @@ viewReady =
     Input.button
         [ width fill
         , height fill
-        , Background.color sand
+        , Background.color View.Style.paper
         , style "cursor" View.Img.pencil
         , shadow3
         ]
@@ -2455,7 +2450,7 @@ viewPostEditor txt disable fontSize =
               )
                 |> style "cursor"
             , height fill
-            , Background.color sand
+            , Background.color View.Style.paper
             , Font.size fontSize
             , padding 10
             , ebg

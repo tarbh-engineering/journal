@@ -98,8 +98,9 @@ iBtn n icn msg =
                 , color = Element.rgb255 150 150 150
                 }
             , Background.color sand
-            , Border.rounded 25
+            , Border.roundEach { topLeft = 0, bottomRight = 0, topRight = 15, bottomLeft = 15 }
             , padding 10
+            , Element.mouseOver [ Background.color black, Font.color white ]
             ]
 
 

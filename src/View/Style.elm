@@ -1,4 +1,4 @@
-module View.Style exposing (abel, baseFont, black, blue, ebg, fadeIn, garish, gold, grey, popIn, purple, red, rotate, sand, serif, text, white, yellow)
+module View.Style exposing (abel, baseFont, black, blue, ebg, fadeIn, garish, gold, grey, paper, popIn, purple, red, rotate, sand, serif, text, white, yellow)
 
 import Element exposing (Attribute, Color, Element, el, rgb255)
 import Element.Font as Font
@@ -99,9 +99,14 @@ black =
 
 sand : Color
 sand =
-    rgb255 255 245 235
+    rgb255 255 223 145
 
 
 grey : Color
 grey =
     rgb255 150 150 150
+
+
+paper : Color
+paper =
+    rgb255 255 253 220
