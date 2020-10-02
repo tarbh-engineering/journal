@@ -26,7 +26,7 @@ import Time.Format.I18n.I_en_us exposing (dayShort, monthName)
 import Types exposing (Def(..), Funnel(..), Model, Msg(..), Post, Tag, View(..))
 import View.Img
 import View.Misc exposing (btn, btn2, btn3, formatDateTime, formatDay, iBtn, icon, lnk, spinner)
-import View.Style exposing (abel, black, blue, ebg, fadeIn, green, grey, popIn, red, rotate, sand, serif, shadow, shadowAlt, shadowNone, white)
+import View.Style exposing (abel, black, blue, ebg, fadeIn, green, grey, paper, popIn, red, rotate, sand, serif, shadow, shadowAlt, shadowNone, white)
 
 
 onCtrlEnter : msg -> Decoder msg
@@ -1826,8 +1826,6 @@ viewNavButton col icn n r curr =
 
           else
             Font.light
-        , Font.underline
-            |> whenAttr curr
         ]
         { onPress =
             if curr then
@@ -2280,7 +2278,7 @@ viewReady =
     Input.button
         [ width fill
         , height fill
-        , Background.color View.Style.paper
+        , Background.color paper
         , style "cursor" View.Img.pencil
         , shadow
         ]
@@ -2399,7 +2397,7 @@ viewPostEditor txt disable fontSize =
               )
                 |> style "cursor"
             , height fill
-            , Background.color View.Style.paper
+            , Background.color paper
             , Font.size fontSize
             , padding 10
             , ebg
@@ -2430,7 +2428,7 @@ viewPreview txt =
         |> el
             [ width fill
             , height fill
-            , Background.color sand
+            , Background.color paper
             , Font.color black
             , Font.size 14
             , padding 5
@@ -2442,11 +2440,11 @@ viewPreview txt =
                 , Background.gradient
                     { angle = degrees 0
                     , steps =
-                        [ Element.rgba255 255 245 235 1
-                        , Element.rgba255 255 245 235 0.8
-                        , Element.rgba255 255 245 235 0.7
-                        , Element.rgba255 255 245 235 0.5
-                        , Element.rgba255 255 245 235 0.4
+                        [ View.Style.paperAlpha 1
+                        , View.Style.paperAlpha 0.8
+                        , View.Style.paperAlpha 0.7
+                        , View.Style.paperAlpha 0.5
+                        , View.Style.paperAlpha 0.4
                         ]
                     }
                 ]

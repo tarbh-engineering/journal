@@ -1,4 +1,4 @@
-module View.Style exposing (abel, baseFont, black, blue, ebg, fadeIn, garish, gold, green, grey, paper, popIn, purple, red, rotate, sand, serif, shadow, shadowAlt, shadowNone, text, white, yellow)
+module View.Style exposing (abel, baseFont, black, blue, ebg, fadeIn, garish, gold, green, grey, paper, paperAlpha, popIn, purple, red, rotate, sand, serif, shadow, shadowAlt, shadowNone, text, white, yellow)
 
 import Element exposing (Attribute, Color, Element, el, rgb255)
 import Element.Border as Border
@@ -145,4 +145,9 @@ grey =
 
 paper : Color
 paper =
-    rgb255 255 253 220
+    paperAlpha 1.0
+
+
+paperAlpha : Float -> Color
+paperAlpha =
+    Element.rgba255 255 253 220
