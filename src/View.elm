@@ -94,7 +94,7 @@ viewCalendar model =
                     60
 
             else if model.area < 200000 then
-                30
+                35
 
             else if model.area < 300000 then
                 40
@@ -1091,28 +1091,26 @@ viewTags model =
 viewHomeMobile : Model -> Int -> Element Msg
 viewHomeMobile model pd =
     let
-        small =
-            View.Misc.isSmall model.screen
+        adj =
+            if model.screen.width < 360 then
+                5
+
+            else
+                0
     in
-    [ [ [ View.Img.loci 65
+    [ [ [ View.Img.loci (65 - adj)
             |> Element.html
             |> el []
         , [ text "BOLSTER"
                 |> el
-                    [ (if small then
-                        35
-
-                       else
-                        55
-                      )
-                        |> Font.size
+                    [ Font.size (55 - adj)
                     , Font.semiBold
                     , abel
                     , centerX
                     ]
           , serif "The secure, private journal."
                 |> el
-                    [ Font.size 20
+                    [ Font.size (20 - adj)
                     , centerX
                     ]
           ]
@@ -1139,6 +1137,7 @@ viewHomeMobile model pd =
             "Return to app"
             (NavigateTo Types.RouteCalendar)
             |> el [ centerX, centerY ]
+            |> el [ cappedHeight 150, width fill ]
     ]
         |> column
             [ height fill
@@ -1318,13 +1317,11 @@ viewBuy model =
             [ Element.alignRight
             , spacing 20
             , cappedWidth 450
+            , cappedHeight 200
             , padding 20
             , Element.alignBottom
-            , Background.color sand
-            , popIn
+            , fadeIn
             , style "transform-origin" "center"
-            , shadow
-            , Border.rounded 20
             ]
 
 
@@ -1777,6 +1774,11 @@ viewWelcome model nonce =
             , Element.alignRight
             , spacing 10
             , fadeIn
+            , centerY
+            ]
+        |> el
+            [ cappedHeight 200
+            , width fill
             ]
 
 
@@ -2192,9 +2194,24 @@ viewBarMobile model day =
                 |> Maybe.andThen .body
                 |> Maybe.withDefault ""
     in
-    [ viewTodayBtn model.screen
-        |> el [ centerX, Element.alignBottom ]
-        |> when (day /= model.today || model.month /= Calendar.getMonth day)
+    [ [ viewTodayBtn model.screen
+            |> el [ centerX ]
+            |> when (day /= model.today || model.month /= Calendar.getMonth day)
+      , formatDay day
+            |> text
+            |> el
+                [ (if model.screen.width < 360 then
+                    14
+
+                   else
+                    16
+                  )
+                    |> Font.size
+                , Font.italic
+                , Element.alignRight
+                ]
+      ]
+        |> column [ width fill, Element.alignBottom, spacing 10 ]
         |> el [ width fill, height fill ]
     , [ Input.button [ height fill, width fill ]
             { onPress = Just <| NavigateTo <| Types.RouteDayDetail day
@@ -2217,19 +2234,6 @@ viewBarMobile model day =
                 ]
                     |> row [ spacing 10, Element.alignRight ]
             }
-      , formatDay day
-            |> text
-            |> el
-                [ (if model.screen.width < 360 then
-                    14
-
-                   else
-                    16
-                  )
-                    |> Font.size
-                , Font.italic
-                , Element.alignRight
-                ]
       ]
         |> column
             [ height fill

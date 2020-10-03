@@ -1,4 +1,4 @@
-module View.Misc exposing (btn, btn2, btn3, dayParts, formatDateTime, formatDay, getArea, iBtn, icon, isSmall, lnk, spinner, tallInt)
+module View.Misc exposing (btn, btn2, btn3, dayParts, formatDateTime, formatDay, getArea, iBtn, icon, lnk, spinner, tallInt)
 
 import Calendar exposing (Date)
 import DateTime exposing (DateTime)
@@ -23,11 +23,6 @@ getArea scr =
 tallInt : Int
 tallInt =
     475
-
-
-isSmall : Screen -> Bool
-isSmall scr =
-    scr.width < 360
 
 
 formatDateTime : DateTime -> String
