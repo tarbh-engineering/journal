@@ -150,4 +150,4 @@ paper =
 
 paperAlpha : Float -> Color
 paperAlpha =
-    Element.rgba255 255 253 220
+    Element.rgba255 220 240 255

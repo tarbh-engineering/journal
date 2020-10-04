@@ -344,25 +344,12 @@ nonce email =
 
 fetchPostsByTag : Uuid -> Auth -> GqlTask (List Post)
 fetchPostsByTag id { key, token } =
-    Api.Query.post_tag
-        (\r ->
-            { r
-                | where_ =
-                    Api.InputObject.buildPost_tag_bool_exp
-                        (\r2 ->
-                            { r2
-                                | tag_id =
-                                    Api.InputObject.buildUuid_comparison_exp
-                                        (\r3 ->
-                                            { r3 | eq_ = Opt.Present id }
-                                        )
-                                        |> Opt.Present
-                            }
-                        )
-                        |> Opt.Present
-            }
+    Api.Query.tag_by_pk { id = id }
+        (postSelection
+            |> Api.Object.Post_tag.post
+            |> Api.Object.Tag.post_tags identity
         )
-        (Api.Object.Post_tag.post postSelection)
+        |> Graphql.SelectionSet.map (Maybe.withDefault [])
         |> query token
         |> Task.andThen
             (List.map

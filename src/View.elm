@@ -140,10 +140,12 @@ viewCalendar model =
                 25
     in
     [ [ iBtn btnSize Icons.chevron_left PrevMonth
-      , [ model.month |> monthName |> text
-        , model.year |> String.fromInt |> text
+      , [ model.month |> monthName
+        , model.year |> String.fromInt
         ]
-            |> row
+            |> String.join " "
+            |> text
+            |> el
                 [ centerX
                 , spacing 10
                 , Background.color white
@@ -406,7 +408,7 @@ view model =
                 |> frame
     ]
         |> column
-            [ spacing wd
+            [ spacing 10
             , height fill
             , width fill
             , fShrink
@@ -544,76 +546,6 @@ viewTagsMobile model =
                         ]
             )
             (viewTag model)
-
-
-viewTagsCol2 : Model -> Date -> List Tag -> List Uuid -> Element Msg
-viewTagsCol2 model d tags tagIds =
-    tags
-        |> (case model.tagsSort of
-                Types.SortName ->
-                    List.sortBy .name
-
-                Types.SortDate ->
-                    List.sortWith
-                        (\a b ->
-                            DateTime.compare a.created b.created
-                        )
-
-                Types.SortUsage ->
-                    List.sortBy (.posts >> List.length)
-           )
-        |> (if model.tagsSortReverse then
-                List.reverse
-
-            else
-                identity
-           )
-        |> List.map
-            (\t ->
-                let
-                    curr =
-                        List.member t.id tagIds
-                in
-                Input.button
-                    [ Font.size 25
-                    , width fill
-                    , padding 15
-                    , Border.rounded 15
-                    , (if curr then
-                        white
-
-                       else
-                        black
-                      )
-                        |> Font.color
-                    , (if curr then
-                        blue
-
-                       else
-                        sand
-                      )
-                        |> Background.color
-                    , shadowAlt
-                    ]
-                    { onPress =
-                        (if curr then
-                            PostTagDetach d t.id
-
-                         else
-                            PostTagAttach d t.id
-                        )
-                            |> Just
-                    , label = ellipsisText 26 t.name
-                    }
-            )
-        |> column
-            [ spacing 10
-            , paddingXY 5 0
-            , scrollbarY
-            , style "min-height" "auto"
-            , width fill
-            , height fill
-            ]
 
 
 viewTagsCol : Model -> List Tag -> Element Msg
@@ -1784,25 +1716,18 @@ viewWelcome model nonce =
 
 viewFrame : Model -> Element Msg -> Element Msg
 viewFrame model elem =
-    let
-        wd =
-            if model.area < 200000 then
-                10
-
-            else
-                20
-    in
     [ [ Input.button
             [ Font.semiBold
+            , Element.mouseOver [ Font.color blue ]
             ]
             { onPress = Just <| NavigateTo Types.RouteHome
             , label =
-                [ View.Img.loci 40
+                [ View.Img.loci 50
                     |> Element.html
                     |> el []
-                , text "BOLSTER" |> el [ abel, Font.size 30 ]
+                , text "BOLSTER" |> el [ abel, Font.size 40 ]
                 , serif "DEMO"
-                    |> el [ Font.light ]
+                    |> el [ Font.light, Font.size 25 ]
                     |> when (model.auth == Nothing)
                 ]
                     |> row [ spacing 10 ]
@@ -1813,10 +1738,10 @@ viewFrame model elem =
         ]
             |> row [ spacing 40 ]
       ]
-        |> row [ width fill, spaceEvenly, paddingXY 20 wd ]
+        |> row [ width fill, spaceEvenly ]
     , elem
     ]
-        |> column [ spacing wd, height fill, cappedWidth 1275, centerX ]
+        |> column [ spacing 10, height fill, cappedWidth 1375, centerX ]
 
 
 viewNavButton : Element.Color -> Icon Msg -> String -> Types.Route -> Bool -> Element Msg
@@ -1828,6 +1753,8 @@ viewNavButton col icn n r curr =
 
           else
             Font.light
+        , Element.mouseOver [ Font.color blue ]
+            |> whenAttr (not curr)
         ]
         { onPress =
             if curr then
@@ -1840,13 +1767,8 @@ viewNavButton col icn n r curr =
                 |> el
                     [ centerX
                     , centerY
-                    , (if curr then
-                        white
-
-                       else
-                        black
-                      )
-                        |> Font.color
+                    , Font.color white
+                        |> whenAttr curr
                     ]
                 |> el
                     [ width <| px 50
@@ -1867,8 +1789,6 @@ viewNavButton col icn n r curr =
             ]
                 |> row
                     [ spacing 5
-                    , Element.mouseOver [ Font.color blue ]
-                        |> whenAttr (not curr)
                     ]
         }
 
@@ -2029,16 +1949,87 @@ viewPage model =
 
             else
                 20
+
+        tags =
+            UD.values model.tags
     in
     [ [ viewCalendar model
             |> el
                 [ Element.alignTop
                 ]
+      , [ model.current
+            |> whenJust
+                (\d ->
+                    let
+                        tagIds =
+                            model.posts
+                                |> Day.get d
+                                |> unwrap [] (.tags >> List.map .tag)
+                    in
+                    [ tags
+                        |> (case model.tagsSort of
+                                Types.SortName ->
+                                    List.sortBy .name
+
+                                Types.SortDate ->
+                                    List.sortWith
+                                        (\a b ->
+                                            DateTime.compare a.created b.created
+                                        )
+
+                                Types.SortUsage ->
+                                    List.sortBy (.posts >> List.length)
+                           )
+                        |> (if model.tagsSortReverse then
+                                List.reverse
+
+                            else
+                                identity
+                           )
+                        |> List.map (viewPostTag model tagIds d)
+                        |> column
+                            [ spacing 10
+                            , paddingXY 5 0
+                            , scrollbarY
+                            , style "min-height" "auto"
+                            , width fill
+                            , height fill
+                            ]
+                    , [ [ viewSortIcon model.tagsSortReverse Types.SortName model.tagsSort
+                        , viewSortIcon model.tagsSortReverse Types.SortDate model.tagsSort
+                        , viewSortIcon model.tagsSortReverse Types.SortUsage model.tagsSort
+                        ]
+                            |> row [ spacing 10, width fill ]
+                      , (case model.tagsSort of
+                            Types.SortName ->
+                                "name"
+
+                            Types.SortDate ->
+                                "date"
+
+                            Types.SortUsage ->
+                                "count"
+                        )
+                            |> (++) "Sorted by "
+                            |> text
+                            |> el [ spacing 5, Font.size 17 ]
+                      ]
+                        |> row [ width fill, paddingXY 0 10 ]
+                    ]
+                        |> column [ height fill, width fill ]
+                )
+            |> when (not <| List.isEmpty tags)
+        ]
+            |> row [ width fill, height fill ]
+      ]
+        |> column [ height fill, spacing 20 ]
+    , [ model.current
+            |> unwrap
+                viewReady
+                (viewPost model)
       , viewTodayBtn model.screen
             |> el
-                [ Element.alignBottom
-                , Element.alignRight
-                , padding 10
+                [ centerY
                 ]
             |> when
                 (model.current
@@ -2047,14 +2038,14 @@ viewPage model =
                             |> unwrap False (\c -> model.month /= Calendar.getMonth c)
                        )
                 )
+            |> el
+                [ height <| px 70
+                , Element.alignRight
+                ]
       ]
-        |> column [ height fill ]
-    , model.current
-        |> unwrap
-            viewReady
-            (viewPost model)
+        |> column [ width fill, height fill ]
     ]
-        |> row [ width fill, height fill, spacing wd, paddingXY 20 wd ]
+        |> row [ width fill, height fill, spacing wd ]
 
 
 viewPageMobile : Model -> Element Msg
@@ -2310,9 +2301,6 @@ viewPost model d =
             model.posts
                 |> Day.get d
 
-        tags =
-            UD.values model.tags
-
         body =
             if model.postBeingEdited then
                 model.postEditorBody
@@ -2359,29 +2347,15 @@ viewPost model d =
                     , width fill
                     ]
     in
-    [ [ topBar
-      , viewPostEditor body (not model.postBeingEdited) fs
-      ]
+    [ topBar
+    , viewPostEditor body (not model.postBeingEdited) fs
+    ]
         |> column
             [ height fill
             , width fill
             , spacing 10
             , fShrink
             ]
-    , [ [ viewSortIcon model.tagsSortReverse Types.SortName model.tagsSort
-        , viewSortIcon model.tagsSortReverse Types.SortDate model.tagsSort
-        , viewSortIcon model.tagsSortReverse Types.SortUsage model.tagsSort
-        ]
-            |> row [ spaceEvenly, paddingXY 0 10, width fill ]
-      , viewTagsCol2 model
-            d
-            tags
-            (pst |> unwrap [] (.tags >> List.map .tag))
-      ]
-        |> column [ height fill, paddingXY 20 0, width <| px 200 ]
-        |> when (not <| List.isEmpty tags)
-    ]
-        |> row [ height fill, width fill ]
 
 
 viewPostEditor : String -> Bool -> Int -> Element Msg
@@ -2489,55 +2463,7 @@ viewPostTags model d pst =
 
     else
         xs
-            |> List.map
-                (\t ->
-                    let
-                        flip =
-                            List.member t.id postTagIds
-
-                        prog =
-                            List.member ( d, t.id ) model.inProgress.postTags
-                    in
-                    [ Input.button [ width fill ]
-                        { onPress = Just <| TagSelect t.id
-                        , label = paragraph [] [ text t.name ]
-                        }
-                    , Input.button
-                        [ width <| px 40
-                        , height <| px 40
-                        , Border.width 1
-                        , (if prog then
-                            sand
-
-                           else
-                            white
-                          )
-                            |> Background.color
-                        ]
-                        { onPress =
-                            if prog then
-                                Nothing
-
-                            else if flip then
-                                Just <| PostTagDetach d t.id
-
-                            else
-                                Just <| PostTagAttach d t.id
-                        , label =
-                            if prog then
-                                spinner
-
-                            else
-                                icon Icons.done 20
-                                    |> el [ centerX, centerY ]
-                                    |> when flip
-                        }
-                    ]
-                        |> row
-                            [ width fill
-                            , spacing 10
-                            ]
-                )
+            |> List.map (viewPostTag model postTagIds d)
             |> List.intersperse hairline
             |> column
                 [ spacing 10
@@ -2547,6 +2473,56 @@ viewPostTags model d pst =
                 , Element.scrollbarY
                 , style "min-height" "auto"
                 ]
+
+
+viewPostTag : Model -> List Uuid -> Date -> Tag -> Element Msg
+viewPostTag model postTagIds d t =
+    let
+        flip =
+            List.member t.id postTagIds
+
+        prog =
+            List.member ( d, t.id ) model.inProgress.postTags
+    in
+    [ Input.button [ width fill ]
+        { onPress = Just <| TagSelect t.id
+        , label = paragraph [] [ text t.name ]
+        }
+    , Input.button
+        [ width <| px 40
+        , height <| px 40
+        , Border.width 1
+        , (if prog then
+            sand
+
+           else
+            white
+          )
+            |> Background.color
+        ]
+        { onPress =
+            if prog then
+                Nothing
+
+            else if flip then
+                Just <| PostTagDetach d t.id
+
+            else
+                Just <| PostTagAttach d t.id
+        , label =
+            if prog then
+                spinner
+
+            else
+                icon Icons.done 20
+                    |> el [ centerX, centerY ]
+                    |> when flip
+        }
+    ]
+        |> row
+            [ width fill
+            , spacing 10
+            ]
 
 
 ellipsisText : Int -> String -> Element msg

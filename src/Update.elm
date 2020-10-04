@@ -84,6 +84,10 @@ update msg model =
                             | today = d
                             , current = Just d
                             , postBeingEdited = True
+                            , postEditorBody =
+                                Day.get d model.posts
+                                    |> Maybe.andThen .body
+                                    |> Maybe.withDefault ""
                           }
                         , goTo <| RouteDay d
                         )
@@ -1207,20 +1211,14 @@ update msg model =
             ( { model
                 | tag = Just id
               }
-              --id
-              --|> unwrap Cmd.none
-              --(\id_ ->
-              --model.auth
-              --|> unwrap Cmd.none
-              --(trip (Data.fetchPostsByTag id_)
-              --PostsCb
-              --)
-              --)
-            , if model.landscape then
-                Cmd.none
-
-              else
-                goTo RouteTag
+            , Cmd.batch
+                [ goTo RouteTag
+                , model.auth
+                    |> unwrap Cmd.none
+                        (trip (Data.fetchPostsByTag id)
+                            PostsCb
+                        )
+                ]
             )
 
         TagDeselect ->
@@ -1292,10 +1290,6 @@ randomTask gen =
 
 handleRoute : Model -> Route -> ( Model, Cmd Msg )
 handleRoute model route =
-    let
-        anon =
-            isNothing model.auth
-    in
     case route of
         RouteHome ->
             ( { model
@@ -1317,26 +1311,6 @@ handleRoute model route =
 
                     else
                         Nothing
-                , tags =
-                    if anon then
-                        --model.tags
-                        --|> UD.values
-                        --|> List.map
-                        --(\t ->
-                        --{ t
-                        --| count =
-                        --model.posts
-                        --|> Day.values
-                        --|> List.filter
-                        --(.tags >> List.member t.id)
-                        --|> List.length
-                        --}
-                        --)
-                        --|> UD.fromList
-                        model.tags
-
-                    else
-                        model.tags
               }
             , model.auth
                 |> unwrap Cmd.none
