@@ -1,4 +1,4 @@
-module View.Misc exposing (btn, btn2, btn3, dayParts, formatDateTime, formatDay, getArea, iBtn, icon, lnk, spinner, tallInt)
+module View.Misc exposing (btn2, btn3, dayParts, formatDateTime, formatDay, getArea, iBtn, icon, lnk, spinner, tallInt)
 
 import Calendar exposing (Date)
 import DateTime exposing (DateTime)
@@ -110,6 +110,7 @@ btn2 inProg ic str msg =
         , height <| px 50
         , width <| px 120
         , shadowAlt
+        , style "transition" "background-color 0.3s"
         ]
         { onPress =
             if inProg then
@@ -146,6 +147,7 @@ btn3 inProg ic str msg =
         , Border.roundEach { topLeft = 0, bottomRight = 0, topRight = 25, bottomLeft = 25 }
         , Background.color sand
         , shadowAlt
+        , style "transition" "background-color 0.3s"
         ]
         { onPress =
             if inProg then
@@ -162,23 +164,6 @@ btn3 inProg ic str msg =
             , text str
             ]
                 |> row [ spacing 10 ]
-        }
-
-
-btn : String -> msg -> Element msg
-btn str msg =
-    Input.button
-        [ Element.paddingXY 15 0
-        , Element.mouseOver
-            [ Font.color white
-            , Background.color black
-            ]
-        , Border.color black
-        , Border.width 1
-        , height <| px 50
-        ]
-        { onPress = Just msg
-        , label = text str
         }
 
 

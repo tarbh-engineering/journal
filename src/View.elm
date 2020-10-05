@@ -25,7 +25,7 @@ import Time exposing (Month(..))
 import Time.Format.I18n.I_en_us exposing (dayShort, monthName)
 import Types exposing (Def(..), Funnel(..), Model, Msg(..), Post, Tag, View(..))
 import View.Img
-import View.Misc exposing (btn, btn2, btn3, formatDateTime, formatDay, iBtn, icon, lnk, spinner)
+import View.Misc exposing (btn2, btn3, formatDateTime, formatDay, iBtn, icon, lnk, spinner)
 import View.Style exposing (abel, black, blue, ebg, fadeIn, green, grey, paper, popIn, red, rotate, sand, serif, shadow, shadowAlt, shadowNone, white)
 
 
@@ -365,12 +365,19 @@ view model =
                                     }
                                         |> Input.button
                                             [ Font.color black
+                                            , Element.mouseOver [ Font.color red ]
+                                                |> whenAttr (not curr)
                                             , Font.size 17
                                             , shadow
                                                 |> whenAttr curr
                                             , Background.color sand
                                                 |> whenAttr curr
-                                            , Border.rounded 25
+                                            , Border.roundEach
+                                                { topLeft = 0
+                                                , bottomRight = 0
+                                                , topRight = 15
+                                                , bottomLeft = 15
+                                                }
                                             , padding 10
                                             ]
                                 )
@@ -385,14 +392,17 @@ view model =
                        ]
                         |> column [ width fill, spacing 10 ]
                      , hairline
+                     , viewAbout
+                     , hairline
                      , btn3 False Icons.emoji_events "Sign up now" (NavigateTo Types.RouteHome)
                         |> el [ centerX ]
                      ]
-                        |> column [ spacing 20, centerX, cappedWidth 450 ]
+                        |> column [ spacing 30, centerX, cappedWidth 450 ]
                     )
                     (\_ ->
                         [ btn3 model.inProgress.logout Icons.power_off "Logout" Logout
                             |> el [ centerX ]
+                        , viewAbout
                         ]
                             |> column [ spacing 20, centerX ]
                     )
@@ -414,6 +424,27 @@ view model =
             , fShrink
             ]
         |> render model.isMobile
+
+
+viewAbout : Element msg
+viewAbout =
+    [ Element.link
+        [ Element.mouseOver [ Font.color red ]
+        , centerX
+        ]
+        { url = "mailto:hello@bolster.pro"
+        , label =
+            [ icon Icons.email 30, text "hello@bolster.pro" ]
+                |> row [ spacing 10 ]
+        }
+    , Element.newTabLink [ centerX, Element.mouseOver [ Font.color red ] ]
+        { url = "https://tarbh.engineering/"
+        , label =
+            [ text "Made by ", text "TARBH" |> el [ abel, Font.size 35 ] ]
+                |> paragraph []
+        }
+    ]
+        |> column [ spacing 30, width fill, Font.size 25 ]
 
 
 render : Bool -> Element msg -> Html msg
@@ -485,9 +516,9 @@ viewTagsMobile model =
                     Types.TagsCreate ->
                         [ Input.text
                             [ Border.rounded 0
-                            , Border.width 1
+                            , Border.widthEach { bottom = 1, top = 0, left = 0, right = 0 }
                             , width fill
-                            , padding 10
+                            , paddingXY 0 10
                             , onKeydown [ onEnter TagCreateSubmit ]
                             , Html.Attributes.id "editor"
                                 |> Element.htmlAttribute
@@ -598,7 +629,7 @@ viewTagsCol model tags =
                                 [ spacing 10
                                 , width fill
                                 , padding 15
-                                , Border.rounded 15
+                                , Border.roundEach { topLeft = 0, bottomRight = 0, topRight = 25, bottomLeft = 25 }
                                 , (if curr then
                                     white
 
@@ -607,7 +638,7 @@ viewTagsCol model tags =
                                   )
                                     |> Font.color
                                 , (if curr then
-                                    blue
+                                    black
 
                                    else
                                     sand
@@ -895,9 +926,8 @@ viewTags model =
           , viewTagsCol model tags
           , [ Input.text
                 [ Border.rounded 0
-                , Border.width 1
                 , width <| px 350
-                , padding 10
+                , paddingXY 0 10
                 , onKeydown [ onEnter TagCreateSubmit ]
                 , Border.widthEach { bottom = 1, top = 0, left = 0, right = 0 }
                 ]
@@ -1612,7 +1642,7 @@ viewFunnel model =
 
                         else
                             [ text "This link is broken."
-                            , btn "Continue" FunnelCancel
+                            , btn3 False Icons.send "Continue" FunnelCancel
                                 |> el [ centerX ]
                             ]
                                 |> column
@@ -1635,8 +1665,8 @@ viewSignup : Model -> Msg -> Element Msg
 viewSignup model msg =
     [ text "Welcome"
         |> el [ Font.bold ]
-    , text "Choose a password to protect your account"
-        |> el [ Font.italic ]
+    , [ text "Choose a password to protect your account" ]
+        |> paragraph [ Font.italic ]
     , Input.currentPassword
         [ Border.rounded 0
         , Border.width 1
@@ -1718,7 +1748,7 @@ viewFrame : Model -> Element Msg -> Element Msg
 viewFrame model elem =
     [ [ Input.button
             [ Font.semiBold
-            , Element.mouseOver [ Font.color blue ]
+            , Element.mouseOver [ Font.color red ]
             ]
             { onPress = Just <| NavigateTo Types.RouteHome
             , label =
@@ -1748,12 +1778,13 @@ viewNavButton : Element.Color -> Icon Msg -> String -> Types.Route -> Bool -> El
 viewNavButton col icn n r curr =
     Input.button
         [ padding 10
+        , Font.size 20
         , if curr then
             Font.bold
 
           else
             Font.light
-        , Element.mouseOver [ Font.color blue ]
+        , Element.mouseOver [ Font.color red ]
             |> whenAttr (not curr)
         ]
         { onPress =
@@ -2149,6 +2180,7 @@ viewPostView model d =
             body
             (not model.postBeingEdited)
             fs
+            10
         , if model.postBeingEdited then
             [ lnk "Cancel" PostUpdateCancel
             , btn2 model.inProgress.post
@@ -2295,7 +2327,7 @@ viewPost : Model -> Date -> Element Msg
 viewPost model d =
     let
         fs =
-            25
+            45
 
         pst =
             model.posts
@@ -2348,7 +2380,7 @@ viewPost model d =
                     ]
     in
     [ topBar
-    , viewPostEditor body (not model.postBeingEdited) fs
+    , viewPostEditor body (not model.postBeingEdited) fs 20
     ]
         |> column
             [ height fill
@@ -2358,8 +2390,8 @@ viewPost model d =
             ]
 
 
-viewPostEditor : String -> Bool -> Int -> Element Msg
-viewPostEditor txt disable fontSize =
+viewPostEditor : String -> Bool -> Int -> Int -> Element Msg
+viewPostEditor txt disable fontSize pd =
     Html.textarea
         [ Html.Attributes.id "editor"
         , Html.Attributes.value txt
@@ -2386,7 +2418,7 @@ viewPostEditor txt disable fontSize =
             , height fill
             , Background.color paper
             , Font.size fontSize
-            , padding 10
+            , padding pd
             , ebg
             , Element.Events.onClick PostUpdateStart
                 |> whenAttr disable

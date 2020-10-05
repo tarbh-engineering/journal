@@ -1380,7 +1380,7 @@ routeDay : Model -> Date -> Maybe Post -> ( Model, Cmd Msg )
 routeDay model d pst =
     let
         startEdit =
-            Just d == model.current
+            Just d == model.current && model.view == Types.ViewCalendar
 
         editorText =
             pst |> Maybe.andThen .body |> Maybe.withDefault ""
