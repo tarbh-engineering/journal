@@ -2398,7 +2398,7 @@ viewPostEditor txt disable fontSize pd =
         , Html.Attributes.style "font-size" "inherit"
         , Html.Attributes.style "font-family" "inherit"
         , Html.Attributes.style "cursor" "inherit"
-        , Html.Attributes.style "line-height" "30px"
+        , Html.Attributes.style "line-height" (String.fromInt (fontSize + 5) ++ "px")
         , Html.Attributes.style "padding" "0px"
         , Html.Attributes.style "flex-grow" "inherit"
         , Html.Attributes.readonly disable
