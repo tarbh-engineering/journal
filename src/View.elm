@@ -1166,30 +1166,18 @@ viewInfo def =
 viewBuy : Model -> Element Msg
 viewBuy model =
     let
-        waiting =
-            not model.inProgress.monthlyPlan && not model.inProgress.annualPlan
+        ready =
+            not model.inProgress.buy
 
-        monthlyCursor =
-            if model.inProgress.monthlyPlan then
+        cursor =
+            if model.inProgress.buy then
                 "wait"
-
-            else if model.inProgress.annualPlan then
-                "not-allowed"
-
-            else
-                "pointer"
-
-        annualCursor =
-            if model.inProgress.annualPlan then
-                "wait"
-
-            else if model.inProgress.monthlyPlan then
-                "not-allowed"
 
             else
                 "pointer"
     in
-    [ [ text "Monthly"
+    [ [ text ("$" ++ String.fromInt model.charge ++ " per year")
+            |> el [ Font.size 20 ]
       , Input.button
             [ Background.gradient
                 { angle = degrees 0
@@ -1198,6 +1186,15 @@ viewBuy model =
                     , Element.rgb255 13 50 77
                     ]
                 }
+            , Element.mouseOver
+                [ Background.gradient
+                    { angle = degrees 0
+                    , steps =
+                        [ red
+                        , Element.rgb255 13 50 77
+                        ]
+                    }
+                ]
             , width <| px 150
             , height <| px 40
             , Font.center
@@ -1209,61 +1206,22 @@ viewBuy model =
                 , Element.moveDown 5
                 , shadowNone
                 ]
-                |> whenAttr waiting
-            , style "cursor" monthlyCursor
+                |> whenAttr ready
+            , style "cursor" cursor
             ]
             { onPress =
-                if waiting then
-                    Just <| Buy False
+                if ready then
+                    Just Buy
 
                 else
                     Nothing
             , label =
-                if model.inProgress.monthlyPlan then
+                if model.inProgress.buy then
                     icon Icons.refresh 25
                         |> el [ rotate, centerX ]
 
                 else
-                    text "$6"
-            }
-      ]
-        |> row [ spaceEvenly, width fill ]
-    , [ text "Annual"
-      , Input.button
-            [ Background.gradient
-                { angle = degrees 0
-                , steps =
-                    [ Element.rgb255 225 95 137
-                    , Element.rgb255 13 50 77
-                    ]
-                }
-            , width <| px 150
-            , height <| px 40
-            , Font.center
-            , Font.color white
-            , Border.rounded 10
-            , shadow
-            , Element.mouseDown
-                [ Element.moveRight 5
-                , Element.moveDown 5
-                , shadowNone
-                ]
-                |> whenAttr waiting
-            , style "cursor" annualCursor
-            ]
-            { onPress =
-                if waiting then
-                    Just <| Buy True
-
-                else
-                    Nothing
-            , label =
-                if model.inProgress.annualPlan then
-                    icon Icons.refresh 25
-                        |> el [ rotate, centerX ]
-
-                else
-                    text "$50"
+                    text "Buy"
             }
       ]
         |> row [ spaceEvenly, width fill ]
@@ -1638,7 +1596,7 @@ viewFunnel model =
                 |> whenJust
                     (\b ->
                         if b then
-                            viewSignup model (SignupSubmit ciph)
+                            viewSignup model (SignupSubmit False ciph)
 
                         else
                             [ text "This link is broken."
@@ -1658,7 +1616,7 @@ viewFunnel model =
             viewBuy model
 
         GuestSignup x ->
-            viewSignup model (GuestSignupSubmit x)
+            viewSignup model (SignupSubmit True x)
 
 
 viewSignup : Model -> Msg -> Element Msg
@@ -1683,10 +1641,31 @@ viewSignup model msg =
         , label = Input.labelHidden ""
         , show = False
         , placeholder =
-            serif "Your password"
+            serif "Password"
                 |> Input.placeholder []
                 |> Just
         , text = model.loginForm.password
+        }
+    , Input.currentPassword
+        [ Border.rounded 0
+        , Border.width 1
+        , width fill
+        , Border.widthEach
+            { top = 0
+            , bottom = 1
+            , left = 0
+            , right = 0
+            }
+        , paddingXY 0 10
+        ]
+        { onChange = LoginFormPasswordConfirmUpdate
+        , label = Input.labelHidden ""
+        , show = False
+        , placeholder =
+            serif "Confirm password"
+                |> Input.placeholder []
+                |> Just
+        , text = model.loginForm.passwordConfirm
         }
     , [ lnk "Cancel" FunnelCancel
       , btn3 model.inProgress.login Icons.send "Submit" msg
@@ -1762,7 +1741,7 @@ viewFrame model elem =
                 ]
                     |> row [ spacing 10 ]
             }
-      , [ viewNavButton blue Icons.event "Calendar" Types.RouteCalendar (model.view == ViewCalendar)
+      , [ viewNavButton blue Icons.event "Write" Types.RouteCalendar (model.view == ViewCalendar)
         , viewNavButton red Icons.assignment_turned_in "Tags" Types.RouteTags (model.view == ViewTags)
         , viewNavButton green Icons.settings "Settings" Types.RouteSettings (model.view == ViewSettings)
         ]
@@ -1858,7 +1837,7 @@ viewFrameMobile model elem =
             }
       , (case model.view of
             ViewCalendar ->
-                "Calendar"
+                "Write"
 
             ViewTags ->
                 "Tags"

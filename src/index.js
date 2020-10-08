@@ -8,7 +8,7 @@ loadStripe.setLoadParameters({ advancedFraudSignals: false });
 /* eslint-disable no-undef */
 const stripeProjectId = STRIPE_PROJECT_ID;
 const stripeAnnual = STRIPE_ANNUAL;
-const stripeMonthly = STRIPE_MONTHLY;
+const charge = STRIPE_CHARGE;
 /* eslint-enable no-undef */
 
 const LS_KEY = "KEY_A";
@@ -67,6 +67,7 @@ const boot = (swActive) => {
     },
     isMobile,
     swActive,
+    charge,
     href: location.href,
     key: swActive ? key : null,
   };
@@ -93,11 +94,11 @@ const boot = (swActive) => {
 
   app.ports.clearState.subscribe(() => localStorage.removeItem(LS_KEY));
 
-  app.ports.buy.subscribe(({ email, annual }) =>
+  app.ports.buy.subscribe((email) =>
     loadStripe(stripeProjectId)
       .then((stripe) =>
         stripe.redirectToCheckout({
-          items: [{ plan: annual ? stripeAnnual : stripeMonthly, quantity: 1 }],
+          items: [{ plan: stripeAnnual, quantity: 1 }],
           customerEmail: email,
           successUrl: location.origin + "/?payment_result=true",
           cancelUrl: location.origin + "/?payment_result=false",

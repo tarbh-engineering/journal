@@ -25,8 +25,7 @@ type alias Model =
         , post : Bool
         , tag : Bool
         , postDelete : Bool
-        , monthlyPlan : Bool
-        , annualPlan : Bool
+        , buy : Bool
         , tags : List Uuid
         , postTags : List ( Date, Uuid )
         }
@@ -40,7 +39,12 @@ type alias Model =
     , tagBeingEdited : Maybe Uuid
     , tagUpdate : String
     , flash : Maybe ( Array ( Bool, String ), List ( Int, String ) )
-    , loginForm : LoginForm
+    , loginForm :
+        { email : String
+        , password : String
+        , passwordConfirm : String
+        , passwordVisible : Bool
+        }
     , searchString : String
     , screen : Screen
     , isMobile : Bool
@@ -61,6 +65,7 @@ type alias Model =
     , today : Date
     , area : Int
     , landscape : Bool
+    , charge : Int
     }
 
 
@@ -81,12 +86,12 @@ type Msg
     | LoginCb (GqlResult Auth)
     | EmailSubmit
     | LoginSubmit String
-    | SignupSubmit String
-    | GuestSignupSubmit String
-    | Buy Bool
+    | SignupSubmit Bool String
+    | Buy
     | PaymentFail
     | LoginFormEmailUpdate String
     | LoginFormPasswordUpdate String
+    | LoginFormPasswordConfirmUpdate String
     | LoginFormPasswordVisibleToggle
     | Logout
     | LogoutCb (GqlResult Bool)
@@ -132,6 +137,7 @@ type alias Flags =
     , href : String
     , key : Maybe String
     , swActive : Bool
+    , charge : Int
     }
 
 
@@ -212,13 +218,6 @@ type EmailRes
     = Guest String
     | Nonce String
     | Newbie
-
-
-type alias LoginForm =
-    { email : String
-    , password : String
-    , passwordVisible : Bool
-    }
 
 
 type alias Keys =

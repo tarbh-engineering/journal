@@ -68,6 +68,7 @@ init flags =
     ( { emptyModel
         | screen = flags.screen
         , isMobile = flags.isMobile
+        , charge = flags.charge
         , month = numberToMonth flags.month |> Maybe.withDefault Time.Jan
         , year = flags.year
         , landscape = flags.screen.width > flags.screen.height
@@ -193,6 +194,7 @@ emptyModel =
     , loginForm =
         { password = ""
         , email = ""
+        , passwordConfirm = ""
         , passwordVisible = False
         }
     , searchString = ""
@@ -210,8 +212,7 @@ emptyModel =
         , post = False
         , tag = False
         , postDelete = False
-        , monthlyPlan = False
-        , annualPlan = False
+        , buy = False
         , tags = []
         , postTags = []
         }
@@ -225,4 +226,5 @@ emptyModel =
     , today = 0 |> Time.millisToPosix |> Calendar.fromPosix
     , area = 0
     , landscape = False
+    , charge = 0
     }

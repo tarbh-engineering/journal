@@ -46,8 +46,7 @@ update msg model =
                     model.inProgress
                         |> (\p ->
                                 { p
-                                    | annualPlan = False
-                                    , monthlyPlan = False
+                                    | buy = False
                                 }
                            )
               }
@@ -600,6 +599,7 @@ update msg model =
                             , loginForm =
                                 { email = ""
                                 , password = ""
+                                , passwordConfirm = ""
                                 , passwordVisible = False
                                 }
                             , funnel = Types.Hello
@@ -827,24 +827,20 @@ update msg model =
                 ]
             )
 
-        Buy annual ->
+        Buy ->
             ( { model
                 | inProgress =
                     model.inProgress
                         |> (\p ->
                                 { p
-                                    | monthlyPlan = not annual
-                                    , annualPlan = annual
+                                    | buy = True
                                 }
                            )
               }
-            , Ports.buy
-                { email = model.loginForm.email
-                , annual = annual
-                }
+            , Ports.buy model.loginForm.email
             )
 
-        SignupSubmit ciph ->
+        SignupSubmit guest data ->
             let
                 inProgress =
                     model.inProgress |> (\p -> { p | login = True })
@@ -854,38 +850,8 @@ update msg model =
                 , Cmd.none
                 )
 
-            else
-                ( { model | errors = [], inProgress = inProgress }
-                , Crypto.nonce
-                    |> Task.andThen
-                        (\nonce ->
-                            Crypto.keys model.loginForm.password nonce
-                                |> Task.andThen
-                                    (\keys ->
-                                        Data.signup keys.serverKey nonce ciph
-                                            |> Task.map
-                                                (\token ->
-                                                    { key = keys.encryptionKey
-                                                    , token = token
-                                                    }
-                                                )
-                                    )
-                        )
-                    |> Task.attempt LoginCb
-                )
-
-        GuestSignupSubmit email ->
-            let
-                inProgress =
-                    model.inProgress
-                        |> (\p ->
-                                { p
-                                    | login = True
-                                }
-                           )
-            in
-            if String.isEmpty model.loginForm.password then
-                ( { model | errors = [ "empty field(s)" ] }
+            else if model.loginForm.password /= model.loginForm.passwordConfirm then
+                ( model
                 , Cmd.none
                 )
 
@@ -897,7 +863,12 @@ update msg model =
                             Crypto.keys model.loginForm.password nonce
                                 |> Task.andThen
                                     (\keys ->
-                                        Data.join keys.serverKey nonce email
+                                        (if guest then
+                                            Data.join keys.serverKey nonce data
+
+                                         else
+                                            Data.signup keys.serverKey nonce data
+                                        )
                                             |> Task.map
                                                 (\token ->
                                                     { key = keys.encryptionKey
@@ -1189,6 +1160,15 @@ update msg model =
                 | loginForm =
                     model.loginForm
                         |> (\f -> { f | password = str })
+              }
+            , Cmd.none
+            )
+
+        LoginFormPasswordConfirmUpdate str ->
+            ( { model
+                | loginForm =
+                    model.loginForm
+                        |> (\f -> { f | passwordConfirm = str })
               }
             , Cmd.none
             )

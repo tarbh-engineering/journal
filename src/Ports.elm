@@ -7,7 +7,7 @@ import Json.Decode exposing (Value)
 -- Out
 
 
-port buy : { annual : Bool, email : String } -> Cmd msg
+port buy : String -> Cmd msg
 
 
 port clearState : () -> Cmd msg
