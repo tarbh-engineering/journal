@@ -17,7 +17,6 @@ import Time exposing (Month, Weekday)
 type alias Model =
     { posts : DayDict Post
     , tags : UuidDict Tag
-    , errors : List String
     , view : View
     , inProgress :
         { logout : Bool
@@ -44,6 +43,7 @@ type alias Model =
         , password : String
         , passwordConfirm : String
         , passwordVisible : Bool
+        , err : Maybe String
         }
     , searchString : String
     , screen : Screen
@@ -205,6 +205,7 @@ type Funnel
     | Signup String
     | PayErr
     | PayOk
+    | SwFail
 
 
 type Def

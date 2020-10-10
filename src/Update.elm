@@ -597,11 +597,14 @@ update msg model =
                                             { p | logout = False }
                                        )
                             , loginForm =
-                                { email = ""
-                                , password = ""
-                                , passwordConfirm = ""
-                                , passwordVisible = False
-                                }
+                                model.loginForm
+                                    |> (\lf ->
+                                            { lf
+                                                | email = ""
+                                                , password = ""
+                                                , passwordConfirm = ""
+                                            }
+                                       )
                             , funnel = Types.Hello
                           }
                         , goTo RouteHome
@@ -659,8 +662,7 @@ update msg model =
                 |> unpack
                     (\err ->
                         ( { model
-                            | errors = parseErrors err
-                            , inProgress =
+                            | inProgress =
                                 model.inProgress
                                     |> (\p -> { p | login = False })
                           }
@@ -705,15 +707,9 @@ update msg model =
                 email =
                     String.trim model.loginForm.email
             in
-            if String.isEmpty email then
-                ( { model | errors = [ "empty field(s)" ] }
-                , Cmd.none
-                )
-
-            else if isValidEmail email then
+            if isValidEmail email then
                 ( { model
-                    | errors = []
-                    , inProgress =
+                    | inProgress =
                         model.inProgress
                             |> (\p -> { p | login = True })
                   }
@@ -722,7 +718,7 @@ update msg model =
                 )
 
             else
-                ( { model | errors = [ "Invalid data" ] }
+                ( model
                 , Cmd.none
                 )
 
@@ -749,8 +745,7 @@ update msg model =
                 |> unpack
                     (\err ->
                         ( { model
-                            | errors = parseErrors err
-                            , inProgress = inProgress
+                            | inProgress = inProgress
                           }
                         , logGqlError "NonceCb" err
                         )
@@ -788,14 +783,13 @@ update msg model =
                     String.trim model.loginForm.email
             in
             if String.isEmpty email || String.isEmpty model.loginForm.password then
-                ( { model | errors = [ "empty field(s)" ] }
+                ( model
                 , Cmd.none
                 )
 
             else
                 ( { model
-                    | errors = []
-                    , inProgress =
+                    | inProgress =
                         model.inProgress
                             |> (\p -> { p | login = True })
                   }
@@ -846,7 +840,7 @@ update msg model =
                     model.inProgress |> (\p -> { p | login = True })
             in
             if String.isEmpty model.loginForm.password then
-                ( { model | errors = [ "empty field(s)" ] }
+                ( model
                 , Cmd.none
                 )
 
@@ -856,7 +850,9 @@ update msg model =
                 )
 
             else
-                ( { model | errors = [], inProgress = inProgress }
+                ( { model
+                    | inProgress = inProgress
+                  }
                 , Crypto.nonce
                     |> Task.andThen
                         (\nonce ->
@@ -1390,16 +1386,6 @@ routeDay model d pst =
             Cmd.none
         ]
     )
-
-
-parseErrors : Graphql.Http.Error a -> List String
-parseErrors err =
-    case err of
-        Graphql.Http.GraphqlError _ errs ->
-            errs |> List.map .message
-
-        _ ->
-            [ "uh oh" ]
 
 
 logGqlError : String -> Graphql.Http.Error a -> Cmd msg

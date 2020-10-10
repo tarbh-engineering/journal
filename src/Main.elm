@@ -80,7 +80,11 @@ init flags =
                     (\atn ->
                         case atn of
                             Types.BootSignup str ->
-                                Types.Signup str
+                                if flags.swActive then
+                                    Types.Signup str
+
+                                else
+                                    Types.SwFail
 
                             Types.BootPaymentFail ->
                                 Types.PayErr
@@ -100,12 +104,15 @@ init flags =
                                 Types.RouteDay d ->
                                     Just d
 
+                                Types.RouteDayDetail d ->
+                                    Just d
+
                                 _ ->
                                     Nothing
                         )
         , view =
             if anon then
-                emptyModel.view
+                Types.ViewHome
 
             else
                 route
@@ -139,22 +146,26 @@ init flags =
       }
     , [ Helpers.today
             |> Task.perform Types.TodaySet
-      , flags.key
-            |> unwrap signupCmd
-                (JD.decodeString JD.value
-                    >> Result.toMaybe
-                    >> unwrap Cmd.none
-                        (\key ->
-                            Data.refresh
-                                |> Task.map
-                                    (Maybe.map
-                                        (\token ->
-                                            { token = token, key = key }
+      , if flags.swActive then
+            flags.key
+                |> unwrap signupCmd
+                    (JD.decodeString JD.value
+                        >> Result.toMaybe
+                        >> unwrap Cmd.none
+                            (\key ->
+                                Data.refresh
+                                    |> Task.map
+                                        (Maybe.map
+                                            (\token ->
+                                                { token = token, key = key }
+                                            )
                                         )
-                                    )
-                                |> Task.attempt (Types.InitCb route)
-                        )
-                )
+                                    |> Task.attempt (Types.InitCb route)
+                            )
+                    )
+
+        else
+            Cmd.none
       ]
         |> Cmd.batch
     )
@@ -176,8 +187,7 @@ subscriptions _ =
 
 emptyModel : Model
 emptyModel =
-    { errors = []
-    , isMobile = False
+    { isMobile = False
     , posts = Day.newDayDict
     , tags = UD.empty
     , view = Types.ViewHome
@@ -196,6 +206,7 @@ emptyModel =
         , email = ""
         , passwordConfirm = ""
         , passwordVisible = False
+        , err = Nothing
         }
     , searchString = ""
     , screen = { height = 0, width = 0 }

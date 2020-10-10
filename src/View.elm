@@ -1615,6 +1615,23 @@ viewFunnel model =
         JoinUs ->
             viewBuy model
 
+        SwFail ->
+            [ text "This browser may not be compatible with Bolster." ]
+                |> paragraph []
+                |> el
+                    [ cappedWidth 400
+                    , Element.alignRight
+                    , Background.color sand
+                    , padding 20
+                    , Border.roundEach
+                        { topLeft = 0
+                        , bottomRight = 0
+                        , topRight = 25
+                        , bottomLeft = 25
+                        }
+                    , shadow
+                    ]
+
         GuestSignup x ->
             viewSignup model (SignupSubmit True x)
 
@@ -1667,10 +1684,14 @@ viewSignup model msg =
                 |> Just
         , text = model.loginForm.passwordConfirm
         }
-    , [ lnk "Cancel" FunnelCancel
-      , btn3 model.inProgress.login Icons.send "Submit" msg
+    , [ model.loginForm.err
+            |> whenJust (text >> el [ Font.color red ])
+      , [ lnk "Cancel" FunnelCancel
+        , btn3 model.inProgress.login Icons.send "Submit" msg
+        ]
+            |> row [ Element.alignRight, spacing 20 ]
       ]
-        |> row [ Element.alignRight, spacing 20 ]
+        |> row [ width fill ]
     ]
         |> column
             [ cappedWidth 450
