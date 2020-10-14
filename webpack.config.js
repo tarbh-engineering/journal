@@ -31,8 +31,14 @@ module.exports = {
     publicPath: "/",
     path: publicFolder,
     filename: "bundle.js",
+    environment: {
+      arrowFunction: false,
+      destructuring: false,
+      const: false,
+    },
   },
   devServer: {
+    publicPath: "/",
     contentBase: publicFolder,
     proxy: {
       "/graphql": HASURA_ENDPOINT + "/v1",
@@ -64,20 +70,6 @@ module.exports = {
         test: /\.css$/,
         use: ["style-loader", "css-loader"],
       },
-      ...(production
-        ? [
-            {
-              test: /\.js$/,
-              exclude: /(node_modules)/,
-              use: {
-                loader: "babel-loader",
-                options: {
-                  presets: ["@babel/preset-env"],
-                },
-              },
-            },
-          ]
-        : []),
     ],
   },
   plugins: [

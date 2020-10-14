@@ -1,15 +1,20 @@
 const PASSWORD_GENERATION_COST = 110000;
 
 // ArrayBuffer -> String
-const toHex = (buf) => Buffer.from(buf).toString("hex");
+const toHex = (buffer) =>
+  Array.from(new Uint8Array(buffer)).reduce(
+    (acc, b) => acc + b.toString(16).padStart(2, "0"),
+    ""
+  );
 
 // String -> ArrayBuffer
-const fromHex = (hex) => Buffer.from(hex, "hex");
+const fromHex = (hex) =>
+  new Uint8Array(hex.match(/.{1,2}/g).map((byte) => parseInt(byte, 16)));
 
 // () -> ArrayBuffer
 const randomBits = () => crypto.getRandomValues(new Uint8Array(16));
 
-// {} -> { iv: String, ciphertext: String }
+// { content: String, key: JWK } -> { iv: String, ciphertext: String }
 const encrypt = async ({ content, key }) => {
   const encryptionKey = await crypto.subtle.importKey(
     "jwk",
@@ -27,7 +32,7 @@ const encrypt = async ({ content, key }) => {
       iv,
     },
     encryptionKey,
-    Buffer.from(content)
+    new TextEncoder().encode(content)
   );
 
   return {
@@ -36,7 +41,7 @@ const encrypt = async ({ content, key }) => {
   };
 };
 
-// {} -> String
+// { iv: String, ciphertext: String, key: JWK } -> String
 const decrypt = async ({ iv, ciphertext, key }) => {
   const encryptionKey = await crypto.subtle.importKey(
     "jwk",
@@ -52,14 +57,14 @@ const decrypt = async ({ iv, ciphertext, key }) => {
     fromHex(ciphertext)
   );
 
-  return Buffer.from(plaintextContent).toString();
+  return new TextDecoder().decode(plaintextContent);
 };
 
-// {} -> { serverKey: String, encryptionKey: JWK }
+// { password: String, nonce: String } -> { serverKey: String, encryptionKey: JWK }
 const keys = async ({ password, nonce }) => {
   const key = await crypto.subtle.importKey(
     "raw",
-    Buffer.from(password),
+    new TextEncoder().encode(password),
     { name: "PBKDF2" },
     false,
     ["deriveBits"]

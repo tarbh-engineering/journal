@@ -43,6 +43,9 @@ const swEnabled = Boolean(
 const cryptoEnabled = Boolean(
   window.crypto &&
     window.crypto.subtle &&
+    window.Response &&
+    window.TextEncoder &&
+    window.TextDecoder &&
     [
       crypto.getRandomValues,
       crypto.subtle.importKey,

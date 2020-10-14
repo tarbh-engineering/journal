@@ -6,6 +6,7 @@ module.exports = {
   mode: "development",
   entry: "./test/index.js",
   devServer: {
+    publicPath: "/",
     contentBase: publicFolder,
     port: 1234,
   },
