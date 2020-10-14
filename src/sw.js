@@ -37,13 +37,13 @@ const handlers = async (request) => {
   }
 };
 
-self.addEventListener("activate", (event) => {
+self.addEventListener("activate", (_event) =>
   // Ensure all subsequent requests are processed
   // by the "fetch" listener.
-  event.waitUntil(self.clients.claim());
-});
+  self.clients.claim()
+);
 
-self.addEventListener("install", (event) => event);
+self.addEventListener("install", (_event) => self.skipWaiting());
 
 self.addEventListener("fetch", (e) =>
   e.request.method === "CRYPTO" ? e.respondWith(handlers(e.request)) : e
