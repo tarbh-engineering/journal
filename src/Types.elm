@@ -7,6 +7,7 @@ import Calendar exposing (Date)
 import CustomScalars exposing (Jwt, Uuid)
 import DateTime exposing (DateTime)
 import Day exposing (DayDict)
+import Email exposing (Email)
 import Graphql.Http
 import Helpers.UuidDict exposing (UuidDict)
 import Json.Decode exposing (Value)
@@ -82,12 +83,12 @@ type Msg
     | PostBodySubmit
     | BodyUpdate String
     | CheckCb (GqlResult Bool)
-    | NonceCb (GqlResult EmailRes)
+    | NonceCb Email (GqlResult EmailRes)
     | LoginCb (GqlResult Auth)
     | EmailSubmit
-    | LoginSubmit String
-    | SignupSubmit Bool String
-    | Buy
+    | LoginSubmit Email String
+    | SignupSubmit (Keys -> String -> GqlTask Jwt)
+    | Buy Email
     | PaymentFail
     | LoginFormEmailUpdate String
     | LoginFormPasswordUpdate String
@@ -127,6 +128,7 @@ type Msg
     | TodaySet Date
     | PostTagAttach Date Uuid
     | PostTagDetach Date Uuid
+    | ServiceWorkerFail
 
 
 type alias Flags =
@@ -199,9 +201,9 @@ type TagsView
 
 type Funnel
     = Hello
-    | WelcomeBack String
-    | JoinUs
-    | GuestSignup String
+    | WelcomeBack Email String
+    | JoinUs Email
+    | GuestSignup Email
     | Signup String
     | PayErr
     | PayOk

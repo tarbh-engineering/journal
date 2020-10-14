@@ -3,6 +3,7 @@ module View exposing (view)
 import Calendar exposing (Date)
 import CalendarDates exposing (Day)
 import CustomScalars exposing (Uuid)
+import Data
 import DateTime
 import Day
 import Element exposing (Attribute, Element, alignBottom, centerX, centerY, column, el, fill, height, html, none, padding, paddingXY, paragraph, px, rgb255, row, scrollbarY, spaceEvenly, spacing, text, width)
@@ -11,6 +12,7 @@ import Element.Border as Border
 import Element.Events
 import Element.Font as Font
 import Element.Input as Input exposing (button)
+import Email exposing (Email)
 import Helpers
 import Helpers.UuidDict as UD
 import Helpers.View exposing (cappedHeight, cappedWidth, style, when, whenAttr, whenJust)
@@ -1163,8 +1165,8 @@ viewInfo def =
         |> row [ width fill, Font.size 17, centerY ]
 
 
-viewBuy : Model -> Element Msg
-viewBuy model =
+viewBuy : Model -> Email -> Element Msg
+viewBuy model email =
     let
         ready =
             not model.inProgress.buy
@@ -1211,7 +1213,7 @@ viewBuy model =
             ]
             { onPress =
                 if ready then
-                    Just Buy
+                    Just <| Buy email
 
                 else
                     Nothing
@@ -1596,7 +1598,11 @@ viewFunnel model =
                 |> whenJust
                     (\b ->
                         if b then
-                            viewSignup model (SignupSubmit False ciph)
+                            (\keys nonce ->
+                                Data.signup keys.serverKey nonce ciph
+                            )
+                                |> SignupSubmit
+                                |> viewSignup model
 
                         else
                             [ text "This link is broken."
@@ -1609,11 +1615,11 @@ viewFunnel model =
                                     ]
                     )
 
-        WelcomeBack nonce ->
-            viewWelcome model nonce
+        WelcomeBack email nonce ->
+            viewWelcome model nonce email
 
-        JoinUs ->
-            viewBuy model
+        JoinUs email ->
+            viewBuy model email
 
         SwFail ->
             [ text "This browser may not be compatible with Bolster." ]
@@ -1632,8 +1638,12 @@ viewFunnel model =
                     , shadow
                     ]
 
-        GuestSignup x ->
-            viewSignup model (SignupSubmit True x)
+        GuestSignup email ->
+            (\keys nonce ->
+                Data.join keys.serverKey nonce email
+            )
+                |> SignupSubmit
+                |> viewSignup model
 
 
 viewSignup : Model -> Msg -> Element Msg
@@ -1700,8 +1710,8 @@ viewSignup model msg =
             ]
 
 
-viewWelcome : Model -> String -> Element Msg
-viewWelcome model nonce =
+viewWelcome : Model -> String -> Email -> Element Msg
+viewWelcome model nonce email =
     [ text "Welcome back"
         |> el [ Font.bold, Font.size 28 ]
     , [ Input.currentPassword
@@ -1709,7 +1719,7 @@ viewWelcome model nonce =
             , Border.widthEach { top = 0, bottom = 1, left = 0, right = 0 }
             , paddingXY 0 10
             , width fill
-            , onKeydown [ onEnter <| LoginSubmit nonce ]
+            , onKeydown [ onEnter <| LoginSubmit email nonce ]
             ]
             { onChange = LoginFormPasswordUpdate
             , label = Input.labelHidden ""
@@ -1722,7 +1732,7 @@ viewWelcome model nonce =
             , show = False
             }
       , [ lnk "Back" FunnelCancel
-        , btn3 model.inProgress.login Icons.save "Submit" (LoginSubmit nonce)
+        , btn3 model.inProgress.login Icons.save "Submit" (LoginSubmit email nonce)
         ]
             |> row [ Element.alignRight, spacing 10 ]
       ]

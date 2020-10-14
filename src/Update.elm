@@ -1,5 +1,6 @@
 module Update exposing (update)
 
+import Boom
 import Browser.Dom
 import Calendar exposing (Date)
 import Crypto
@@ -7,6 +8,7 @@ import Data
 import Day
 import Derberos.Date.Utils exposing (getNextMonth, getPrevMonth)
 import Dict
+import Email
 import Graphql.Http
 import Helpers
 import Helpers.Parse
@@ -23,7 +25,6 @@ import Task exposing (Task)
 import Time
 import Types exposing (Auth, GqlResult, GqlTask, Model, Msg(..), Post, Route(..))
 import Uuid
-import Validate exposing (isValidEmail)
 
 
 wait : Task Never ()
@@ -703,24 +704,22 @@ update msg model =
             )
 
         EmailSubmit ->
-            let
-                email =
-                    String.trim model.loginForm.email
-            in
-            if isValidEmail email then
-                ( { model
-                    | inProgress =
-                        model.inProgress
-                            |> (\p -> { p | login = True })
-                  }
-                , Data.nonce email
-                    |> Task.attempt NonceCb
-                )
-
-            else
-                ( model
-                , Cmd.none
-                )
+            model.loginForm.email
+                |> Email.parse
+                |> unwrap
+                    ( model
+                    , Cmd.none
+                    )
+                    (\email ->
+                        ( { model
+                            | inProgress =
+                                model.inProgress
+                                    |> (\p -> { p | login = True })
+                          }
+                        , Data.nonce email
+                            |> Task.attempt (NonceCb email)
+                        )
+                    )
 
         CheckCb res ->
             res
@@ -736,7 +735,7 @@ update msg model =
                         )
                     )
 
-        NonceCb res ->
+        NonceCb email res ->
             let
                 inProgress =
                     model.inProgress |> (\p -> { p | login = False })
@@ -754,7 +753,12 @@ update msg model =
                         case data of
                             Types.Nonce n ->
                                 ( { model
-                                    | funnel = Types.WelcomeBack n
+                                    | funnel =
+                                        if model.swActive then
+                                            Types.WelcomeBack email n
+
+                                        else
+                                            Types.SwFail
                                     , inProgress = inProgress
                                   }
                                 , Cmd.none
@@ -762,7 +766,16 @@ update msg model =
 
                             Types.Guest n ->
                                 ( { model
-                                    | funnel = Types.GuestSignup n
+                                    | funnel =
+                                        if model.swActive then
+                                            n
+                                                |> Email.parse
+                                                |> unwrap
+                                                    Types.Hello
+                                                    Types.GuestSignup
+
+                                        else
+                                            Types.SwFail
                                     , inProgress = inProgress
                                   }
                                 , Cmd.none
@@ -770,19 +783,15 @@ update msg model =
 
                             Types.Newbie ->
                                 ( { model
-                                    | funnel = Types.JoinUs
+                                    | funnel = Types.JoinUs email
                                     , inProgress = inProgress
                                   }
                                 , Cmd.none
                                 )
                     )
 
-        LoginSubmit nonce ->
-            let
-                email =
-                    String.trim model.loginForm.email
-            in
-            if String.isEmpty email || String.isEmpty model.loginForm.password then
+        LoginSubmit email nonce ->
+            if String.isEmpty model.loginForm.password then
                 ( model
                 , Cmd.none
                 )
@@ -821,7 +830,7 @@ update msg model =
                 ]
             )
 
-        Buy ->
+        Buy email ->
             ( { model
                 | inProgress =
                     model.inProgress
@@ -831,10 +840,10 @@ update msg model =
                                 }
                            )
               }
-            , Ports.buy model.loginForm.email
+            , email |> Email.toString |> Ports.buy
             )
 
-        SignupSubmit guest data ->
+        SignupSubmit fn ->
             let
                 inProgress =
                     model.inProgress |> (\p -> { p | login = True })
@@ -859,12 +868,7 @@ update msg model =
                             Crypto.keys model.loginForm.password nonce
                                 |> Task.andThen
                                     (\keys ->
-                                        (if guest then
-                                            Data.join keys.serverKey nonce data
-
-                                         else
-                                            Data.signup keys.serverKey nonce data
-                                        )
+                                        fn keys nonce
                                             |> Task.map
                                                 (\token ->
                                                     { key = keys.encryptionKey
@@ -1249,6 +1253,17 @@ update msg model =
                 |> Task.attempt (RefreshCb cmd)
             )
 
+        ServiceWorkerFail ->
+            ( { model
+                | auth = Nothing
+                , view = Types.ViewHome
+                , funnel = Types.SwFail
+                , posts = Day.newDayDict
+                , tags = UD.empty
+              }
+            , Ports.clearState ()
+            )
+
         NavigateTo route ->
             ( model, goTo route )
 
@@ -1399,11 +1414,14 @@ trip task msg =
         >> Task.attempt
             (unpack
                 (\err ->
-                    if codeCheck "invalid-jwt" err then
-                        JwtFailure
-                            (task
-                                >> Task.attempt msg
-                            )
+                    if codeCheck Boom.invalidJwt err then
+                        (task
+                            >> Task.attempt msg
+                        )
+                            |> JwtFailure
+
+                    else if codeCheck Boom.swFail err then
+                        ServiceWorkerFail
 
                     else
                         err

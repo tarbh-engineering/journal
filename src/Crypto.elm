@@ -1,6 +1,8 @@
 module Crypto exposing (decrypt, encrypt, keys, nonce)
 
+import Boom
 import Graphql.Http
+import Helpers
 import Http
 import Json.Decode as Decode exposing (Decoder, Value)
 import Json.Encode as Encode
@@ -60,6 +62,11 @@ decodeCipher =
         (Decode.field "ciphertext" Decode.string)
 
 
+swFail : Graphql.Http.Error ()
+swFail =
+    Helpers.makeGqlError Boom.swFail
+
+
 serviceWorkerRequest : String -> Value -> Decoder a -> GqlTask a
 serviceWorkerRequest key body decoder =
     Http.task
@@ -71,33 +78,22 @@ serviceWorkerRequest key body decoder =
             Http.stringResolver
                 (\response ->
                     case response of
-                        Http.BadUrl_ url_ ->
-                            Graphql.Http.BadUrl url_
-                                |> Graphql.Http.HttpError
-                                |> Err
+                        Http.BadUrl_ _ ->
+                            Err swFail
 
                         Http.Timeout_ ->
-                            Graphql.Http.Timeout
-                                |> Graphql.Http.HttpError
-                                |> Err
+                            Err swFail
 
                         Http.NetworkError_ ->
-                            Graphql.Http.NetworkError
-                                |> Graphql.Http.HttpError
-                                |> Err
+                            Err swFail
 
-                        Http.BadStatus_ metadata body_ ->
-                            Graphql.Http.BadStatus metadata body_
-                                |> Graphql.Http.HttpError
-                                |> Err
+                        Http.BadStatus_ _ _ ->
+                            Err swFail
 
                         Http.GoodStatus_ _ body_ ->
                             body_
                                 |> Decode.decodeString decoder
-                                |> Result.mapError
-                                    (Graphql.Http.BadPayload
-                                        >> Graphql.Http.HttpError
-                                    )
+                                |> Result.mapError (always swFail)
                 )
         , timeout = Nothing
         }

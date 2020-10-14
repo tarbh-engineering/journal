@@ -11,14 +11,13 @@ import Api.Query
 import Calendar exposing (Date)
 import Crypto
 import CustomScalars exposing (Jwt, Uuid)
-import Dict
+import Email exposing (Email)
 import Graphql.Http
-import Graphql.Http.GraphqlError
 import Graphql.Operation
 import Graphql.OptionalArgument as Opt
 import Graphql.SelectionSet exposing (SelectionSet)
+import Helpers exposing (makeGqlError)
 import Json.Decode exposing (Value)
-import Json.Encode as JE
 import JwtScalar exposing (useToken)
 import Maybe.Extra exposing (unwrap)
 import Task
@@ -293,22 +292,22 @@ signup pw nonce_ ciph =
         |> Task.mapError ignoreParsedErrorData
 
 
-join : String -> String -> String -> GqlTask Jwt
+join : String -> String -> Email -> GqlTask Jwt
 join pw nonce_ email =
     Api.Mutation.join
         { nonce = nonce_
         , password = pw
-        , email = email
+        , email = Email.toString email
         }
         |> Graphql.Http.mutationRequest graphqlEndpoint
         |> Graphql.Http.toTask
         |> Task.mapError ignoreParsedErrorData
 
 
-login : String -> String -> GqlTask Jwt
+login : Email -> String -> GqlTask Jwt
 login email pw =
     Api.Mutation.login
-        { email = email
+        { email = Email.toString email
         , password = pw
         }
         |> Graphql.Http.mutationRequest graphqlEndpoint
@@ -316,10 +315,10 @@ login email pw =
         |> Task.mapError ignoreParsedErrorData
 
 
-nonce : String -> GqlTask Types.EmailRes
+nonce : Email -> GqlTask Types.EmailRes
 nonce email =
     Api.Query.nonce
-        { email = email
+        { email = Email.toString email
         }
         (Graphql.SelectionSet.map2
             (\key ->
@@ -386,17 +385,6 @@ tagUpdate { id, name } { token, key } =
                 (Task.fail (makeGqlError "post doesn't exist"))
                 (tagDecrypt key)
             )
-
-
-makeGqlError : String -> Graphql.Http.Error ()
-makeGqlError str =
-    Graphql.Http.GraphqlError
-        (Graphql.Http.GraphqlError.UnparsedData JE.null)
-        [ { message = str
-          , locations = Nothing
-          , details = Dict.empty
-          }
-        ]
 
 
 tagDelete : Tag -> Auth -> GqlTask Uuid
