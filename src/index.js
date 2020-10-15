@@ -9,6 +9,7 @@ loadStripe.setLoadParameters({ advancedFraudSignals: false });
 const stripeProjectId = STRIPE_PROJECT_ID;
 const stripeAnnual = STRIPE_ANNUAL;
 const charge = STRIPE_CHARGE;
+const coinbase = COINBASE_CHECKOUT;
 /* eslint-enable no-undef */
 
 const LS_KEY = "KEY_A";
@@ -73,6 +74,7 @@ const boot = (swActive) => {
     charge,
     href: location.href,
     key: swActive ? key : null,
+    coinbase,
   };
 
   if (!key) {

@@ -98,7 +98,7 @@ viewCalendar model =
             else if model.area < 200000 then
                 35
 
-            else if model.area < 300000 then
+            else if model.area < 250000 then
                 40
 
             else
@@ -271,10 +271,12 @@ viewCell model n day =
             ]
                 |> row [ width fill, height fill ]
           , [ icon Icons.edit 20
+                |> el [ popIn ]
                 |> when (pst |> unwrap False (\p -> isJust p.body))
                 |> el [ centerX ]
                 |> el [ width fill ]
             , icon Icons.assignment_turned_in 20
+                |> el [ popIn ]
                 |> when (pst |> unwrap False (\p -> not <| List.isEmpty p.tags))
                 |> el [ centerX ]
                 |> el [ width fill ]
@@ -1178,8 +1180,25 @@ viewBuy model email =
             else
                 "pointer"
     in
-    [ [ text ("$" ++ String.fromInt model.charge ++ " per year")
-            |> el [ Font.size 20 ]
+    [ [ [ ("$" ++ String.fromInt (model.charge + 10))
+            |> text
+            |> el [ Font.strike, Font.size 23, Element.alignBottom ]
+        , ("$" ++ String.fromInt model.charge ++ " per year")
+            |> text
+            |> el [ Font.bold ]
+        ]
+            |> row [ Font.size 30, spacing 10 ]
+      , "Limited discount"
+            |> text
+            |> el [ Font.italic, centerX, Font.size 17 ]
+      ]
+        |> column [ spacing 10, centerX ]
+    , [ Element.newTabLink
+            [ Element.mouseOver [ Element.alpha 0.7 ]
+            ]
+            { url = "https://stripe.com"
+            , label = View.Img.stripe |> Element.html
+            }
       , Input.button
             [ Background.gradient
                 { angle = degrees 0
@@ -1223,25 +1242,30 @@ viewBuy model email =
                         |> el [ rotate, centerX ]
 
                 else
-                    text "Buy"
+                    text "Buy now"
             }
       ]
-        |> row [ spaceEvenly, width fill ]
-    , [ Element.newTabLink []
-            { url = "https://stripe.com"
-            , label = View.Img.stripe |> Element.html
-            }
-      , lnk "Back" FunnelCancel
+        |> row [ spacing 10, Element.alignRight ]
+    , Element.link
+        [ Element.alignRight
+        , Font.underline
+        , Font.size 17
+        , Element.mouseOver
+            [ Font.color blue
+            ]
+        ]
+        { url = model.coinbase
+        , label = text "Or pay with cryptocurrency"
+        }
+    , [ lnk "Back" FunnelCancel
       ]
-        |> row [ spaceEvenly, width fill ]
+        |> row [ Element.alignRight ]
     ]
         |> column
-            [ Element.alignRight
-            , spacing 20
-            , cappedWidth 450
-            , cappedHeight 200
+            [ spacing 20
+            , cappedWidth 400
+            , centerX
             , padding 20
-            , Element.alignBottom
             , fadeIn
             , style "transform-origin" "center"
             ]
@@ -1323,7 +1347,7 @@ viewHome model =
         |> column [ spacing 50, height fill, centerX ]
     ]
         |> column
-            [ spacing 50
+            [ spacing 30
             , centerX
             , padding 30
             , height fill
@@ -1837,19 +1861,12 @@ viewNavButton col icn n r curr =
 viewFrameMobile : Model -> Element Msg -> Element Msg
 viewFrameMobile model elem =
     let
-        nd =
-            if model.area < 200000 then
-                10
-
-            else
-                20
-
         pic =
             if model.area < 200000 then
                 25
 
             else
-                40
+                50
     in
     [ [ Input.button []
             { onPress = Just <| NavigateTo Types.RouteHome
@@ -1892,7 +1909,7 @@ viewFrameMobile model elem =
             , height fill
             , width fill
             , fShrink
-            , paddingXY nd 10
+            , padding 10
             ]
 
 
@@ -2337,7 +2354,7 @@ viewPost : Model -> Date -> Element Msg
 viewPost model d =
     let
         fs =
-            45
+            30
 
         pst =
             model.posts

@@ -67,6 +67,7 @@ type alias Model =
     , area : Int
     , landscape : Bool
     , charge : Int
+    , coinbase : String
     }
 
 
@@ -140,6 +141,7 @@ type alias Flags =
     , key : Maybe String
     , swActive : Bool
     , charge : Int
+    , coinbase : String
     }
 
 

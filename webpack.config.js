@@ -9,6 +9,7 @@ const {
   STRIPE_PROJECT_ID,
   STRIPE_ANNUAL,
   STRIPE_CHARGE,
+  COINBASE_CHECKOUT,
 } = process.env;
 
 const publicFolder = resolve("./public");
@@ -74,6 +75,7 @@ module.exports = {
   },
   plugins: [
     new webpack.DefinePlugin({
+      COINBASE_CHECKOUT: JSON.stringify(COINBASE_CHECKOUT),
       STRIPE_PROJECT_ID: JSON.stringify(STRIPE_PROJECT_ID),
       STRIPE_ANNUAL: JSON.stringify(STRIPE_ANNUAL),
       STRIPE_CHARGE,

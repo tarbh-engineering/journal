@@ -74,6 +74,7 @@ init flags =
         , landscape = flags.screen.width > flags.screen.height
         , area = View.Misc.getArea flags.screen
         , swActive = flags.swActive
+        , coinbase = flags.coinbase
         , funnel =
             boot
                 |> unwrap Types.Hello
@@ -238,4 +239,5 @@ emptyModel =
     , area = 0
     , landscape = False
     , charge = 0
+    , coinbase = ""
     }
