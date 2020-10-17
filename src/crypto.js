@@ -19,7 +19,7 @@ const encrypt = async ({ content, key }) => {
   const encryptionKey = await crypto.subtle.importKey(
     "jwk",
     key,
-    { name: "AES-CBC" },
+    { name: "AES-GCM" },
     false,
     ["encrypt"]
   );
@@ -28,7 +28,7 @@ const encrypt = async ({ content, key }) => {
 
   const ciphertext = await crypto.subtle.encrypt(
     {
-      name: "AES-CBC",
+      name: "AES-GCM",
       iv,
     },
     encryptionKey,
@@ -46,13 +46,13 @@ const decrypt = async ({ iv, ciphertext, key }) => {
   const encryptionKey = await crypto.subtle.importKey(
     "jwk",
     key,
-    { name: "AES-CBC" },
+    { name: "AES-GCM" },
     false,
     ["decrypt"]
   );
 
   const plaintextContent = await crypto.subtle.decrypt(
-    { name: "AES-CBC", iv: fromHex(iv) },
+    { name: "AES-GCM", iv: fromHex(iv) },
     encryptionKey,
     fromHex(ciphertext)
   );
@@ -88,7 +88,7 @@ const keys = async ({ password, nonce }) => {
   const encryptionKey = await crypto.subtle.importKey(
     "raw",
     bits.slice(n),
-    { name: "AES-CBC" },
+    { name: "AES-GCM" },
     true,
     ["encrypt", "decrypt"]
   );
